@@ -18,7 +18,7 @@ class DeWebsocket {
   }
 
   initialize() {
-    this.connection()
+    // this.connection()
     const _this = this
     this.timer = this.isLoginStatu() && setInterval(() => {
       this.isLoginStatu() || this.destroy()

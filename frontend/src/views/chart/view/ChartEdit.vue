@@ -854,8 +854,7 @@
       <el-col v-if="editFrom==='view'" style="height: 100%;min-width: 500px;border-top: 1px solid #E6E6E6;">
         <el-row style="width: 100%;height: 100%;" class="padding-lr">
           <div ref="imageWrapper" style="height: 100%">
-            <plugin-com
-              v-if="httpRequest.status && chart.type && view.isPlugin"
+            <plugin-com v-if="httpRequest.status && chart.type && view.isPlugin"
               ref="dynamicChart"
               :component-name="chart.type + '-view'"
               :obj="{chart}"
@@ -865,8 +864,9 @@
               class="chart-class"
               @onChartClick="chartClick"
             />
-            <chart-component
-              v-else-if="httpRequest.status && chart.type && !chart.type.includes('table') && !chart.type.includes('text') && chart.type !== 'label' && renderComponent() === 'echarts'"
+            <chart-component v-else-if="httpRequest.status && chart.type
+                && !chart.type.includes('table') && !chart.type.includes('text')
+                && chart.type !== 'label' && renderComponent() === 'echarts'"
               ref="dynamicChart"
               :chart-id="chart.id"
               :chart="chart"
@@ -874,40 +874,40 @@
               :theme-style="curComponent.commonBackground"
               @onChartClick="chartClick"
             />
-            <chart-component-g2
-              v-else-if="httpRequest.status && chart.type && !chart.type.includes('table') && !chart.type.includes('text') && chart.type !== 'label' && renderComponent() === 'antv'"
+            <chart-component-g2 v-else-if="httpRequest.status && chart.type
+                && !chart.type.includes('table') && !chart.type.includes('text')
+                && chart.type !== 'label' && renderComponent() === 'antv'"
               ref="dynamicChart"
               :chart-id="chart.id"
               :chart="chart"
               class="chart-class"
               @onChartClick="chartClick"
             />
-            <chart-component-s2
-              v-else-if="httpRequest.status && chart.type && chart.type.includes('table') && !chart.type.includes('text') && chart.type !== 'label' && renderComponent() === 'antv'"
+            <chart-component-s2 v-else-if="httpRequest.status
+                && chart.type && chart.type.includes('table') && !chart.type.includes('text')
+                && chart.type !== 'label' && renderComponent() === 'antv'"
               ref="dynamicChart"
               :chart-id="chart.id"
               :chart="chart"
               class="chart-class"
               @onChartClick="chartClick"
             />
-            <table-normal
-              v-else-if="httpRequest.status && chart.type && chart.type.includes('table') && renderComponent() === 'echarts' && chart.type !== 'table-pivot'"
+            <table-normal v-else-if="httpRequest.status
+                && chart.type && chart.type.includes('table') && renderComponent() === 'echarts' && chart.type !== 'table-pivot'"
               :show-summary="chart.type === 'table-normal'"
               :chart="chart"
               class="table-class"
             />
-            <label-normal
-              v-else-if="httpRequest.status && chart.type && chart.type.includes('text')"
+            <label-normal v-else-if="httpRequest.status
+                && chart.type && chart.type.includes('text')"
               :chart="chart"
               class="table-class"
             />
-            <label-normal-text
-              v-else-if="httpRequest.status && chart.type && chart.type === 'label'"
+            <label-normal-text v-else-if="httpRequest.status && chart.type && chart.type === 'label'"
               :chart="chart"
               class="table-class"
             />
-            <div v-if="!httpRequest.status" class="chart-error-class">
-              <div
+            <div v-if="!httpRequest.status" class="chart-error-class"><div
                 style="font-size: 12px; color: #9ea6b2;height: 100%;display: flex;align-items: center;justify-content: center;"
               >
                 {{ httpRequest.msg }},{{ $t('chart.chart_show_error') }}

@@ -91,9 +91,7 @@
           </div>
         </template>
       </template>
-
-      <el-form-item
-        v-if="form.type !== 'es' && form.type !== 'api'"
+      <el-form-item v-if="form.type !== 'es' && form.type !== 'api'"
         :label="$t('datasource.host')"
         prop="configuration.host"
       >
@@ -103,9 +101,7 @@
           autocomplete="off"
         />
       </el-form-item>
-
-      <el-form-item
-        v-if="form.type == 'es'"
+      <el-form-item v-if="form.type == 'es'"
         :label="$t('datasource.datasource_url')"
         prop="configuration.url"
       >
@@ -115,9 +111,7 @@
           autocomplete="off"
         />
       </el-form-item>
-
-      <el-form-item
-        v-if="form.type !== 'es' && form.type !== 'api'"
+      <el-form-item v-if="form.type !== 'es' && form.type !== 'api'"
         :label="$t('datasource.data_base')"
         prop="configuration.dataBase"
       >
@@ -127,9 +121,7 @@
           autocomplete="off"
         />
       </el-form-item>
-
-      <el-form-item
-        v-if="form.type == 'oracle' && form.type !== 'api'"
+      <el-form-item v-if="form.type == 'oracle' && form.type !== 'api'"
         :label="$t('datasource.connection_mode')"
         prop="configuration.connectionType"
       >
@@ -145,9 +137,7 @@
           {{ $t('datasource.oracle_service_name') }}
         </el-radio>
       </el-form-item>
-
-      <el-form-item
-        v-if="form.type == 'hive'"
+      <el-form-item v-if="form.type == 'hive'"
         :label="$t('datasource.auth_method')"
       >
         <el-select v-model="form.configuration.authMethod" class="de-select">
@@ -159,20 +149,12 @@
           />
         </el-select>
       </el-form-item>
-
-      <el-form-item
-        v-if="
-          form.type === 'hive' && form.configuration.authMethod === 'kerberos'
-        "
+      <el-form-item v-if="form.type === 'hive' && form.configuration.authMethod === 'kerberos'"
         :label="$t('datasource.client_principal')"
       >
         <el-input v-model="form.configuration.username" autocomplete="off" />
       </el-form-item>
-
-      <el-form-item
-        v-if="
-          form.type === 'hive' && form.configuration.authMethod === 'kerberos'
-        "
+      <el-form-item v-if="form.type === 'hive' && form.configuration.authMethod === 'kerberos'"
         :label="$t('datasource.keytab_Key_path')"
       >
         <dePwd v-model="form.configuration.password" />
@@ -180,19 +162,8 @@
           {{ $t('datasource.kerbers_info') }}
         </p>
       </el-form-item>
-
-      <span
-        v-if="
-          form.type === 'hive' && form.configuration.authMethod === 'kerberos'
-        "
-      />
-
-      <el-form-item
-        v-if="
-          form.type !== 'es' &&
-            form.type !== 'api' &&
-            form.configuration.authMethod !== 'kerberos'
-        "
+      <span v-if="form.type === 'hive' && form.configuration.authMethod === 'kerberos'" />
+      <el-form-item v-if="form.type !== 'es' &&form.type !== 'api' &&form.configuration.authMethod !== 'kerberos'"
         :label="$t('datasource.user_name')"
       >
         <el-input
@@ -201,13 +172,7 @@
           autocomplete="off"
         />
       </el-form-item>
-
-      <el-form-item
-        v-if="
-          form.type !== 'es' &&
-            form.type !== 'api' &&
-            form.configuration.authMethod !== 'kerberos'
-        "
+      <el-form-item v-if="form.type !== 'es' &&form.type !== 'api' &&form.configuration.authMethod !== 'kerberos'"
         :label="$t('datasource.password')"
       >
         <dePwd
@@ -215,9 +180,7 @@
           :placeholder="$t('components.input_a_password')"
         />
       </el-form-item>
-
-      <el-form-item
-        v-if="form.type === 'es'"
+      <el-form-item v-if="form.type === 'es'"
         :label="$t('datasource.user_name')"
       >
         <el-input
@@ -226,29 +189,18 @@
           autocomplete="off"
         />
       </el-form-item>
-
-      <el-form-item
-        v-if="form.type === 'es'"
-        :label="$t('datasource.password')"
-      >
+      <el-form-item v-if="form.type === 'es'" :label="$t('datasource.password')">
         <dePwd
           v-model="form.configuration.esPassword"
           :placeholder="$t('components.input_a_password')"
         />
       </el-form-item>
-
-      <el-form-item
-        v-if="
-          form.type !== 'es' && form.type !== 'oracle' && form.type !== 'api'
-        "
+      <el-form-item v-if="form.type !== 'es' && form.type !== 'oracle' && form.type !== 'api'"
         :label="$t('datasource.extra_params')"
       >
         <el-input v-model="form.configuration.extraParams" :placeholder="$t('fu.search_bar.please_input') + $t('datasource.extra_params')" autocomplete="off" />
       </el-form-item>
-
-      <el-form-item
-        v-if="form.type !== 'es' && form.type !== 'api'"
-        :label="$t('datasource.port')"
+      <el-form-item v-if="form.type !== 'es' && form.type !== 'api'" :label="$t('datasource.port')"
         prop="configuration.port"
       >
         <el-input
@@ -259,11 +211,7 @@
           min="0"
         />
       </el-form-item>
-
-      <el-form-item
-        v-if="
-          ['oracle', 'sqlServer', 'pg', 'redshift', 'db2'].includes(form.type)
-        "
+      <el-form-item v-if="['oracle', 'sqlServer', 'pg', 'redshift', 'db2'].includes(form.type)"
         class="schema-label"
       >
         <template slot="label">
@@ -290,9 +238,7 @@
           />
         </el-select>
       </el-form-item>
-
-      <el-form-item
-        v-if="form.type == 'oracle'"
+      <el-form-item v-if="form.type == 'oracle'"
         :label="$t('datasource.charset')"
       >
         <el-select
@@ -309,9 +255,7 @@
           />
         </el-select>
       </el-form-item>
-
-      <el-form-item
-        v-if="form.type == 'oracle'"
+      <el-form-item v-if="form.type == 'oracle'"
         :label="$t('datasource.targetCharset')"
       >
         <el-select
@@ -328,15 +272,12 @@
           />
         </el-select>
       </el-form-item>
-
-      <span
-        v-if="!['es', 'api', 'mongo'].includes(form.type)"
+      <span v-if="!['es', 'api', 'mongo'].includes(form.type)"
         class="de-expand de-mar0"
         @click="showPriority = !showPriority"
       >{{ $t('datasource.priority')
        }}<i v-if="showPriority" class="el-icon-arrow-up" />
         <i v-else class="el-icon-arrow-down" /></span>
-
       <template v-if="showPriority">
         <el-row :gutter="24">
           <el-col :span="12">
