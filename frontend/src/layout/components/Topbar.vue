@@ -1,8 +1,21 @@
 <template>
   <div class="top-nav">
-    <div v-loading="!axiosFinished" class="log">
-      <svg-icon v-if="!logoUrl && axiosFinished" icon-class="DataEase" custom-class="top-nav-logo-icon" />
-      <img v-if="logoUrl && axiosFinished" :src="logoUrl" width="140" alt="" style="padding-top: 10px;">
+    <div
+      v-loading="!axiosFinished"
+      class="log"
+    >
+      <svg-icon
+        v-if="!logoUrl && axiosFinished"
+        icon-class="DataEase"
+        custom-class="top-nav-logo-icon"
+      />
+      <img
+        v-if="logoUrl && axiosFinished"
+        :src="logoUrl"
+        width="140"
+        alt=""
+        style="padding-top: 10px;"
+      >
     </div>
     <el-menu
       class="de-top-menu"
@@ -12,28 +25,40 @@
       :default-active="activeMenu"
       @select="handleSelect"
     >
-      <div v-for="item in permission_routes" :key="item.path" class="nav-item">
+      <div
+        v-for="item in permission_routes"
+        :key="item.path"
+        class="nav-item"
+      >
         <app-link :to="resolvePath(item)">
-          <el-menu-item v-if="!item.hidden" :index="item.path">
-            {{ item.meta ? item.meta.title : item.children[0].meta.title }}</el-menu-item>
+          <el-menu-item
+            v-if="!item.hidden"
+            :index="item.path"
+          >
+            {{ item.meta ? item.meta.title : item.children[0].meta.title }}
+          </el-menu-item>
         </app-link>
       </div>
     </el-menu>
 
-    <div class="right-menu" style="color: var(--TopTextColor)">
-      <template>
-        <notification class="right-menu-item hover-effect" />
-        <lang-select class="right-menu-item hover-effect" />
-        <div style="height: 100%;padding: 0 8px;" class="right-menu-item hover-effect">
-          <a
-            :href="helpLink"
-            target="_blank"
-            style="display: flex;height: 100%;width: 100%;justify-content: center;align-items: center;"
-          >
-            <svg-icon icon-class="docs" />
-          </a>
-        </div>
-      </template>
+    <div
+      class="right-menu"
+      style="color: var(--TopTextColor)"
+    >
+      <notification class="right-menu-item hover-effect" />
+      <lang-select class="right-menu-item hover-effect" />
+      <div
+        style="height: 100%;padding: 0 8px;"
+        class="right-menu-item hover-effect"
+      >
+        <a
+          :href="helpLink"
+          target="_blank"
+          style="display: flex;height: 100%;width: 100%;justify-content: center;align-items: center;"
+        >
+          <svg-icon icon-class="docs" />
+        </a>
+      </div>
 
       <el-dropdown
         ref="my-drop"
@@ -41,7 +66,10 @@
         style="display: flex;align-items: center; width:100px;"
         trigger="click"
       >
-        <div class="el-dropdown-link" style="display: flex;color: var(--TopTextColor);font-size: 14px; width:100%;">
+        <div
+          class="el-dropdown-link"
+          style="display: flex;color: var(--TopTextColor);font-size: 14px; width:100%;"
+        >
           <span style="max-width:80px;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;">{{ name }}</span>
           <span><i class="el-icon-arrow-down el-icon--right" /></span>
         </div>
@@ -50,7 +78,10 @@
             <el-dropdown-item>{{ $t('commons.personal_info') }}</el-dropdown-item>
           </router-link>
 
-          <router-link v-if="$store.getters.validate" to="/ukey/index">
+          <router-link
+            v-if="$store.getters.validate"
+            to="/ukey/index"
+          >
             <el-dropdown-item>{{ $t('commons.ukey_title') }}</el-dropdown-item>
           </router-link>
 
@@ -61,7 +92,10 @@
           <router-link to="/about/index">
             <el-dropdown-item>{{ $t('commons.about_us') }}</el-dropdown-item>
           </router-link>
-          <el-dropdown-item divided @click.native="logout">
+          <el-dropdown-item
+            divided
+            @click.native="logout"
+          >
             <span style="display:block;">{{ $t('commons.exit_system') }}</span>
           </el-dropdown-item>
         </el-dropdown-menu>
@@ -76,35 +110,30 @@
       :fullscreen="true"
       append-to-body
     >
-      <template-market v-if="templateMarketShow" style="text-align: center" @closeDialog="changeTemplateMarketShow(false)" />
+      <template-market
+        v-if="templateMarketShow"
+        style="text-align: center"
+        @closeDialog="changeTemplateMarketShow(false)"
+      />
     </el-dialog>
   </div>
 
 </template>
 
 <script>
-import {
-  mapGetters
-} from 'vuex'
+import { mapGetters } from 'vuex'
 import AppLink from './Sidebar/Link'
 import variables from '@/styles/variables.scss'
-import {
-  isExternal
-} from '@/utils/validate'
-import Notification from '@/components/Notification'
+import { isExternal } from '@/utils/validate'
+import Notification from '@/components/notification'
 import bus from '@/utils/bus'
-import LangSelect from '@/components/LangSelect'
-import {
-  getSysUI
-} from '@/utils/auth'
-import {
-  pluginLoaded
-} from '@/api/user'
-import {
-  initTheme
-} from '@/utils/ThemeUtil'
+import LangSelect from '@/components/langSelect'
+import { getSysUI } from '@/utils/auth'
+import { pluginLoaded } from '@/api/user'
+import { initTheme } from '@/utils/ThemeUtil'
 import TemplateMarket from '@/views/panel/templateMarket'
 import { changeFavicon } from '@/utils/index'
+
 export default {
   name: 'Topbar',
   components: {
@@ -270,9 +299,9 @@ export default {
       // 如果有子项，默认跳转第一个子项路由
       let path = ''
       /**
-         * item 路由子项
-         * parent 路由父项
-         */
+       * item 路由子项
+       * parent 路由父项
+       */
       const getDefaultPath = (item, parent) => {
         // 如果path是个外部链接（不建议），直接返回链接，存在个问题：如果是外部链接点击跳转后当前页内容还是上一个路由内容
         if (isExternal(item.path)) {
@@ -380,38 +409,39 @@ export default {
 
 </script>
 <style lang="scss" scoped>
-  .el-dropdown-link {
-    cursor: pointer;
-    color: #1e212a;
-  }
+.el-dropdown-link {
+  cursor: pointer;
+  color: #1e212a;
+}
 
-  .el-icon-arrow-down {
-    font-size: 12px;
-  }
+.el-icon-arrow-down {
+  font-size: 12px;
+}
 
-  .top-dropdown {
-    display: inline-block;
-    padding: 10px 8px;
-    height: 100%;
-    font-size: 16px;
-    color: #1e212a;
-    vertical-align: text-bottom;
-    margin-right: 10px;
-  }
+.top-dropdown {
+  display: inline-block;
+  padding: 10px 8px;
+  height: 100%;
+  font-size: 16px;
+  color: #1e212a;
+  vertical-align: text-bottom;
+  margin-right: 10px;
+}
 
-  .de-top-menu {
-    background-color: var(--MainBG);
+.de-top-menu {
+  background-color: var(--MainBG);
 
-  }
-  .template-market-item{
-    display: flex;
-    color: var(--MenuActiveBG, #409EFF);
-    font-size: 14px!important;
-    line-height: 38px!important;
-  }
+}
 
-  .dialog-css ::v-deep .el-dialog__header{
-    display: none;
-  }
+.template-market-item {
+  display: flex;
+  color: var(--MenuActiveBG, #409EFF);
+  font-size: 14px !important;
+  line-height: 38px !important;
+}
+
+.dialog-css ::v-deep .el-dialog__header {
+  display: none;
+}
 
 </style>

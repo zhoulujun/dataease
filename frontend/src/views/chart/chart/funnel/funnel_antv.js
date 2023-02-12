@@ -11,7 +11,7 @@ export function baseFunnelOptionAntV(plot, container, chart, action) {
   // style
   const legend = getLegend(chart)
   // data
-  const data = chart.data.datas
+  const data = chart.data.data
   // options
   const options = {
     theme: theme,
@@ -42,14 +42,6 @@ export function baseFunnelOptionAntV(plot, container, chart, action) {
         }
       }
     ]
-  }
-  // size
-  let customAttr = {}
-  if (chart.customAttr) {
-    customAttr = JSON.parse(chart.customAttr)
-    if (customAttr.size) {
-      const s = JSON.parse(JSON.stringify(customAttr.size))
-    }
   }
   // custom color
   options.color = antVCustomColor(chart)

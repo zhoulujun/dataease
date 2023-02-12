@@ -1,20 +1,47 @@
 <template>
-  <div ref="chartContainer" style="padding: 0;width: 100%;height: 100%;overflow: hidden;" :style="bg_class">
-    <view-track-bar ref="viewTrack" :track-menu="trackMenu" class="track-bar" :style="trackBarStyleTime" @trackClick="trackClick" />
-    <span v-if="chart.type && antVRenderStatus" v-show="title_show" ref="title" :style="title_class" style="cursor: default;display: block;">
-      <div style="padding:6px 4px 0;margin: 0;">
-        <p style="overflow: hidden;white-space: pre;text-overflow: ellipsis;display: inline;">{{ chart.title }}</p>
-        <title-remark v-if="remarkCfg.show" style="text-shadow: none!important;" :remark-cfg="remarkCfg" />
+  <div
+    ref="chartContainer"
+    style="padding: 0;width: 100%;height: 100%;overflow: hidden;"
+    :style="bg_class"
+  >
+    <view-track-bar
+      ref="viewTrack"
+      :track-menu="trackMenu"
+      class="track-bar"
+      :style="trackBarStyleTime"
+      @trackClick="trackClick"
+    />
+    <span
+      v-if="chart.type && antVRenderStatus"
+      v-show="title_show"
+      ref="title"
+      :style="title_class"
+      style="cursor: default;display: block;"
+    >
+      <div style="padding:4px 4px 0;margin: 0;">
+        <chart-title-update
+          :title-class="title_class"
+          :chart-info="chartInfo"
+        />
+        <title-remark
+          v-if="remarkCfg.show"
+          style="text-shadow: none!important;margin-left: 4px;"
+          :remark-cfg="remarkCfg"
+        />
       </div>
     </span>
-    <div :id="chartId" style="width: 100%;overflow: hidden;" :style="{height:chartHeight}" />
+    <div
+      :id="chartId"
+      style="width: 100%;overflow: hidden;"
+      :style="{height:chartHeight}"
+    />
   </div>
 </template>
 
 <script>
 import { baseLiquid } from '@/views/chart/chart/liquid/liquid'
 import { uuid } from 'vue-uuid'
-import ViewTrackBar from '@/components/canvas/components/Editor/ViewTrackBar'
+import ViewTrackBar from '@/components/canvas/components/editor/ViewTrackBar'
 import { getRemark, hexColorToRGBA } from '@/views/chart/chart/util'
 import { baseBarOptionAntV, hBaseBarOptionAntV } from '@/views/chart/chart/bar/bar_antv'
 import { baseAreaOptionAntV, baseLineOptionAntV } from '@/views/chart/chart/line/line_antv'
@@ -28,10 +55,13 @@ import { baseWaterfallOptionAntV } from '@/views/chart/chart/waterfall/waterfall
 import { baseWordCloudOptionAntV } from '@/views/chart/chart/wordCloud/word_cloud'
 import TitleRemark from '@/views/chart/view/TitleRemark'
 import { DEFAULT_TITLE_STYLE } from '@/views/chart/chart/chart'
+import { baseMixOptionAntV } from '@/views/chart/chart/mix/mix_antv'
+import ChartTitleUpdate from './ChartTitleUpdate.vue'
+import { equalsAny } from '@/utils/StringUtils'
 
 export default {
   name: 'ChartComponentG2',
-  components: { TitleRemark, ViewTrackBar },
+  components: { TitleRemark, ViewTrackBar, ChartTitleUpdate },
   props: {
     chart: {
       type: Object,
@@ -106,6 +136,10 @@ export default {
       return {
         borderRadius: this.borderRadius
       }
+    },
+    chartInfo() {
+      const { id, title } = this.chart
+      return { id, title }
     }
   },
   watch: {
@@ -113,7 +147,9 @@ export default {
       handler(newVal, oldVla) {
         this.initTitle()
         this.calcHeightDelay()
-        new Promise((resolve) => { resolve() }).then(() => {
+        new Promise((resolve) => {
+          resolve()
+        }).then(() => {
           this.drawView()
         })
       },
@@ -122,6 +158,11 @@ export default {
     resize() {
       this.drawEcharts()
     }
+  },
+  beforeDestroy() {
+    this.myChart.destroy()
+    window.removeEventListener('resize', this.calcHeightDelay)
+    this.myChart = null
   },
   mounted() {
     this.preDraw()
@@ -161,28 +202,27 @@ export default {
       })
     },
     checkSelected(param) {
-      return (this.linkageActiveParam.name.indexOf(param.name) > -1) &&
+      return (this.linkageActiveParam.name === param.name || (this.linkageActiveParam.name === 'NO_DATA' && !param.name)) &&
         (this.linkageActiveParam.category === param.category)
     },
     preDraw() {
       this.initTitle()
       this.calcHeightDelay()
-      new Promise((resolve) => { resolve() }).then(() => {
+      new Promise((resolve) => {
+        resolve()
+      }).then(() => {
         this.drawView()
       })
-      const that = this
-      window.onresize = function() {
-        that.calcHeightDelay()
-      }
+      window.addEventListener('resize', this.calcHeightDelay)
     },
     drawView() {
       const chart = this.chart
       // type
       // if (chart.data) {
       this.antVRenderStatus = true
-      if (!chart.data || (!chart.data.datas && !chart.data.series)) {
+      if (!chart.data || (!chart.data.data && !chart.data.series)) {
         chart.data = {
-          datas: [{}],
+          data: [{}],
           series: [
             {
               data: [0]
@@ -194,13 +234,13 @@ export default {
         this.myChart = baseBarOptionAntV(this.myChart, this.chartId, chart, this.antVAction, true, false)
       } else if (chart.type === 'bar-group') {
         this.myChart = baseBarOptionAntV(this.myChart, this.chartId, chart, this.antVAction, true, false)
-      } else if (chart.type === 'bar-stack') {
+      } else if (equalsAny(chart.type, 'bar-stack', 'percentage-bar-stack')) {
         this.myChart = baseBarOptionAntV(this.myChart, this.chartId, chart, this.antVAction, false, true)
-      } else if (chart.type === 'percentage-bar-stack') {
-        this.myChart = baseBarOptionAntV(this.myChart, this.chartId, chart, this.antVAction, false, true)
+      } else if (chart.type === 'bar-group-stack') {
+        this.myChart = baseBarOptionAntV(this.myChart, this.chartId, chart, this.antVAction, true, true)
       } else if (chart.type === 'bar-horizontal') {
         this.myChart = hBaseBarOptionAntV(this.myChart, this.chartId, chart, this.antVAction, true, false)
-      } else if (chart.type === 'bar-stack-horizontal') {
+      } else if (equalsAny(chart.type, 'bar-stack-horizontal', 'percentage-bar-stack-horizontal')) {
         this.myChart = hBaseBarOptionAntV(this.myChart, this.chartId, chart, this.antVAction, false, true)
       } else if (chart.type === 'line') {
         this.myChart = baseLineOptionAntV(this.myChart, this.chartId, chart, this.antVAction)
@@ -214,9 +254,9 @@ export default {
         this.myChart = baseRadarOptionAntV(this.myChart, this.chartId, chart, this.antVAction)
       } else if (chart.type === 'gauge') {
         this.myChart = baseGaugeOptionAntV(this.myChart, this.chartId, chart, this.antVAction, this.scale)
-      } else if (chart.type === 'pie') {
+      } else if (chart.type === 'pie' || chart.type === 'pie-donut') {
         this.myChart = basePieOptionAntV(this.myChart, this.chartId, chart, this.antVAction)
-      } else if (chart.type === 'pie-rose') {
+      } else if (chart.type === 'pie-rose' || chart.type === 'pie-donut-rose') {
         this.myChart = basePieRoseOptionAntV(this.myChart, this.chartId, chart, this.antVAction)
       } else if (chart.type === 'funnel') {
         this.myChart = baseFunnelOptionAntV(this.myChart, this.chartId, chart, this.antVAction)
@@ -228,6 +268,8 @@ export default {
         this.myChart = baseWaterfallOptionAntV(this.myChart, this.chartId, chart, this.antVAction)
       } else if (chart.type === 'word-cloud') {
         this.myChart = baseWordCloudOptionAntV(this.myChart, this.chartId, chart, this.antVAction)
+      } else if (chart.type === 'chart-mix') {
+        this.myChart = baseMixOptionAntV(this.myChart, this.chartId, chart, this.antVAction)
       } else {
         if (this.myChart) {
           this.antVRenderStatus = false
@@ -364,7 +406,3 @@ export default {
   }
 }
 </script>
-
-<style scoped lang="scss">
-
-</style>

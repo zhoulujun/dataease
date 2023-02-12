@@ -1,19 +1,24 @@
 <template>
-  <div class="dataset-on-time">
+  <div class="dataset-on-time de-search-table">
     <el-row class="top-operate">
       <el-col :span="10">
         <deBtn
           type="primary"
-          icon="el-icon-circle-plus-outline"
+          icon="el-icon-plus"
           @click="() => selectDataset()"
-        >{{ $t("dataset.add_task") }}</deBtn>
+        >{{ $t("dataset.add_task") }}
+        </deBtn>
         <deBtn
           :disabled="!multipleSelection.length"
           secondary
           @click="confirmDelete"
-        >{{ $t("organization.delete") }}</deBtn>
+        >{{ $t("organization.delete") }}
+        </deBtn>
       </el-col>
-      <el-col :span="14" class="right-user">
+      <el-col
+        :span="14"
+        class="right-user"
+      >
         <el-input
           ref="search"
           v-model="nickName"
@@ -30,20 +35,33 @@
           :plain="!!filterTexts.length"
           icon="iconfont icon-icon-filter"
           @click="filterShow"
-        >{{ $t("user.filter")
-        }}<template v-if="filterTexts.length">
-          ({{ filterTexts.length }})
-        </template>
+        >{{
+           $t("user.filter")
+         }}
+          <template v-if="filterTexts.length">
+            ({{ filterTexts.length }})
+          </template>
         </deBtn>
-        <el-dropdown trigger="click" :hide-on-click="false">
-          <deBtn secondary icon="el-icon-setting">{{ $t("user.list") }}</deBtn>
-          <el-dropdown-menu slot="dropdown" class="list-colums-slect">
+        <el-dropdown
+          trigger="click"
+          :hide-on-click="false"
+        >
+          <deBtn
+            secondary
+            icon="el-icon-setting"
+          >{{ $t("user.list") }}
+          </deBtn>
+          <el-dropdown-menu
+            slot="dropdown"
+            class="list-columns-select"
+          >
             <p class="title">{{ $t("user.list_info") }}</p>
             <el-checkbox
               v-model="checkAll"
               :indeterminate="isIndeterminate"
               @change="handleCheckAllChange"
-            >{{ $t("dataset.check_all") }}</el-checkbox>
+            >{{ $t("dataset.check_all") }}
+            </el-checkbox>
             <el-checkbox-group
               v-model="checkedColumnNames"
               @change="handleCheckedColumnNamesChange"
@@ -52,13 +70,17 @@
                 v-for="column in columnNames"
                 :key="column.props"
                 :label="column.props"
-              >{{ $t(column.label) }}</el-checkbox>
+              >{{ $t(column.label) }}
+              </el-checkbox>
             </el-checkbox-group>
           </el-dropdown-menu>
         </el-dropdown>
       </el-col>
     </el-row>
-    <div v-if="filterTexts.length" class="filter-texts">
+    <div
+      v-if="filterTexts.length"
+      class="filter-texts"
+    >
       <span class="sum">{{ paginationConfig.total }}</span>
       <span class="title">{{ $t("user.result_one") }}</span>
       <el-divider direction="vertical" />
@@ -68,8 +90,15 @@
         @click="scrollPre"
       />
       <div class="filter-texts-container">
-        <p v-for="(ele, index) in filterTexts" :key="ele" class="text">
-          {{ ele }} <i class="el-icon-close" @click="clearOneFilter(index)" />
+        <p
+          v-for="(ele, index) in filterTexts"
+          :key="ele"
+          class="text"
+        >
+          {{ ele }} <i
+            class="el-icon-close"
+            @click="clearOneFilter(index)"
+          />
         </p>
       </div>
       <i
@@ -82,7 +111,8 @@
         class="clear-btn"
         icon="el-icon-delete"
         @click="clearFilter"
-      >{{ $t("user.clear_filter") }}</el-button>
+      >{{ $t("user.clear_filter") }}
+      </el-button>
     </div>
     <div
       id="resize-for-filter"
@@ -100,7 +130,10 @@
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
       >
-        <el-table-column type="selection" width="55" />
+        <el-table-column
+          type="selection"
+          width="55"
+        />
         <el-table-column
           key="name"
           min-width="178"
@@ -166,7 +199,13 @@
             >{{
                $t(`dataset.${scope.row.lastExecStatus.toLocaleLowerCase()}`)
              }}
-              <svg-icon v-if="scope.row.lastExecStatus === 'Error'" style="cursor: pointer;" icon-class="icon-maybe" class="field-icon-location" @click="showErrorMassage(scope.row.msg)" />
+              <svg-icon
+                v-if="scope.row.lastExecStatus === 'Error'"
+                style="cursor: pointer;"
+                icon-class="icon-maybe"
+                class="field-icon-location"
+                @click="showErrorMassage(scope.row.msg)"
+              />
             </span>
             <span v-else>-</span>
           </template>
@@ -213,35 +252,41 @@
           key="__operation"
           :label="$t('commons.operating')"
           fixed="right"
-          width="84"
+          width="160"
         >
           <template slot-scope="scope">
             <el-button
-              class="text-btn mar3 mar6"
+              class="de-text-btn mar3 mar6"
               type="text"
               @click="selectDataset(scope.row)"
-            >{{
-              $t(disableEdit(scope.row) ? "auth.view" : "commons.edit")
-            }}</el-button>
+            >{{ $t(disableEdit(scope.row) ? "auth.view" : "commons.edit") }}
+            </el-button>
+            <el-button
+              class="de-text-btn mar3 mar6"
+              :disabled="disableExec(scope.row)"
+              type="text"
+              @click="execTask(scope.row)"
+            >{{ $t("emailtask.execute_now") }}
+            </el-button>
             <el-dropdown
               size="medium"
               trigger="click"
               @command="(type) => handleCommand(type, scope.row)"
             >
-              <i class="el-icon-more" @click.stop />
-              <el-dropdown-menu slot="dropdown" class="de-card-dropdown">
+              <i
+                class="el-icon-more"
+                @click.stop
+              />
+              <el-dropdown-menu
+                slot="dropdown"
+                class="de-card-dropdown"
+              >
                 <template
-                  v-if="!['Stopped', 'Exec'].includes(scope.row.status)"
+                  v-if="!['Exec'].includes(scope.row.status)"
                 >
                   <el-dropdown-item
-                    :disabled="disableExec(scope.row)"
-                    command="exec"
-                  >
-                    {{ $t("components.run_once") }}
-                  </el-dropdown-item>
-                  <el-dropdown-item
                     v-if="scope.row.status === 'Pending'"
-                    command="contine"
+                    command="continue"
                   >
                     {{ $t("components.continue") }}
                   </el-dropdown-item>
@@ -266,7 +311,10 @@
     </div>
 
     <keep-alive>
-      <filterUser ref="filterUser" @search="filterDraw" />
+      <filterUser
+        ref="filterUser"
+        @search="filterDraw"
+      />
     </keep-alive>
 
     <el-dialog
@@ -277,8 +325,14 @@
       class="de-dialog-form"
     >
       <span class="err-msg">{{ error_massage }}</span>
-      <span slot="footer" class="dialog-footer">
-        <deBtn secondary @click="show_error_massage = false">{{
+      <span
+        slot="footer"
+        class="dialog-footer"
+      >
+        <deBtn
+          secondary
+          @click="show_error_massage = false"
+        >{{
           $t("dataset.close")
         }}</deBtn>
       </span>
@@ -287,55 +341,25 @@
 </template>
 
 <script>
-const columnOptions = [
-  {
-    label: 'dataset.task_name',
-    props: 'name'
-  },
-  {
-    label: 'dataset.task.dataset',
-    props: 'datasetName'
-  },
-  {
-    label: 'dataset.execute_rate',
-    props: 'rate'
-  },
-  {
-    label: 'dataset.task.last_exec_time',
-    props: 'lastExecTime'
-  },
-  {
-    label: 'dataset.task.last_exec_status',
-    props: 'lastExecStatus'
-  },
-  {
-    label: 'dataset.task.next_exec_time',
-    props: 'nextExecTime'
-  },
-  {
-    label: 'dataset.task.task_status',
-    props: 'status'
-  }
-]
+import { columnOptions } from './options'
 import { formatOrders } from '@/utils/index'
 import { datasetTaskList, post } from '@/api/dataset/dataset'
-import cron from '@/components/cron/cron'
-import TableSelector from '@/views/chart/view/TableSelector'
 import { hasDataPermission } from '@/utils/permission'
 import GridTable from '@/components/gridTable/index.vue'
-import filterUser from './filterUser.vue'
+import filterUser from './FilterUser.vue'
 import msgCfm from '@/components/msgCfm/index'
 import _ from 'lodash'
 import keyEnter from '@/components/msgCfm/keyEnter.js'
 
 export default {
   name: 'DatasetTaskList',
-  components: { GridTable, cron, filterUser, TableSelector },
+  components: { GridTable, filterUser },
   mixins: [msgCfm, keyEnter],
   props: {
     transCondition: {
       type: Object,
-      default: () => {}
+      default: () => {
+      }
     }
   },
   data() {
@@ -440,16 +464,14 @@ export default {
       switch (key) {
         case 'exec':
           this.execTask(row)
-          return
           break
         case 'delete':
           this.deleteTask(row)
-          return
           break
         default:
+          this.changeTaskStatus(row)
           break
       }
-      this.changeTaskStatus(row)
     },
     handleSelectionChange(val) {
       this.multipleSelection = val
@@ -502,8 +524,8 @@ export default {
       datasetTaskList(currentPage, pageSize, param, showLoading).then(
         (response) => {
           const multipleSelection = this.multipleSelection.map(ele => ele.id)
-          this.data = response.data.listObject
-          this.paginationConfig.total = response.data.itemCount
+          this.data = response.data?.listObject
+          this.paginationConfig.total = response.data?.itemCount
           if (multipleSelection.length) {
             this.$nextTick(() => {
               this.data.forEach(row => {
@@ -586,7 +608,8 @@ export default {
             this.initSearch(true)
           })
         })
-        .catch(() => {})
+        .catch(() => {
+        })
     },
     selectDataset(row) {
       if (row) {
@@ -611,12 +634,7 @@ export default {
       )
     },
     disableExec(task) {
-      return (
-        task.status === 'Stopped' ||
-        task.status === 'Pending' ||
-        task.rate === 'SIMPLE' ||
-        !hasDataPermission('manage', task.privileges)
-      )
+      return ((task.status === 'Stopped' && task.rate !== 'SIMPLE') || task.status === 'Pending' || task.status === 'Exec' || !hasDataPermission('manage', task.privileges))
     },
     disableDelete(task) {
       return false
@@ -651,6 +669,7 @@ export default {
   height: 100px;
   overflow-y: auto;
 }
+
 .codemirror ::v-deep .CodeMirror-scroll {
   height: 100px;
   overflow-y: auto;
@@ -698,24 +717,9 @@ export default {
     border-radius: 4px;
   }
 }
+
 .table-container {
   height: calc(100% - 50px);
-
-  .text-btn {
-    font-family: PingFang SC;
-    font-size: 14px;
-    font-weight: 400;
-    line-height: 22px;
-    letter-spacing: 0px;
-    text-align: center;
-    margin-left: 2px;
-    border: none;
-    padding: 2px 4px;
-  }
-
-  .text-btn:hover {
-    background: rgba(51, 112, 255, 0.1);
-  }
 
   .mar6 {
     margin-right: 6px;
@@ -729,112 +733,9 @@ export default {
 .table-container-filter {
   height: calc(100% - 110px);
 }
-.filter-texts {
-  display: flex;
-  align-items: center;
-  margin: 17px 0;
-  font-family: "PingFang SC";
-  font-weight: 400;
-
-  .sum {
-    color: #1f2329;
-  }
-
-  .title {
-    color: #999999;
-    margin-left: 8px;
-  }
-
-  .text {
-    max-width: 280px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    padding: 1px 22px 1px 6px;
-    display: inline-block;
-    align-items: center;
-    color: #0c296e;
-    font-size: 14px;
-    line-height: 22px;
-    background: rgba(51, 112, 255, 0.1);
-    border-radius: 2px;
-    margin: 0;
-    margin-right: 8px;
-    position: relative;
-    i {
-      position: absolute;
-      right: 2px;
-      top: 50%;
-      transform: translateY(-50%);
-      cursor: pointer;
-    }
-  }
-
-  .clear-btn {
-    color: #646a73;
-  }
-
-  .clear-btn:hover {
-    color: #3370ff;
-  }
-
-  .filter-texts-container::-webkit-scrollbar {
-    display: none;
-  }
-
-  .arrow-filter {
-    font-size: 16px;
-    width: 24px;
-    height: 24px;
-    cursor: pointer;
-    color: #646a73;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-  .arrow-filter:hover {
-    background: rgba(31, 35, 41, 0.1);
-    border-radius: 4px;
-  }
-
-  .el-icon-arrow-right.arrow-filter {
-    margin-left: 5px;
-  }
-
-  .el-icon-arrow-left.arrow-filter {
-    margin-right: 5px;
-  }
-  .filter-texts-container {
-    flex: 1;
-    overflow-x: auto;
-    white-space: nowrap;
-    height: 24px;
-  }
-}
-.top-operate {
-  margin-bottom: 16px;
-  .right-user {
-    text-align: right;
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-
-    .de-button {
-      margin-left: 12px;
-    }
-
-    .el-input--medium .el-input__icon {
-      line-height: 32px;
-    }
-  }
-
-  .name-email-search {
-    width: 240px;
-  }
-}
 </style>
 <style lang="scss">
-.list-colums-slect {
+.list-columns-select {
   padding: 8px 11px !important;
   width: 238px;
 
@@ -853,8 +754,10 @@ export default {
     width: 100%;
   }
 }
+
 .de-card-dropdown {
   margin-top: 0 !important;
+
   .popper__arrow {
     display: none !important;
   }

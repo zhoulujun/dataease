@@ -1,13 +1,23 @@
 <template>
-  <de-layout-content :header="$t('log.title')">
+  <de-layout-content
+    class="de-search-table"
+    :header="$t('log.title')"
+  >
     <el-row class="top-operate">
       <el-col :span="12">
-        <deBtn v-permission="['log:export']" secondary @click="exportConfirm">{{
+        <deBtn
+          v-permission="['log:export']"
+          secondary
+          @click="exportConfirm"
+        >{{
           $t("zip.export")
         }}</deBtn>
         &nbsp; &nbsp;
       </el-col>
-      <el-col :span="12" class="right-user">
+      <el-col
+        :span="12"
+        class="right-user"
+      >
         <el-input
           ref="search"
           v-model="nickName"
@@ -31,7 +41,10 @@
         </deBtn>
       </el-col>
     </el-row>
-    <div v-if="filterTexts.length" class="filter-texts">
+    <div
+      v-if="filterTexts.length"
+      class="filter-texts"
+    >
       <span class="sum">{{ paginationConfig.total }}</span>
       <span class="title">{{ $t("user.result_one") }}</span>
       <el-divider direction="vertical" />
@@ -41,8 +54,15 @@
         @click="scrollPre"
       />
       <div class="filter-texts-container">
-        <p v-for="(ele, index) in filterTexts" :key="ele" class="text">
-          {{ ele }} <i class="el-icon-close" @click="clearOneFilter(index)" />
+        <p
+          v-for="(ele, index) in filterTexts"
+          :key="ele"
+          class="text"
+        >
+          {{ ele }} <i
+            class="el-icon-close"
+            @click="clearOneFilter(index)"
+          />
         </p>
       </div>
       <i
@@ -75,9 +95,9 @@
           show-overflow-tooltip
           prop="opType"
           :label="$t('log.optype')"
-          width="140"
+          width="160"
         >
-          <template v-slot:default="{ row }">
+          <template #default="{ row }">
             <span>{{ row.opType + row.sourceType }}</span>
           </template>
         </el-table-column>
@@ -94,19 +114,28 @@
         />
         <el-table-column
           show-overflow-tooltip
+          prop="ip"
+          :label="$t('log.ip')"
+          width="100"
+        />
+        <el-table-column
+          show-overflow-tooltip
           prop="time"
           sortable="custom"
           :label="$t('log.time')"
           width="180"
         >
-          <template v-slot:default="scope">
+          <template #default="scope">
             <span>{{ scope.row.time | timestampFormatDate }}</span>
           </template>
         </el-table-column>
       </grid-table>
     </div>
     <keep-alive>
-      <filterUser ref="filterUser" @search="filterDraw" />
+      <filterUser
+        ref="filterUser"
+        @search="filterDraw"
+      />
     </keep-alive>
   </de-layout-content>
 </template>
@@ -114,7 +143,7 @@
 <script>
 import DeLayoutContent from '@/components/business/DeLayoutContent'
 import GridTable from '@/components/gridTable/index.vue'
-import filterUser from './filterUser'
+import filterUser from './FilterUser'
 import _ from 'lodash'
 import keyEnter from '@/components/msgCfm/keyEnter.js'
 import {
@@ -181,7 +210,7 @@ export default {
         const link = document.createElement('a')
         link.style.display = 'none'
         link.href = URL.createObjectURL(blob)
-        link.download = 'DataEase操作日志.xls' // 下载的文件名
+        link.download = 'DataEase操作日志.xlsx' // 下载的文件名
         document.body.appendChild(link)
         link.click()
         document.body.removeChild(link)
@@ -283,108 +312,5 @@ export default {
 
 .table-container-filter {
   height: calc(100% - 110px);
-}
-.filter-texts {
-  display: flex;
-  align-items: center;
-  margin: 17px 0;
-  font-family: "PingFang SC";
-  font-weight: 400;
-
-  .sum {
-    color: #1f2329;
-  }
-
-  .title {
-    color: #999999;
-    margin-left: 8px;
-  }
-
-  .text {
-    max-width: 280px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    padding: 1px 22px 1px 6px;
-    display: inline-block;
-    align-items: center;
-    color: #0c296e;
-    font-size: 14px;
-    line-height: 22px;
-    background: rgba(51, 112, 255, 0.1);
-    border-radius: 2px;
-    margin: 0;
-    margin-right: 8px;
-    position: relative;
-    i {
-      position: absolute;
-      right: 2px;
-      top: 50%;
-      transform: translateY(-50%);
-      cursor: pointer;
-    }
-  }
-
-  .clear-btn {
-    color: #646a73;
-  }
-
-  .clear-btn:hover {
-    color: #3370ff;
-  }
-
-  .filter-texts-container::-webkit-scrollbar {
-    display: none;
-  }
-
-  .arrow-filter {
-    font-size: 16px;
-    width: 24px;
-    height: 24px;
-    cursor: pointer;
-    color: #646a73;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-  .arrow-filter:hover {
-    background: rgba(31, 35, 41, 0.1);
-    border-radius: 4px;
-  }
-
-  .el-icon-arrow-right.arrow-filter {
-    margin-left: 5px;
-  }
-
-  .el-icon-arrow-left.arrow-filter {
-    margin-right: 5px;
-  }
-  .filter-texts-container {
-    flex: 1;
-    overflow-x: auto;
-    white-space: nowrap;
-    height: 24px;
-  }
-}
-.top-operate {
-  margin-bottom: 16px;
-  .right-user {
-    text-align: right;
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-
-    .de-button {
-      margin-left: 12px;
-    }
-
-    .el-input--medium .el-input__icon {
-      line-height: 32px;
-    }
-  }
-
-  .name-email-search {
-    width: 240px;
-  }
 }
 </style>

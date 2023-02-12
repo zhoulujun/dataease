@@ -1,11 +1,13 @@
 package io.dataease.job.sechedule.strategy.impl;
 
+import cn.hutool.core.io.FileUtil;
 import io.dataease.auth.entity.SysUserEntity;
 import io.dataease.auth.entity.TokenInfo;
 import io.dataease.auth.service.AuthUserService;
 import io.dataease.auth.service.impl.AuthUserServiceImpl;
 import io.dataease.auth.util.JWTUtils;
 import io.dataease.dto.PermissionProxy;
+import io.dataease.dto.chart.ViewOption;
 import io.dataease.ext.ExtTaskMapper;
 import io.dataease.commons.utils.CommonBeanFactory;
 import io.dataease.commons.utils.CronUtils;
@@ -25,8 +27,11 @@ import io.dataease.plugins.xpack.email.dto.response.XpackEmailTemplateDTO;
 import io.dataease.plugins.xpack.email.service.EmailXpackService;
 import io.dataease.plugins.xpack.lark.dto.entity.LarkMsgResult;
 import io.dataease.plugins.xpack.lark.service.LarkXpackService;
+import io.dataease.plugins.xpack.larksuite.dto.response.LarksuiteMsgResult;
+import io.dataease.plugins.xpack.larksuite.service.LarksuiteXpackService;
 import io.dataease.plugins.xpack.wecom.dto.entity.WecomMsgResult;
 import io.dataease.plugins.xpack.wecom.service.WecomXpackService;
+import io.dataease.service.chart.ChartViewService;
 import io.dataease.service.chart.ViewExportExcel;
 import io.dataease.service.sys.SysUserService;
 import io.dataease.service.system.EmailService;
@@ -36,6 +41,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.quartz.*;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.web.util.HtmlUtils;
 
 import javax.annotation.Resource;
 import java.io.File;
@@ -48,7 +54,7 @@ import java.util.stream.Collectors;
 @Service("emailTaskHandler")
 public class EmailTaskHandler extends TaskHandler implements Job {
 
-    private static final Integer RUNING = 0;
+    private static final Integer RUNNING = 0;
     private static final Integer SUCCESS = 1;
     private static final Integer ERROR = -1;
 
@@ -62,9 +68,7 @@ public class EmailTaskHandler extends TaskHandler implements Job {
     protected JobDataMap jobDataMap(GlobalTaskEntity taskEntity) {
         JobDataMap jobDataMap = new JobDataMap();
         jobDataMap.put("taskEntity", taskEntity);
-        EmailXpackService emailXpackService = SpringContextUtil.getBean(EmailXpackService.class);
-        XpackEmailTemplateDTO emailTemplateDTO = emailXpackService.emailTemplate(taskEntity.getTaskId());
-        jobDataMap.put("emailTemplate", emailTemplateDTO);
+
         SysUserEntity creator = authUserServiceImpl.getUserByIdNoCache(taskEntity.getCreator());
         jobDataMap.put("creator", creator);
         return jobDataMap;
@@ -87,13 +91,14 @@ public class EmailTaskHandler extends TaskHandler implements Job {
             return;
 
         JobDataMap jobDataMap = context.getJobDetail().getJobDataMap();
+        Boolean isTempTask = (Boolean) jobDataMap.getOrDefault(IS_TEMP_TASK, false);
         GlobalTaskEntity taskEntity = (GlobalTaskEntity) jobDataMap.get("taskEntity");
         ScheduleManager scheduleManager = SpringContextUtil.getBean(ScheduleManager.class);
-        if (CronUtils.taskExpire(taskEntity.getEndTime())) {
+        if (!isTempTask && CronUtils.taskExpire(taskEntity.getEndTime())) {
             removeTask(scheduleManager, taskEntity);
             return;
         }
-        if (taskIsRunning(taskEntity.getTaskId())) {
+        if (!isTempTask && taskIsRunning(taskEntity.getTaskId())) {
             LogUtil.info("Skip synchronization task: {} ,due to task status is {}",
                     taskEntity.getTaskId(), "running");
             return;
@@ -103,10 +108,12 @@ public class EmailTaskHandler extends TaskHandler implements Job {
         Long instanceId = saveInstance(taskInstance);
         taskInstance.setInstanceId(instanceId);
 
-        XpackEmailTemplateDTO emailTemplate = (XpackEmailTemplateDTO) jobDataMap.get("emailTemplate");
         SysUserEntity creator = (SysUserEntity) jobDataMap.get("creator");
         LogUtil.info("start execute send panel report task...");
-        proxy(taskEntity.getTaskType()).sendReport(taskInstance, emailTemplate, creator);
+        proxy(taskEntity.getTaskType()).sendReport(taskInstance, creator, isTempTask);
+        if (isTempTask) {
+            removeTask(scheduleManager, taskEntity);
+        }
 
     }
 
@@ -124,7 +131,7 @@ public class EmailTaskHandler extends TaskHandler implements Job {
     private GlobalTaskInstance buildInstance(GlobalTaskEntity taskEntity) {
         GlobalTaskInstance taskInstance = new GlobalTaskInstance();
         taskInstance.setTaskId(taskEntity.getTaskId());
-        taskInstance.setStatus(RUNING);
+        taskInstance.setStatus(RUNNING);
         taskInstance.setExecuteTime(System.currentTimeMillis());
         return taskInstance;
     }
@@ -151,14 +158,16 @@ public class EmailTaskHandler extends TaskHandler implements Job {
     }
 
     @Async("priorityExecutor")
-    public void sendReport(GlobalTaskInstance taskInstance, XpackEmailTemplateDTO emailTemplateDTO, SysUserEntity user) {
+    public void sendReport(GlobalTaskInstance taskInstance, SysUserEntity user, Boolean isTempTask) {
 
         EmailXpackService emailXpackService = SpringContextUtil.getBean(EmailXpackService.class);
         AuthUserServiceImpl userService = SpringContextUtil.getBean(AuthUserServiceImpl.class);
         SysUserService sysUserService = SpringContextUtil.getBean(SysUserService.class);
+        List<File> files = null;
         try {
+            XpackEmailTemplateDTO emailTemplateDTO = emailXpackService.emailTemplate(taskInstance.getTaskId());
             XpackEmailTaskRequest taskForm = emailXpackService.taskForm(taskInstance.getTaskId());
-            if (ObjectUtils.isEmpty(taskForm) || CronUtils.taskExpire(taskForm.getEndTime())) {
+            if (ObjectUtils.isEmpty(taskForm) || (!isTempTask && CronUtils.taskExpire(taskForm.getEndTime()))) {
                 removeInstance(taskInstance);
                 return;
             }
@@ -192,16 +201,21 @@ public class EmailTaskHandler extends TaskHandler implements Job {
 
             String contentStr = "";
             if (ObjectUtils.isNotEmpty(content)) {
-                contentStr = new String(content, "UTF-8");
+                contentStr = HtmlUtils.htmlUnescape(new String(content, "UTF-8"));
             }
 
-            List<File> files = null;
+
             String viewIds = emailTemplateDTO.getViewIds();
-            if (StringUtils.isNotBlank(viewIds)) {
-                List<String> viewIdList = Arrays.asList(viewIds.split(",")).stream().filter(StringUtils::isNotBlank).map(s -> (s.trim())).collect(Collectors.toList());
+            ChartViewService chartViewService = SpringContextUtil.getBean(ChartViewService.class);
+            List<ViewOption> viewOptions = chartViewService.viewOptions(panelId);
+            if (StringUtils.isNotBlank(viewIds) && CollectionUtils.isNotEmpty(viewOptions)) {
+                List<String> viewOptionIdList = viewOptions.stream().map(ViewOption::getId).collect(Collectors.toList());
+                String viewDataRange = emailTemplateDTO.getViewDataRange();
+                Boolean justExportView = StringUtils.isBlank(viewDataRange) || StringUtils.equals("view", viewDataRange);
+                List<String> viewIdList = Arrays.asList(viewIds.split(",")).stream().map(s -> s.trim()).filter(viewId -> StringUtils.isNotBlank(viewId) && viewOptionIdList.contains(viewId)).collect(Collectors.toList());
                 PermissionProxy proxy = new PermissionProxy();
                 proxy.setUserId(user.getUserId());
-                files = viewExportExcel.export(panelId, viewIdList, proxy);
+                files = viewExportExcel.export(panelId, viewIdList, proxy, justExportView, taskInstance.getTaskId().toString());
             }
 
             List<String> channels = null;
@@ -297,6 +311,30 @@ public class EmailTaskHandler extends TaskHandler implements Job {
 
                         }
                         break;
+                    case "larksuite":
+                        if (SpringContextUtil.getBean(AuthUserService.class).supportLarksuite()) {
+                            List<String> larksuiteUsers = new ArrayList<>();
+                            for (int j = 0; j < reciLists.size(); j++) {
+                                String reci = reciLists.get(j);
+                                SysUserEntity userBySub = userService.getUserByName(reci);
+                                if (ObjectUtils.isEmpty(userBySub)) continue;
+                                Long userId = userBySub.getUserId();
+                                SysUserAssist sysUserAssist = sysUserService.assistInfo(userId);
+                                if (ObjectUtils.isEmpty(sysUserAssist) || StringUtils.isBlank(sysUserAssist.getLarksuiteId()))
+                                    continue;
+                                larksuiteUsers.add(sysUserAssist.getLarksuiteId());
+                            }
+
+                            if (CollectionUtils.isNotEmpty(larksuiteUsers)) {
+                                LarksuiteXpackService larksuiteXpackService = SpringContextUtil.getBean(LarksuiteXpackService.class);
+                                LarksuiteMsgResult larksuiteMsgResult = larksuiteXpackService.pushOaMsg(larksuiteUsers, emailTemplateDTO.getTitle(), contentStr, bytes, files);
+                                if (larksuiteMsgResult.getCode() != 0) {
+                                    errorMsgs.add("larksuite: " + larksuiteMsgResult.getMsg());
+                                }
+                            }
+
+                        }
+                        break;
                     default:
                         break;
                 }
@@ -310,6 +348,14 @@ public class EmailTaskHandler extends TaskHandler implements Job {
         } catch (Exception e) {
             error(taskInstance, e);
             LogUtil.error(e.getMessage(), e);
+        } finally {
+            if (CollectionUtils.isNotEmpty(files)) {
+                files.forEach(file -> {
+                    if (file.exists()) {
+                        FileUtil.del(file);
+                    }
+                });
+            }
         }
     }
 

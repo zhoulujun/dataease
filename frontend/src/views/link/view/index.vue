@@ -1,21 +1,30 @@
 <template>
-  <div style="width: 100%;height: 100vh;background-color: #f7f8fa">
+  <div
+    v-loading="dataLoading"
+    style="width: 100%;height: 100vh;background-color: #f7f8fa"
+    :element-loading-text="$t('panel.data_loading')"
+    element-loading-spinner="el-icon-loading"
+    element-loading-background="rgba(220,220,220,1)"
+  >
     <Preview
       v-if="show"
-      :component-data="componentData"
+      :component-data="mainCanvasComponentData"
       :canvas-style-data="canvasStyleData"
       :panel-info="panelInfo"
+      :user-id="user"
+      @change-load-status="setLoading"
     />
   </div>
 </template>
 
 <script>
-import { loadResource } from '@/api/link'
+import { loadResource, viewLinkLog } from '@/api/link'
+import { isMobile } from '@/utils/index'
 import { uuid } from 'vue-uuid'
-import Preview from '@/components/canvas/components/Editor/Preview'
+import Preview from '@/components/canvas/components/editor/Preview'
 import { getPanelAllLinkageInfo } from '@/api/panel/linkage'
 import { queryPanelJumpInfo, queryTargetPanelJumpInfo } from '@/api/panel/linkJump'
-import { panelInit } from '@/components/canvas/utils/utils'
+import { getNowCanvasComponentData, panelInit } from '@/components/canvas/utils/utils'
 import { getOuterParamsInfo } from '@/api/panel/outerParams'
 import { mapState } from 'vuex'
 
@@ -34,25 +43,47 @@ export default {
   },
   data() {
     return {
+      canvasId: 'canvas-main',
       show: false,
-      panelInfo: {}
+      panelInfo: {},
+      dataLoading: false
     }
   },
   computed: {
+    mainCanvasComponentData() {
+      return getNowCanvasComponentData(this.canvasId)
+    },
     ...mapState([
-      'canvasStyleData',
-      'componentData'
+      'canvasStyleData'
     ])
   },
   created() {
     this.show = false
     this.setPanelInfo()
+    this.viewLog()
   },
   methods: {
+    setLoading(status) {
+      this.dataLoading = !!status
+    },
+    viewLog() {
+      const param = {
+        panelId: this.resourceId,
+        userId: this.user,
+        mobile: !!isMobile()
+      }
+      viewLinkLog(param).then(res => {
+
+      })
+    },
     setPanelInfo() {
       loadResource(this.resourceId).then(res => {
         this.show = false
         let loadingCount = 0
+        const watermarkInfo = {
+          ...res.data.watermarkInfo,
+          settingContent: JSON.parse(res.data.watermarkInfo.settingContent)
+        }
         this.panelInfo = {
           id: res.data.id,
           name: res.data.name,
@@ -61,7 +92,9 @@ export default {
           createBy: res.data.createBy,
           createTime: res.data.createTime,
           updateBy: res.data.updateBy,
-          updateTime: res.data.updateTime
+          updateTime: res.data.updateTime,
+          watermarkOpen: res.data.watermarkOpen,
+          watermarkInfo: watermarkInfo
         }
         this.$store.dispatch('panel/setPanelInfo', this.panelInfo)
 
@@ -154,8 +187,8 @@ export default {
 </script>
 
 <style scoped>
- *{
-     margin: 0;
-     padding: 0;
- }
+* {
+  margin: 0;
+  padding: 0;
+}
 </style>

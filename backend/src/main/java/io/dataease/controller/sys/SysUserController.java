@@ -4,9 +4,12 @@ import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.github.xiaoymin.knife4j.annotations.ApiSupport;
 import io.dataease.auth.annotation.DeLog;
+import io.dataease.auth.annotation.DePermission;
 import io.dataease.auth.api.dto.CurrentUserDto;
 import io.dataease.auth.entity.AccountLockStatus;
 import io.dataease.auth.service.AuthUserService;
+import io.dataease.commons.constants.DePermissionType;
+import io.dataease.commons.constants.ResourceAuthLevel;
 import io.dataease.commons.constants.SysLogConstants;
 import io.dataease.commons.exception.DEException;
 import io.dataease.commons.utils.BeanUtils;
@@ -56,6 +59,8 @@ public class SysUserController {
     private static final String DINGTALK = "dingtalk";
     private static final String LARK = "lark";
 
+    private static final String LARKSUITE = "larksuite";
+
     @Resource
     private SysUserService sysUserService;
 
@@ -82,6 +87,17 @@ public class SysUserController {
             user.setLocked(accountLockStatus.getLocked());
         });
         return PageUtils.setPageInfo(page, users);
+    }
+
+    @DePermission(type = DePermissionType.DATASET, level = ResourceAuthLevel.DATASET_LEVEL_MANAGE)
+    @PostMapping("/userGrid/{datasetId}")
+    @ApiImplicitParams({
+            @ApiImplicitParam(paramType = "path", name = "goPage", value = "页码", required = true, dataType = "Integer"),
+            @ApiImplicitParam(paramType = "path", name = "pageSize", value = "页容量", required = true, dataType = "Integer"),
+            @ApiImplicitParam(name = "request", value = "查询条件", required = true)
+    })
+    public Pager<List<SysUserGridResponse>> userGrids(@PathVariable String datasetId, @RequestBody KeyGridRequest request) {
+       return userGrid(0, 0, request);
     }
 
     @ApiIgnore
@@ -246,13 +262,16 @@ public class SysUserController {
         AuthBindDTO dto = new AuthBindDTO();
         if (ObjectUtils.isEmpty(sysUserAssist)) return dto;
         if (authUserService.supportWecom() && StringUtils.isNotBlank(sysUserAssist.getWecomId())) {
-            dto.setWecomBinded(true);
+            dto.setWecomBound(true);
         }
         if (authUserService.supportDingtalk() && StringUtils.isNotBlank(sysUserAssist.getDingtalkId())) {
-            dto.setDingtalkBinded(true);
+            dto.setDingtalkBound(true);
         }
         if (authUserService.supportLark() && StringUtils.isNotBlank(sysUserAssist.getLarkId())) {
-            dto.setLarkBinded(true);
+            dto.setLarkBound(true);
+        }
+        if (authUserService.supportLarksuite() && StringUtils.isNotBlank(sysUserAssist.getLarksuiteId())) {
+            dto.setLarksuiteBound(true);
         }
         return dto;
     }
@@ -260,9 +279,9 @@ public class SysUserController {
     @PostMapping("/unbindAssist/{type}")
     public void unbindAssist(@PathVariable("type") String type) {
 
-        Boolean valid = StringUtils.equals(WECOM, type) || StringUtils.equals(DINGTALK, type) || StringUtils.equals(LARK, type);
+        Boolean valid = StringUtils.equals(WECOM, type) || StringUtils.equals(DINGTALK, type) || StringUtils.equals(LARK, type) || StringUtils.equals(LARKSUITE, type);
         if (!valid) {
-            DEException.throwException("only [wecom, dingtalk, lark] is valid");
+            DEException.throwException("only [wecom, dingtalk, lark, larksuite] is valid");
         }
         Long userId = AuthUtils.getUser().getUserId();
         SysUserAssist sysUserAssist = sysUserService.assistInfo(userId);
@@ -275,10 +294,13 @@ public class SysUserController {
         if (StringUtils.equals(LARK, type)) {
             sysUserAssist.setLarkId(null);
         }
-        if (StringUtils.isBlank(sysUserAssist.getWecomId()) && StringUtils.isBlank(sysUserAssist.getDingtalkId()) && StringUtils.isBlank(sysUserAssist.getLarkId())) {
+        if (StringUtils.equals(LARKSUITE, type)) {
+            sysUserAssist.setLarksuiteId(null);
+        }
+        if (StringUtils.isBlank(sysUserAssist.getWecomId()) && StringUtils.isBlank(sysUserAssist.getDingtalkId()) && StringUtils.isBlank(sysUserAssist.getLarkId()) && StringUtils.isBlank(sysUserAssist.getLarksuiteId())) {
             sysUserService.changeUserFrom(userId, 0);
         }
-        sysUserService.saveAssist(userId, sysUserAssist.getWecomId(), sysUserAssist.getDingtalkId(), sysUserAssist.getLarkId());
+        sysUserService.saveAssist(userId, sysUserAssist.getWecomId(), sysUserAssist.getDingtalkId(), sysUserAssist.getLarkId(), sysUserAssist.getLarksuiteId());
 
     }
 

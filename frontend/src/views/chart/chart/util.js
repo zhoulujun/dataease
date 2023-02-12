@@ -1,4 +1,6 @@
 import { DEFAULT_TITLE_STYLE } from '@/views/chart/chart/chart'
+import { equalsAny, includesAny } from '@/utils/StringUtils'
+import _ from 'lodash'
 
 export function hexColorToRGBA(hex, alpha) {
   const rgb = [] // 定义rgb数组
@@ -48,6 +50,7 @@ export const TYPE_CONFIGS = [
         'tableHeaderFontColor',
         'tableFontColor',
         'tableBorderColor',
+        'tableScrollBarColor',
         'alpha'
       ],
       'size-selector-ant-v': [
@@ -57,7 +60,9 @@ export const TYPE_CONFIGS = [
         'tableItemAlign',
         'tableTitleHeight',
         'tableItemHeight',
-        'tableColumnMode'
+        'tableColumnMode',
+        'showIndex',
+        'indexLabel'
       ],
       'title-selector-ant-v': [
         'show',
@@ -92,6 +97,7 @@ export const TYPE_CONFIGS = [
         'tableHeaderFontColor',
         'tableFontColor',
         'tableBorderColor',
+        'tableScrollBarColor',
         'alpha'
       ],
       'size-selector-ant-v': [
@@ -103,7 +109,9 @@ export const TYPE_CONFIGS = [
         'tableItemAlign',
         'tableTitleHeight',
         'tableItemHeight',
-        'tableColumnMode'
+        'tableColumnMode',
+        'showIndex',
+        'indexLabel'
       ],
       'title-selector-ant-v': [
         'show',
@@ -139,6 +147,7 @@ export const TYPE_CONFIGS = [
         'tableHeaderFontColor',
         'tableFontColor',
         'tableBorderColor',
+        'tableScrollBarColor',
         'alpha'
       ],
       'size-selector-ant-v': [
@@ -275,6 +284,7 @@ export const TYPE_CONFIGS = [
       'color-selector': [
         'value',
         'custom',
+        'gradient',
         'alpha'
       ],
       'size-selector-ant-v': [
@@ -349,8 +359,14 @@ export const TYPE_CONFIGS = [
     value: 'richTextView',
     title: 'chart.rich_text_view',
     icon: 'richTextView',
-    properties: [],
-    propertyInner: {}
+    properties: [
+      'title-selector-ant-v'
+    ],
+    propertyInner: {
+      'title-selector-ant-v': [
+        'title'
+      ]
+    }
   },
   {
     render: 'antv',
@@ -453,7 +469,8 @@ export const TYPE_CONFIGS = [
         'value',
         'colorPanel',
         'customColor',
-        'alpha'
+        'alpha',
+        'gradient'
       ],
       'size-selector-ant-v': [
         'lineWidth',
@@ -533,6 +550,7 @@ export const TYPE_CONFIGS = [
         'value',
         'colorPanel',
         'customColor',
+        'gradient',
         'alpha'
       ],
       'size-selector-ant-v': [
@@ -592,7 +610,6 @@ export const TYPE_CONFIGS = [
       ]
     }
   },
-
   {
     render: 'antv',
     category: 'chart.chart_type_compare',
@@ -614,6 +631,7 @@ export const TYPE_CONFIGS = [
         'value',
         'colorPanel',
         'customColor',
+        'gradient',
         'alpha'
       ],
       'size-selector-ant-v': [
@@ -693,6 +711,7 @@ export const TYPE_CONFIGS = [
         'value',
         'colorPanel',
         'customColor',
+        'gradient',
         'alpha'
       ],
       'size-selector-ant-v': [
@@ -772,6 +791,87 @@ export const TYPE_CONFIGS = [
         'value',
         'colorPanel',
         'customColor',
+        'gradient',
+        'alpha'
+      ],
+      'size-selector-ant-v': [
+        'barDefault',
+        'barGap'
+      ],
+      'label-selector-ant-v': [
+        'show',
+        'fontSize',
+        'color',
+        'position-v'
+      ],
+      'tooltip-selector-ant-v': [
+        'show',
+        'textStyle'
+      ],
+      'x-axis-selector-ant-v': [
+        'show',
+        'position',
+        'name',
+        'nameTextStyle',
+        'splitLine',
+        'axisForm',
+        'axisLabel'
+      ],
+      'y-axis-selector-ant-v': [
+        'show',
+        'position',
+        'name',
+        'nameTextStyle',
+        'axisValue',
+        'splitLine',
+        'axisForm',
+        'axisLabel'
+      ],
+      'title-selector-ant-v': [
+        'show',
+        'title',
+        'fontSize',
+        'color',
+        'hPosition',
+        'isItalic',
+        'isBolder',
+        'remarkShow',
+        'fontFamily',
+        'letterSpace',
+        'fontShadow'
+      ],
+      'legend-selector-ant-v': [
+        'show',
+        'icon',
+        'orient',
+        'textStyle',
+        'hPosition',
+        'vPosition'
+      ]
+    }
+  },
+  {
+    render: 'antv',
+    category: 'chart.chart_type_compare',
+    value: 'bar-group-stack',
+    title: 'chart.chart_bar_group_stack',
+    icon: 'bar-group-stack',
+    properties: [
+      'color-selector',
+      'size-selector-ant-v',
+      'label-selector-ant-v',
+      'tooltip-selector-ant-v',
+      'x-axis-selector-ant-v',
+      'y-axis-selector-ant-v',
+      'title-selector-ant-v',
+      'legend-selector-ant-v'
+    ],
+    propertyInner: {
+      'color-selector': [
+        'value',
+        'colorPanel',
+        'customColor',
+        'gradient',
         'alpha'
       ],
       'size-selector-ant-v': [
@@ -848,6 +948,7 @@ export const TYPE_CONFIGS = [
       'color-selector': [
         'value',
         'custom',
+        'gradient',
         'alpha'
       ],
       'label-selector-ant-v': [
@@ -915,6 +1016,7 @@ export const TYPE_CONFIGS = [
         'value',
         'colorPanel',
         'customColor',
+        'gradient',
         'alpha'
       ],
       'size-selector-ant-v': [
@@ -994,6 +1096,7 @@ export const TYPE_CONFIGS = [
         'value',
         'colorPanel',
         'customColor',
+        'gradient',
         'alpha'
       ],
       'size-selector-ant-v': [
@@ -1005,6 +1108,82 @@ export const TYPE_CONFIGS = [
         'fontSize',
         'color',
         'position-h'
+      ],
+      'tooltip-selector-ant-v': [
+        'show',
+        'textStyle'
+      ],
+      'x-axis-selector-ant-v': [
+        'show',
+        'position',
+        'name',
+        'nameTextStyle',
+        'axisValue',
+        'splitLine',
+        'axisForm',
+        'axisLabel'
+      ],
+      'y-axis-selector-ant-v': [
+        'show',
+        'position',
+        'name',
+        'nameTextStyle',
+        'splitLine',
+        'axisForm',
+        'axisLabel'
+      ],
+      'title-selector-ant-v': [
+        'show',
+        'title',
+        'fontSize',
+        'color',
+        'hPosition',
+        'isItalic',
+        'isBolder',
+        'remarkShow',
+        'fontFamily',
+        'letterSpace',
+        'fontShadow'
+      ],
+      'legend-selector-ant-v': [
+        'show',
+        'icon',
+        'orient',
+        'textStyle',
+        'hPosition',
+        'vPosition'
+      ]
+    }
+  },
+  {
+    render: 'antv',
+    category: 'chart.chart_type_compare',
+    value: 'percentage-bar-stack-horizontal',
+    title: 'chart.chart_percentage_bar_stack_horizontal',
+    icon: 'percentage-bar-stack-horizontal',
+    properties: [
+      'color-selector',
+      'label-selector-ant-v',
+      'tooltip-selector-ant-v',
+      'x-axis-selector-ant-v',
+      'y-axis-selector-ant-v',
+      'title-selector-ant-v',
+      'legend-selector-ant-v'
+    ],
+    propertyInner: {
+      'color-selector': [
+        'value',
+        'colorPanel',
+        'customColor',
+        'gradient',
+        'alpha'
+      ],
+      'label-selector-ant-v': [
+        'show',
+        'fontSize',
+        'color',
+        'position-h',
+        'reserveDecimalCount'
       ],
       'tooltip-selector-ant-v': [
         'show',
@@ -1074,7 +1253,125 @@ export const TYPE_CONFIGS = [
         'alpha'
       ],
       'size-selector-ant-v': [
+        'pieOuterRadius'
+      ],
+      'label-selector-ant-v': [
+        'show',
+        'fontSize',
+        'color',
+        'position-pie',
+        'labelContent',
+        'reserveDecimalCount'
+      ],
+      'tooltip-selector-ant-v': [
+        'show',
+        'textStyle'
+      ],
+      'title-selector-ant-v': [
+        'show',
+        'title',
+        'fontSize',
+        'color',
+        'hPosition',
+        'isItalic',
+        'isBolder',
+        'remarkShow',
+        'fontFamily',
+        'letterSpace',
+        'fontShadow'
+      ],
+      'legend-selector-ant-v': [
+        'show',
+        'icon',
+        'orient',
+        'textStyle',
+        'hPosition',
+        'vPosition'
+      ]
+    }
+  },
+  {
+    render: 'antv',
+    category: 'chart.chart_type_distribute',
+    value: 'pie-donut',
+    title: 'chart.chart_pie_donut',
+    icon: 'pie-donut',
+    properties: [
+      'color-selector',
+      'size-selector-ant-v',
+      'label-selector-ant-v',
+      'tooltip-selector-ant-v',
+      'title-selector-ant-v',
+      'legend-selector-ant-v'
+    ],
+    propertyInner: {
+      'color-selector': [
+        'value',
+        'colorPanel',
+        'customColor',
+        'alpha'
+      ],
+      'size-selector-ant-v': [
         'pieInnerRadius',
+        'pieOuterRadius'
+      ],
+      'label-selector-ant-v': [
+        'show',
+        'fontSize',
+        'color',
+        'position-pie',
+        'labelContent',
+        'reserveDecimalCount'
+      ],
+      'tooltip-selector-ant-v': [
+        'show',
+        'textStyle'
+      ],
+      'title-selector-ant-v': [
+        'show',
+        'title',
+        'fontSize',
+        'color',
+        'hPosition',
+        'isItalic',
+        'isBolder',
+        'remarkShow',
+        'fontFamily',
+        'letterSpace',
+        'fontShadow'
+      ],
+      'legend-selector-ant-v': [
+        'show',
+        'icon',
+        'orient',
+        'textStyle',
+        'hPosition',
+        'vPosition'
+      ]
+    }
+  },
+  {
+    render: 'antv',
+    category: 'chart.chart_type_distribute',
+    value: 'pie-rose',
+    title: 'chart.chart_pie_rose',
+    icon: 'pie-rose',
+    properties: [
+      'color-selector',
+      'size-selector-ant-v',
+      'label-selector-ant-v',
+      'tooltip-selector-ant-v',
+      'title-selector-ant-v',
+      'legend-selector-ant-v'
+    ],
+    propertyInner: {
+      'color-selector': [
+        'value',
+        'colorPanel',
+        'customColor',
+        'alpha'
+      ],
+      'size-selector-ant-v': [
         'pieOuterRadius'
       ],
       'label-selector-ant-v': [
@@ -1113,9 +1410,9 @@ export const TYPE_CONFIGS = [
   {
     render: 'antv',
     category: 'chart.chart_type_distribute',
-    value: 'pie-rose',
-    title: 'chart.chart_pie_rose',
-    icon: 'pie-rose',
+    value: 'pie-donut-rose',
+    title: 'chart.chart_pie_donut_rose',
+    icon: 'pie-donut-rose',
     properties: [
       'color-selector',
       'size-selector-ant-v',
@@ -1176,7 +1473,6 @@ export const TYPE_CONFIGS = [
     icon: 'percentage-bar-stack',
     properties: [
       'color-selector',
-      'size-selector-ant-v',
       'label-selector-ant-v',
       'tooltip-selector-ant-v',
       'x-axis-selector-ant-v',
@@ -1189,18 +1485,15 @@ export const TYPE_CONFIGS = [
         'value',
         'colorPanel',
         'customColor',
+        'gradient',
         'alpha'
-      ],
-      'size-selector-ant-v': [
-        'barDefault',
-        'barGap'
       ],
       'label-selector-ant-v': [
         'show',
         'fontSize',
         'color',
         'position-v',
-        'reserve-decimal-count'
+        'reserveDecimalCount'
       ],
       'tooltip-selector-ant-v': [
         'show',
@@ -1378,6 +1671,7 @@ export const TYPE_CONFIGS = [
     propertyInner: {
       'color-selector': [
         'value',
+        'custom',
         'alpha'
       ],
       'tooltip-selector-ant-v': [
@@ -1549,6 +1843,7 @@ export const TYPE_CONFIGS = [
         'tableItemBgColor',
         'tableHeaderFontColor',
         'tableFontColor',
+        'tableScrollBarColor',
         'alpha'
       ],
       'size-selector': [
@@ -1556,7 +1851,9 @@ export const TYPE_CONFIGS = [
         'tableItemFontSize',
         'tableTitleHeight',
         'tableItemHeight',
-        'tableColumnWidth'
+        'tableColumnWidth',
+        'showIndex',
+        'indexLabel'
       ],
       'title-selector': [
         'show',
@@ -1586,6 +1883,7 @@ export const TYPE_CONFIGS = [
         'tableItemBgColor',
         'tableHeaderFontColor',
         'tableFontColor',
+        'tableScrollBarColor',
         'alpha'
       ],
       'size-selector': [
@@ -1595,7 +1893,9 @@ export const TYPE_CONFIGS = [
         'tableItemFontSize',
         'tableTitleHeight',
         'tableItemHeight',
-        'tableColumnWidth'
+        'tableColumnWidth',
+        'showIndex',
+        'indexLabel'
       ],
       'title-selector': [
         'show',
@@ -2386,6 +2686,64 @@ export const TYPE_CONFIGS = [
         'alpha'
       ],
       'size-selector': [
+        'pieOuterRadius'
+      ],
+      'label-selector': [
+        'show',
+        'labelLine',
+        'fontSize',
+        'color',
+        'position-pie',
+        'formatter'
+      ],
+      'tooltip-selector': [
+        'show',
+        'trigger',
+        'textStyle',
+        'formatter'
+      ],
+      'title-selector': [
+        'show',
+        'title',
+        'fontSize',
+        'color',
+        'hPosition',
+        'vPosition',
+        'isItalic',
+        'isBolder'
+      ],
+      'legend-selector': [
+        'show',
+        'icon',
+        'orient',
+        'textStyle',
+        'hPosition',
+        'vPosition'
+      ]
+    }
+  },
+  {
+    render: 'echarts',
+    category: 'chart.chart_type_distribute',
+    value: 'pie-donut',
+    title: 'chart.chart_pie_donut',
+    icon: 'pie-donut',
+    properties: [
+      'color-selector',
+      'size-selector',
+      'label-selector',
+      'tooltip-selector',
+      'title-selector',
+      'legend-selector'
+    ],
+    propertyInner: {
+
+      'color-selector': [
+        'value',
+        'custom',
+        'alpha'
+      ],
+      'size-selector': [
         'pieInnerRadius',
         'pieOuterRadius'
       ],
@@ -2429,6 +2787,65 @@ export const TYPE_CONFIGS = [
     value: 'pie-rose',
     title: 'chart.chart_pie_rose',
     icon: 'pie-rose',
+    properties: [
+      'color-selector',
+      'size-selector',
+      'label-selector',
+      'tooltip-selector',
+      'title-selector',
+      'legend-selector'
+    ],
+    propertyInner: {
+
+      'color-selector': [
+        'value',
+        'custom',
+        'alpha'
+      ],
+      'size-selector': [
+        'pieOuterRadius',
+        'pieRoseType',
+        'pieRoseRadius'
+      ],
+      'label-selector': [
+        'show',
+        'fontSize',
+        'color',
+        'position-pie',
+        'formatter'
+      ],
+      'tooltip-selector': [
+        'show',
+        'trigger',
+        'textStyle',
+        'formatter'
+      ],
+      'title-selector': [
+        'show',
+        'title',
+        'fontSize',
+        'color',
+        'hPosition',
+        'vPosition',
+        'isItalic',
+        'isBolder'
+      ],
+      'legend-selector': [
+        'show',
+        'icon',
+        'orient',
+        'textStyle',
+        'hPosition',
+        'vPosition'
+      ]
+    }
+  },
+  {
+    render: 'echarts',
+    category: 'chart.chart_type_distribute',
+    value: 'pie-donut-rose',
+    title: 'chart.chart_pie_donut_rose',
+    icon: 'pie-donut-rose',
     properties: [
       'color-selector',
       'size-selector',
@@ -2752,7 +3169,8 @@ export const TYPE_CONFIGS = [
       'color-selector',
       'label-selector',
       'tooltip-selector',
-      'title-selector'
+      'title-selector',
+      'suspension-selector'
     ],
     propertyInner: {
 
@@ -2760,7 +3178,8 @@ export const TYPE_CONFIGS = [
         'value',
         'custom',
         'alpha',
-        'area-border-color'
+        'area-border-color',
+        'gradient-color'
       ],
       'label-selector': [
         'show',
@@ -2785,6 +3204,9 @@ export const TYPE_CONFIGS = [
         'vPosition',
         'isItalic',
         'isBolder'
+      ],
+      'suspension-selector': [
+        'show'
       ]
     }
   }
@@ -2848,7 +3270,7 @@ export function getColors(chart, colors, reset) {
   let series
   if (chart.type.includes('stack')) {
     if (chart.data) {
-      const data = chart.data.datas
+      const data = chart.data.data
       const stackData = []
       for (let i = 0; i < data.length; i++) {
         const s = data[i]
@@ -2867,7 +3289,7 @@ export function getColors(chart, colors, reset) {
         })
       }
     }
-  } else if ((chart.type.includes('bar') || chart.type.includes('line') || chart.type.includes('scatter') || chart.type.includes('radar') || chart.type.includes('area')) && !chart.type.includes('group')) {
+  } else if (includesAny(chart.type, 'bar', 'scatter', 'radar', 'area') && !chart.type.includes('group')) {
     if (Object.prototype.toString.call(chart.yaxis) === '[object Array]') {
       series = JSON.parse(JSON.stringify(chart.yaxis))
     } else {
@@ -2883,9 +3305,9 @@ export function getColors(chart, colors, reset) {
         })
       }
     }
-  } else if (chart.type === 'bar-group') {
+  } else if (equalsAny(chart.type, 'bar-group', 'line')) {
     // 拿到data中的category，并去重，然后构建seriesColor
-    const data = chart.data.datas
+    const data = chart.data.data
     const s = []
     data.forEach((cur) => {
       if (s.indexOf(cur.category) < 0) {
@@ -2901,7 +3323,7 @@ export function getColors(chart, colors, reset) {
     }
   } else {
     if (chart.data) {
-      const data = chart.data.datas
+      const data = chart.data.data
       // data 的维度值，需要根据自定义顺序排序
       // let customSortData
       // if (Object.prototype.toString.call(chart.customSort) === '[object Array]') {
@@ -2974,4 +3396,144 @@ export function getRemark(chart) {
     }
   }
   return remark
+}
+
+export const quotaViews = ['label', 'richTextView', 'text', 'gauge', 'liquid']
+
+export function handleEmptyDataStrategy(strategy, chart, data, options) {
+  if (!data?.length) {
+    return
+  }
+  if (strategy === 'ignoreData') {
+    handleIgnoreData(chart, data)
+    return
+  }
+  const yaxis = JSON.parse(chart.yaxis)
+  const extAxis = JSON.parse(chart.xaxisExt)
+  const multiDimension = yaxis?.length >= 2 || extAxis?.length > 0
+  switch (strategy) {
+    case 'breakLine': {
+      options.connectNulls = false
+      if (multiDimension) {
+        // 多维度线条断开
+        handleBreakLineMultiDimension(chart, data)
+      }
+      break
+    }
+    case 'setZero': {
+      if (multiDimension > 0) {
+        // 多维度置0
+        handleSetZeroMultiDimension(chart, data, options)
+      } else {
+        // 单维度置0
+        handleSetZeroSingleDimension(chart, data, options)
+      }
+      break
+    }
+    default:
+      break
+  }
+}
+
+function handleBreakLineMultiDimension(chart, data) {
+  const dimensionInfoMap = new Map()
+  const subDimensionSet = new Set()
+  for (let i = 0; i < data.length; i++) {
+    const item = data[i]
+    const dimensionInfo = dimensionInfoMap.get(item.field)
+    if (dimensionInfo) {
+      dimensionInfo.set.add(item.category)
+    } else {
+      dimensionInfoMap.set(item.field, { set: new Set([item.category]), index: i })
+    }
+    subDimensionSet.add(item.category)
+  }
+  // Map 是按照插入顺序排序的，所以插入索引往后推
+  let insertCount = 0
+  dimensionInfoMap.forEach((dimensionInfo, field) => {
+    if (dimensionInfo.set.size < subDimensionSet.size) {
+      let subInsertIndex = 0
+      subDimensionSet.forEach(dimension => {
+        if (!dimensionInfo.set.has(dimension)) {
+          data.splice(dimensionInfo.index + insertCount + subInsertIndex, 0, {
+            field,
+            value: null,
+            category: dimension
+          })
+        }
+        subInsertIndex++
+      })
+      insertCount += subDimensionSet.size - dimensionInfo.set.size
+    }
+  })
+}
+
+function handleSetZeroMultiDimension(chart, data) {
+  const dimensionInfoMap = new Map()
+  const subDimensionSet = new Set()
+  for (let i = 0; i < data.length; i++) {
+    const item = data[i]
+    if (item.value === null) {
+      item.value = 0
+    }
+    const dimensionInfo = dimensionInfoMap.get(item.field)
+    if (dimensionInfo) {
+      dimensionInfo.set.add(item.category)
+    } else {
+      dimensionInfoMap.set(item.field, { set: new Set([item.category]), index: i })
+    }
+    subDimensionSet.add(item.category)
+  }
+  let insertCount = 0
+  dimensionInfoMap.forEach((dimensionInfo, field) => {
+    if (dimensionInfo.set.size < subDimensionSet.size) {
+      let subInsertIndex = 0
+      subDimensionSet.forEach(dimension => {
+        if (!dimensionInfo.set.has(dimension)) {
+          data.splice(dimensionInfo.index + insertCount + subInsertIndex, 0, {
+            field,
+            value: 0,
+            category: dimension
+          })
+        }
+        subInsertIndex++
+      })
+      insertCount += subDimensionSet.size - dimensionInfo.set.size
+    }
+  })
+}
+
+function handleSetZeroSingleDimension(chart, data) {
+  data.forEach(item => {
+    if (item.value === null) {
+      item.value = 0
+    }
+  })
+}
+
+function handleIgnoreData(chart, data) {
+  for (let i = data.length - 1; i >= 0; i--) {
+    const item = data[i]
+    if (item.value === null) {
+      data.splice(i, 1)
+    }
+  }
+}
+
+export function resetRgbOpacity(sourceColor, times) {
+  if (sourceColor?.startsWith('rgb')) {
+    const numbers = sourceColor.match(/(\d(\.\d+)?)+/g)
+    if (numbers?.length === 4) {
+      const opacity = parseFloat(numbers[3])
+      if (_.isNumber(opacity)) {
+        let resultOpacity = (opacity * times).toFixed(2)
+        if (resultOpacity > 1) {
+          resultOpacity = 1
+        }
+        const colorArr = numbers.slice(0, 3).concat(resultOpacity)
+        return `rgba(${colorArr.join(',')})`
+      }
+    }
+  }
+  return sourceColor
 }

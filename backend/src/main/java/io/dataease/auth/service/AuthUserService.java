@@ -20,8 +20,12 @@ public interface AuthUserService {
     SysUserEntity getUserBySub(String sub, Integer from);
 
     SysUserEntity getUserByWecomId(String weComId);
+
     SysUserEntity getUserByDingtalkId(String dingtalkId);
+
     SysUserEntity getUserByLarkId(String larkId);
+
+    SysUserEntity getUserByLarksuiteId(String larksuiteId);
 
     List<String> roles(Long userId);
 
@@ -43,19 +47,23 @@ public interface AuthUserService {
 
     Boolean supportLark();
 
+    Boolean supportLarksuite();
+
     Boolean supportLoginLimit();
 
     Boolean pluginLoaded();
 
     void checkAdmin(String uname, String pwd);
 
-    void recordLoginFail(String username, Integer logintype);
+    AccountLockStatus recordLoginFail(String username, Integer logintype);
 
     void unlockAccount(String username, Integer logintype);
 
     AccountLockStatus lockStatus(String username, Integer logintype);
 
     void clearAllLock();
+
+    Boolean checkScanCreateLimit();
 
 
 }

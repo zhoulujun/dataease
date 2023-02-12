@@ -35,7 +35,7 @@ public class ChartViewFieldController {
     @Resource
     private DataSetTableService dataSetTableService;
 
-    @DePermission(type = DePermissionType.PANEL, level = ResourceAuthLevel.PANNEL_LEVEL_MANAGE)
+    @DePermission(type = DePermissionType.PANEL, level = ResourceAuthLevel.PANEL_LEVEL_MANAGE)
     @ApiOperation("保存")
     @PostMapping("/save/{panelId}")
     public ChartViewField save(@PathVariable String panelId, @RequestBody ChartViewField chartViewField) {
@@ -46,28 +46,28 @@ public class ChartViewFieldController {
             BeanUtils.copyProperties(datasetTable, dataSetTableRequest);
             DatasetTableField datasetTableField = new DatasetTableField();
             BeanUtils.copyProperties(chartViewField, datasetTableField);
-            dataSetTableService.getPreviewData(dataSetTableRequest, 1, 1, Collections.singletonList(datasetTableField));
+            dataSetTableService.getPreviewData(dataSetTableRequest, 1, 1, Collections.singletonList(datasetTableField), null);
         } catch (Exception e) {
             DEException.throwException(Translator.get("i18n_calc_field_error"));
         }
         return chartViewFieldService.save(chartViewField);
     }
 
-    @DePermission(type = DePermissionType.PANEL, level = ResourceAuthLevel.PANNEL_LEVEL_MANAGE, paramIndex = 1)
+    @DePermission(type = DePermissionType.PANEL, level = ResourceAuthLevel.PANEL_LEVEL_MANAGE, paramIndex = 1)
     @ApiOperation("删除")
     @PostMapping("/delete/{id}/{panelId}")
     public void delete(@PathVariable String id, @PathVariable String panelId) {
         chartViewFieldService.delete(id);
     }
 
-    @DePermission(type = DePermissionType.PANEL, level = ResourceAuthLevel.PANNEL_LEVEL_MANAGE, paramIndex = 1)
+    @DePermission(type = DePermissionType.PANEL, level = ResourceAuthLevel.PANEL_LEVEL_MANAGE, paramIndex = 1)
     @ApiOperation("删除视图的字段")
     @PostMapping("/deleteByChartId/{chartId}/{panelId}")
     public void deleteByChartId(@PathVariable String chartId, @PathVariable String panelId) {
         chartViewFieldService.deleteByChartId(chartId);
     }
 
-    @DePermission(type = DePermissionType.PANEL, level = ResourceAuthLevel.PANNEL_LEVEL_VIEW, paramIndex = 1)
+    @DePermission(type = DePermissionType.PANEL, level = ResourceAuthLevel.PANEL_LEVEL_VIEW, paramIndex = 1)
     @ApiOperation("分组查询表下属字段")
     @PostMapping("listByDQ/{chartId}/{panelId}")
     public ChartViewField4Type listByDQ(@PathVariable String chartId, @PathVariable String panelId) {

@@ -1,12 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <parent>
         <artifactId>dataease-server</artifactId>
         <groupId>io.dataease</groupId>
-        <version>1.15.0</version>
+        <version>1.17.0</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
@@ -14,7 +12,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <shiro.version>1.7.1</shiro.version>
+        <shiro.version>1.9.1</shiro.version>
         <java.version>1.8</java.version>
         <graalvm.version>20.1.0</graalvm.version>
         <jwt.version>3.12.1</jwt.version>
@@ -120,7 +118,7 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-text</artifactId>
-            <version>1.8</version>
+            <version>[1.10.0,)</version>
         </dependency>
         <dependency>
             <groupId>commons-codec</groupId>
@@ -205,7 +203,7 @@
         <dependency>
             <groupId>io.dataease</groupId>
             <artifactId>dataease-plugin-interface</artifactId>
-            <version>1.15.0</version>
+            <version>1.17.0</version>
             <exclusions>
                 <exclusion>
                     <artifactId>guava</artifactId>
@@ -216,12 +214,12 @@
         <dependency>
             <groupId>io.dataease</groupId>
             <artifactId>dataease-plugin-view</artifactId>
-            <version>1.15.0</version>
+            <version>1.17.0</version>
         </dependency>
         <dependency>
             <groupId>io.dataease</groupId>
             <artifactId>dataease-plugin-datasource</artifactId>
-            <version>1.15.0</version>
+            <version>1.17.0</version>
         </dependency>
         <!-- kettle及数据源依赖 -->
         <dependency>
@@ -380,7 +378,7 @@
                 <configuration>
                     <encoding>UTF-8</encoding>
                     <nonFilteredFileExtensions>
-                        <nonFilteredFileExtension>xls</nonFilteredFileExtension>
+                        <nonFilteredFileExtension>xlsx</nonFilteredFileExtension>
                     </nonFilteredFileExtensions>
                 </configuration>
             </plugin>
@@ -504,8 +502,7 @@
                                                 <exclude name="*.html"/>
                                             </fileset>
                                         </copy>
-                                        <copy file="../mobile/dist/index.html"
-                                              tofile="src/main/resources/templates/app.html"/>
+                                        <copy file="../mobile/dist/index.html" tofile="src/main/resources/templates/app.html"/>
                                     </target>
                                 </configuration>
                                 <goals>

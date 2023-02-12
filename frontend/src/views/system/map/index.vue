@@ -1,6 +1,9 @@
 <template>
   <layout-content v-loading="$store.getters.loadingMap[$store.getters.currentPath]">
-    <div id="maptest" style="width: 100%;height:100%;" />
+    <div
+      id="maptest"
+      style="width: 100%;height:100%;"
+    />
   </layout-content>
 </template>
 
@@ -15,9 +18,6 @@ export default {
       defaultPcode: '100000',
       mapurl: '/api/map/resourceFull/'
     }
-  },
-  created() {
-
   },
   mounted() {
     const chartDom = document.getElementById('maptest')
@@ -48,12 +48,12 @@ export default {
           ]
         })
         this.queryAreaCodes(pcode).then(res => {
-          const areaEntitys = res.data
+          const areaEntities = res.data
 
           this.myChart.on('click', param => {
             const name = param.name
-            for (let index = 0; index < areaEntitys.length; index++) {
-              const element = areaEntitys[index]
+            for (let index = 0; index < areaEntities.length; index++) {
+              const element = areaEntities[index]
               if (element.name === name) {
                 this.initMap(element.code)
               }

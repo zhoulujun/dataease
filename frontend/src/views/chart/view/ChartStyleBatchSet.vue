@@ -1,7 +1,10 @@
 <template>
   <div class="batch-opt-main">
     <el-row style="height: 40px">
-      <span class="title-text view-title-name" style="line-height: 40px;">{{ $t('panel.batch_opt') }}</span>
+      <span
+        class="title-text view-title-name"
+        style="line-height: 40px;"
+      >{{ $t('panel.batch_opt') }}</span>
     </el-row>
     <chart-style
       v-if="mixProperties&&batchOptChartInfo"
@@ -23,6 +26,8 @@
       @onChangeSplitForm="onChangeSplitForm"
       @onTextChange="onTextChange"
       @onLegendChange="onLegendChange"
+      @onMarginChange="onMarginChange"
+      @onSuspensionChange="onSuspensionChange"
     />
     <el-row v-else>
       <div class="view-selected-message-class">
@@ -95,6 +100,12 @@ export default {
     },
     onLegendChange(val) {
       this.batchOptChange('customStyle', 'legend', val)
+    },
+    onMarginChange(val) {
+      this.batchOptChange('customStyle', 'margin', val)
+    },
+    onSuspensionChange(val) {
+      this.batchOptChange('customAttr', 'suspension', val)
     },
     batchOptChange(custom, property, value) {
       this.$store.commit('setChangeProperties', {

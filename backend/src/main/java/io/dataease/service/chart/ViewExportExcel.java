@@ -1,5 +1,6 @@
 package io.dataease.service.chart;
 
+import com.google.gson.internal.LinkedTreeMap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -23,10 +24,7 @@ import io.dataease.service.panel.PanelGroupService;
 
 import java.io.File;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import com.google.gson.reflect.TypeToken;
@@ -35,49 +33,54 @@ import com.google.gson.reflect.TypeToken;
 public class ViewExportExcel {
 
     private final static Gson gson = new Gson();
-    private Type tokenType = new TypeToken<List<Map<String, Object>>>() {
+    private final Type tokenType = new TypeToken<List<Map<String, Object>>>() {
     }.getType();
 
-    private Type fieldTokenType = new TypeToken<List<ChartViewFieldDTO>>() {
+    private final Type fieldTokenType = new TypeToken<List<ChartViewFieldDTO>>() {
     }.getType();
 
     @DePermissionProxy(paramIndex = 2)
-    public List<File> export(String panelId, List<String> viewIds, PermissionProxy proxy) throws Exception {
+    public List<File> export(String panelId, List<String> viewIds, PermissionProxy proxy, Boolean justView, String taskId) throws Exception {
         if (CollectionUtils.isEmpty(viewIds)) {
             return null;
         }
         PanelGroupService panelGroupService = SpringContextUtil.getBean(PanelGroupService.class);
 
         PanelGroupDTO panelDto = panelGroupService.findOne(panelId);
-        String componentsJson = panelDto.getPanelData();
-        List<Map<String, Object>> components = gson.fromJson(componentsJson, tokenType);
-        ChartExtRequest chartExtRequest = buildViewRequest(FilterBuildTemplate.componentsFilter(components, "custom", null, null));
+
+        Map<String, ChartExtRequest> stringChartExtRequestMap = buildViewRequest(panelDto, justView);
         List<File> results = new ArrayList<>();
-        List<ExcelSheetModel> sheets = viewIds.stream().map(viewId -> viewFiles(viewId, chartExtRequest)).collect(Collectors.toList());
-        File excelFile = ExcelUtils.exportExcel(sheets, panelDto.getName());
+        List<ExcelSheetModel> sheets = viewIds.stream().map(viewId -> viewFiles(viewId, stringChartExtRequestMap.get(viewId))).collect(Collectors.toList());
+        File excelFile = ExcelUtils.exportExcel(sheets, panelDto.getName(), panelDto.getId() + "_" + taskId);
         results.add(excelFile);
         return results;
     }
 
 
+    private Map<String, ChartExtRequest> buildViewRequest(PanelGroupDTO panelDto, Boolean justView) {
+        String componentsJson = panelDto.getPanelData();
+        List<Map<String, Object>> components = gson.fromJson(componentsJson, tokenType);
+        String panelStyle = panelDto.getPanelStyle();
+        Map map = gson.fromJson(panelStyle, Map.class);
+        Map panelMap = (LinkedTreeMap) map.get("panel");
+        double resultCount = Double.parseDouble(panelMap.get("resultCount").toString());
+        String resultMode = null;
+        if (ObjectUtils.isNotEmpty(panelMap.get("resultMode"))) {
+            resultMode = panelMap.get("resultMode").toString();
+        }
 
-    private ChartExtRequest buildViewRequest(List<Map<String, Object>> filters) {
-        ChartExtRequest chartExtRequest = new ChartExtRequest();
-        filters = Optional.ofNullable(filters).orElse(new ArrayList<>());
-
-        List<ChartExtFilterRequest> panelFilters = filters.stream().map(item -> {
-            ChartExtFilterRequest curentFilter = new ChartExtFilterRequest();
-            return curentFilter;
-        }).collect(Collectors.toList());
-
-        chartExtRequest.setQueryFrom("panel");
-        chartExtRequest.setFilter(panelFilters);
-        return chartExtRequest;
-    }
-
-    private List<ChartExtFilterRequest> initFilters(List<Map<String, Object>> components) {
-
-        return null;
+        Map<String, ChartExtRequest> result = new HashMap<>();
+        Map<String, List<ChartExtFilterRequest>> panelFilters = justView ? FilterBuildTemplate.buildFilters(components) : FilterBuildTemplate.buildEmpty(components);
+        for (Map.Entry<String, List<ChartExtFilterRequest>> entry : panelFilters.entrySet()) {
+            List<ChartExtFilterRequest> chartExtFilterRequests = entry.getValue();
+            ChartExtRequest chartExtRequest = new ChartExtRequest();
+            chartExtRequest.setQueryFrom("panel");
+            chartExtRequest.setFilter(chartExtFilterRequests);
+            chartExtRequest.setResultCount((int) resultCount);
+            chartExtRequest.setResultMode(resultMode);
+            result.put(entry.getKey(), chartExtRequest);
+        }
+        return result;
     }
 
     private ExcelSheetModel viewFiles(String viewId, ChartExtRequest request) {
@@ -114,7 +117,7 @@ public class ViewExportExcel {
             return filterInvalidDecimal(val.toString());
         }).collect(Collectors.toList())).collect(Collectors.toList());
         result.setHeads(heads);
-        result.setDatas(details);
+        result.setData(details);
 
         result.setSheetName(title);
         return result;

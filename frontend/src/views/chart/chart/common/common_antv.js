@@ -1,5 +1,7 @@
 import { hexColorToRGBA } from '@/views/chart/chart/util'
 import { formatterItem, valueFormatter } from '@/views/chart/chart/formatter'
+import { DEFAULT_XAXIS_STYLE, DEFAULT_YAXIS_EXT_STYLE, DEFAULT_YAXIS_STYLE } from '@/views/chart/chart/chart'
+import { equalsAny, includesAny } from '@/utils/StringUtils'
 
 export function getPadding(chart) {
   if (chart.drill) {
@@ -119,15 +121,25 @@ export function getLabel(chart) {
     if (customAttr.label) {
       const l = JSON.parse(JSON.stringify(customAttr.label))
       if (l.show) {
-        if (chart.type === 'pie') {
+        if (equalsAny(chart.type, 'pie', 'pie-donut')) {
           label = {
             type: l.position,
             autoRotate: false
+          }
+          if (l.position === 'outer') {
+            label.type = 'spider'
           }
         } else if (chart.type.includes('line') || chart.type.includes('area')) {
           label = {
             position: l.position,
             offsetY: -8
+          }
+        } else if (equalsAny(chart.type, 'pie-rose', 'pie-donut-rose')) {
+          label = {
+            autoRotate: true
+          }
+          if (l.position === 'inner') {
+            label.offset = -10
           }
         } else {
           label = {
@@ -154,11 +166,8 @@ export function getLabel(chart) {
               extStack = JSON.parse(JSON.stringify(chart.extStack))
             }
 
-            if (chart.type === 'bar-stack' ||
-              chart.type === 'line-stack' ||
-              chart.type === 'bar-stack-horizontal' ||
-              chart.type === 'percentage-bar-stack'
-            ) {
+            if (equalsAny(chart.type, 'bar-stack', 'line-stack',
+              'bar-stack-horizontal', 'percentage-bar-stack', 'percentage-bar-stack-horizontal')) {
               let f
               if (extStack && extStack.length > 0) {
                 f = yAxis[0]
@@ -177,13 +186,16 @@ export function getLabel(chart) {
                 f.formatterCfg = formatterItem
               }
               // 百分比堆叠柱状图保留小数处理
-              if (chart.type === 'percentage-bar-stack') {
+              if (chart.type.includes('percentage')) {
+                if (!param.value) {
+                  return
+                }
                 f.formatterCfg.type = 'percent'
                 f.formatterCfg.decimalCount = l.reserveDecimalCount
                 f.formatterCfg.thousandSeparator = false
               }
               res = valueFormatter(param.value, f.formatterCfg)
-            } else if (chart.type === 'bar-group') {
+            } else if (equalsAny(chart.type, 'bar-group', 'bar-group-stack')) {
               const f = yAxis[0]
               if (f.formatterCfg) {
                 res = valueFormatter(param.value, f.formatterCfg)
@@ -194,10 +206,35 @@ export function getLabel(chart) {
               for (let i = 0; i < yAxis.length; i++) {
                 const f = yAxis[i]
                 if (f.name === param.category) {
+                  let formatterCfg = formatterItem
                   if (f.formatterCfg) {
-                    res = valueFormatter(param.value, f.formatterCfg)
+                    formatterCfg = f.formatterCfg
+                  }
+                  // 饼图和环形图格式优化
+                  if (equalsAny(chart.type, 'pie', 'pie-donut')) {
+                    // 这边默认值取指标是为了兼容存量的视图
+                    const labelContent = l.labelContent ?? ['quota']
+                    const contentItems = []
+                    if (labelContent.includes('dimension')) {
+                      contentItems.push(param.field)
+                    }
+                    if (labelContent.includes('quota')) {
+                      contentItems.push(valueFormatter(param.value, formatterCfg))
+                    }
+                    if (labelContent.includes('proportion')) {
+                      const percentage = `${(Math.round(param.percent * 10000) / 100).toFixed(l.reserveDecimalCount)}%`
+                      if (labelContent.length === 3) {
+                        contentItems.push(`(${percentage})`)
+                      } else {
+                        contentItems.push(percentage)
+                      }
+                    }
+                    res = contentItems.join(' ')
+                  } else if (equalsAny(chart.type, 'pie-rose', 'pie-donut-rose')) {
+                    const quotaValue = valueFormatter(param.value, formatterCfg)
+                    res = [param.field, quotaValue].join(' ')
                   } else {
-                    res = valueFormatter(param.value, formatterItem)
+                    res = valueFormatter(param.value, formatterCfg)
                   }
                   break
                 }
@@ -241,10 +278,8 @@ export function getTooltip(chart) {
             }
 
             let obj
-            if (chart.type === 'bar-stack' ||
-              chart.type === 'line-stack' ||
-              chart.type === 'bar-stack-horizontal' ||
-              chart.type === 'percentage-bar-stack') {
+            if (equalsAny(chart.type, 'bar-stack', 'line-stack',
+              'bar-stack-horizontal', 'percentage-bar-stack', 'percentage-bar-stack-horizontal')) {
               let f
               if (extStack && extStack.length > 0) {
                 obj = { name: param.category, value: param.value }
@@ -264,7 +299,11 @@ export function getTooltip(chart) {
               if (!f.formatterCfg) {
                 f.formatterCfg = formatterItem
               }
-              if (chart.type === 'percentage-bar-stack') {
+              if (chart.type.includes('percentage')) {
+                if (!param.value) {
+                  obj.value = 0
+                  return obj
+                }
                 // 保留小数位数和标签保持一致，这边拿一下标签的配置
                 const l = JSON.parse(JSON.stringify(customAttr.label))
                 f.formatterCfg.type = 'percent'
@@ -292,7 +331,7 @@ export function getTooltip(chart) {
                   res = valueFormatter(param.value, formatterItem)
                 }
               }
-            } else if (chart.type.includes('pie') || chart.type.includes('funnel')) {
+            } else if (includesAny(chart.type, 'pie', 'funnel')) {
               obj = { name: param.field, value: param.value }
               for (let i = 0; i < yAxis.length; i++) {
                 const f = yAxis[i]
@@ -302,7 +341,7 @@ export function getTooltip(chart) {
                   res = valueFormatter(param.value, formatterItem)
                 }
               }
-            } else if ((chart.type.includes('bar') || chart.type.includes('line') || chart.type.includes('scatter') || chart.type.includes('radar') || chart.type.includes('area')) && !chart.type.includes('group')) {
+            } else if (includesAny(chart.type, 'bar', 'line', 'scatter', 'radar', 'area') && !chart.type.includes('group')) {
               obj = { name: param.category, value: param.value }
               for (let i = 0; i < yAxis.length; i++) {
                 const f = yAxis[i]
@@ -316,7 +355,11 @@ export function getTooltip(chart) {
                 }
               }
             } else if (chart.type.includes('group')) {
-              obj = { name: param.category, value: param.value }
+              if (chart.type === 'bar-group') {
+                obj = { name: param.category, value: param.value }
+              } else {
+                obj = { name: param.group, value: param.value }
+              }
               for (let i = 0; i < yAxis.length; i++) {
                 const f = yAxis[i]
                 if (f.formatterCfg) {
@@ -335,7 +378,7 @@ export function getTooltip(chart) {
       } else {
         // 百分比堆叠柱状图隐藏 tooltip 设置 show 为 false 或者直接设置 tooltip 为 false 都无效，会变成分组显示，
         // 需要将容器(container)或者内容框(showContent)设置为 false 或者 null 才可以隐藏
-        if (chart.type === 'percentage-bar-stack') {
+        if (chart.type.includes('percentage')) {
           tooltip.showContent = false
         } else {
           tooltip = false
@@ -454,6 +497,18 @@ export function getXAxis(chart) {
             }
           }
         } : null
+        const axisCfg = a.axisLine ? a.axisLine : DEFAULT_XAXIS_STYLE.axisLine
+        const axisLine = axisCfg.show ? {
+          style: {
+            stroke: axisCfg.lineStyle.color,
+            lineWidth: parseInt(axisCfg.lineStyle.width)
+          }
+        } : null
+        const tickLine = axisCfg.show ? {
+          style: {
+            stroke: axisCfg.lineStyle.color
+          }
+        } : null
         const label = a.axisLabel.show ? {
           rotate: parseInt(a.axisLabel.rotate) * Math.PI / 180,
           style: {
@@ -477,7 +532,9 @@ export function getXAxis(chart) {
           position: transAxisPosition(chart, a),
           title: title,
           grid: grid,
-          label: label
+          label: label,
+          line: axisLine,
+          tickLine: tickLine
         }
 
         // 轴值设置
@@ -525,6 +582,18 @@ export function getYAxis(chart) {
             }
           }
         } : null
+        const axisCfg = a.axisLine ? a.axisLine : DEFAULT_YAXIS_STYLE.axisLine
+        const axisLine = axisCfg.show ? {
+          style: {
+            stroke: axisCfg.lineStyle.color,
+            lineWidth: parseInt(axisCfg.lineStyle.width)
+          }
+        } : null
+        const tickLine = axisCfg.show ? {
+          style: {
+            stroke: axisCfg.lineStyle.color
+          }
+        } : null
         const label = a.axisLabel.show ? {
           rotate: parseInt(a.axisLabel.rotate) * Math.PI / 180,
           style: {
@@ -552,7 +621,9 @@ export function getYAxis(chart) {
           position: transAxisPosition(chart, a),
           title: title,
           grid: grid,
-          label: label
+          label: label,
+          line: axisLine,
+          tickLine: tickLine
         }
 
         // 轴值设置
@@ -600,11 +671,38 @@ export function getYAxisExt(chart) {
             }
           }
         } : null
+        const axisCfg = a.axisLine ? a.axisLine : DEFAULT_YAXIS_EXT_STYLE.axisLine
+        const axisLine = axisCfg.show ? {
+          style: {
+            stroke: axisCfg.lineStyle.color,
+            lineWidth: parseInt(axisCfg.lineStyle.width)
+          }
+        } : null
+        const tickLine = axisCfg.show ? {
+          style: {
+            stroke: axisCfg.lineStyle.color
+          }
+        } : null
         const label = a.axisLabel.show ? {
           rotate: parseInt(a.axisLabel.rotate) * Math.PI / 180,
           style: {
             fill: a.axisLabel.color,
             fontSize: parseInt(a.axisLabel.fontSize)
+          },
+          formatter: function(value) {
+            if (chart.type === 'waterfall') {
+              return value
+            } else {
+              if (!chart.type.includes('horizontal')) {
+                if (!a.axisLabelFormatter) {
+                  return valueFormatter(value, formatterItem)
+                } else {
+                  return valueFormatter(value, a.axisLabelFormatter)
+                }
+              } else {
+                return value
+              }
+            }
           }
         } : null
 
@@ -612,7 +710,9 @@ export function getYAxisExt(chart) {
           position: transAxisPosition(chart, a),
           title: title,
           grid: grid,
-          label: label
+          label: label,
+          line: axisLine,
+          tickLine: tickLine
         }
 
         // 轴值设置
@@ -703,14 +803,20 @@ export function getAnalyse(chart) {
     senior = JSON.parse(chart.senior)
     if (senior.assistLine && senior.assistLine.length > 0) {
       const customStyle = JSON.parse(chart.customStyle)
-      let xAxisPosition, yAxisPosition
+      let xAxisPosition, yAxisPosition, axisFormatterCfg
       if (customStyle.xAxis) {
         const a = JSON.parse(JSON.stringify(customStyle.xAxis))
         xAxisPosition = transAxisPosition(chart, a)
+        if (chart.type.includes('horizontal')) {
+          axisFormatterCfg = a.axisLabelFormatter ? a.axisLabelFormatter : DEFAULT_XAXIS_STYLE.axisLabelFormatter
+        }
       }
       if (customStyle.yAxis) {
         const a = JSON.parse(JSON.stringify(customStyle.yAxis))
         yAxisPosition = transAxisPosition(chart, a)
+        if (!chart.type.includes('horizontal')) {
+          axisFormatterCfg = a.axisLabelFormatter ? a.axisLabelFormatter : DEFAULT_YAXIS_STYLE.axisLabelFormatter
+        }
       }
 
       const fixedLines = senior.assistLine.filter(ele => ele.field === '0')
@@ -718,11 +824,12 @@ export function getAnalyse(chart) {
       const lines = fixedLines.concat(dynamicLines)
 
       lines.forEach(ele => {
-        const content = ele.name + ' : ' + parseFloat(ele.value)
+        const value = parseFloat(ele.value)
+        const content = ele.name + ' : ' + valueFormatter(value, axisFormatterCfg)
         assistLine.push({
           type: 'line',
-          start: ['start', parseFloat(ele.value)],
-          end: ['end', parseFloat(ele.value)],
+          start: ['start', value],
+          end: ['end', value],
           style: {
             stroke: ele.color,
             lineDash: getLineDash(ele.lineType)
@@ -731,7 +838,7 @@ export function getAnalyse(chart) {
         if (!chart.type.includes('horizontal')) {
           assistLine.push({
             type: 'text',
-            position: [yAxisPosition === 'left' ? 'start' : 'end', parseFloat(ele.value)],
+            position: [yAxisPosition === 'left' ? 'start' : 'end', value],
             content: content,
             offsetY: -2,
             offsetX: yAxisPosition === 'left' ? 2 : -10 * (content.length - 2),
@@ -744,7 +851,7 @@ export function getAnalyse(chart) {
         } else {
           assistLine.push({
             type: 'text',
-            position: [xAxisPosition === 'left' ? 'start' : 'end', parseFloat(ele.value)],
+            position: [xAxisPosition === 'left' ? 'start' : 'end', value],
             content: content,
             offsetY: xAxisPosition === 'left' ? -2 : -10 * (content.length - 2),
             offsetX: 2,
@@ -773,4 +880,10 @@ function getLineDash(type) {
     default:
       return [0, 0]
   }
+}
+
+export function setGradientColor(rawColor, show = false, angle = 0) {
+  const item = rawColor.split(',')
+  item.splice(3, 1, '0.3)')
+  return show ? `l(${angle}) 0:${item.join(',')} 1:${rawColor}` : rawColor
 }

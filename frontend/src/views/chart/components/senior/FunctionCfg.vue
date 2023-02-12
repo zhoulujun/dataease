@@ -1,21 +1,85 @@
 <template>
   <div style="width: 100%">
     <el-col>
-      <el-form ref="functionForm" :model="functionForm" label-width="80px" size="mini">
-        <el-form-item :label="$t('chart.slider')" class="form-item">
-          <el-checkbox v-model="functionForm.sliderShow" @change="changeFunctionCfg">{{ $t('chart.show') }}</el-checkbox>
+      <el-form
+        ref="functionForm"
+        :model="functionForm"
+        label-width="80px"
+        size="mini"
+      >
+        <el-form-item
+          :label="$t('chart.slider')"
+          class="form-item"
+        >
+          <el-checkbox
+            v-model="functionForm.sliderShow"
+            @change="changeFunctionCfg"
+          >{{ $t('chart.show') }}</el-checkbox>
         </el-form-item>
-        <el-form-item v-show="functionForm.sliderShow" :label="$t('chart.slider_range')+'(%)'" class="form-item form-item-slider">
-          <el-slider v-model="functionForm.sliderRange" style="width: 90%" :min="0" :max="100" input-size="mini" range @change="changeFunctionCfg" />
+        <el-form-item
+          v-show="functionForm.sliderShow"
+          :label="$t('chart.slider_range')+'(%)'"
+          class="form-item form-item-slider"
+        >
+          <el-slider
+            v-model="functionForm.sliderRange"
+            style="width: 90%"
+            :min="0"
+            :max="100"
+            input-size="mini"
+            range
+            @change="changeFunctionCfg"
+          />
         </el-form-item>
-        <el-form-item v-show="functionForm.sliderShow" :label="$t('chart.slider_bg')" class="form-item">
-          <el-color-picker v-model="functionForm.sliderBg" class="color-picker-style" :predefine="predefineColors" @change="changeFunctionCfg" />
+        <el-form-item
+          v-show="functionForm.sliderShow"
+          :label="$t('chart.slider_bg')"
+          class="form-item"
+        >
+          <el-color-picker
+            v-model="functionForm.sliderBg"
+            class="color-picker-style"
+            :predefine="predefineColors"
+            @change="changeFunctionCfg"
+          />
         </el-form-item>
-        <el-form-item v-show="functionForm.sliderShow" :label="$t('chart.slider_fill_bg')" class="form-item">
-          <el-color-picker v-model="functionForm.sliderFillBg" class="color-picker-style" :predefine="predefineColors" @change="changeFunctionCfg" />
+        <el-form-item
+          v-show="functionForm.sliderShow"
+          :label="$t('chart.slider_fill_bg')"
+          class="form-item"
+        >
+          <el-color-picker
+            v-model="functionForm.sliderFillBg"
+            class="color-picker-style"
+            :predefine="predefineColors"
+            @change="changeFunctionCfg"
+          />
         </el-form-item>
-        <el-form-item v-show="functionForm.sliderShow" :label="$t('chart.slider_text_color')" class="form-item">
-          <el-color-picker v-model="functionForm.sliderTextClolor" class="color-picker-style" :predefine="predefineColors" @change="changeFunctionCfg" />
+        <el-form-item
+          v-show="functionForm.sliderShow"
+          :label="$t('chart.slider_text_color')"
+          class="form-item"
+        >
+          <el-color-picker
+            v-model="functionForm.sliderTextClolor"
+            class="color-picker-style"
+            :predefine="predefineColors"
+            @change="changeFunctionCfg"
+          />
+        </el-form-item>
+        <el-form-item
+          v-show="chart.render === 'antv' && chart.type === 'line'"
+          :label="$t('chart.empty_data_strategy')"
+          class="form-item"
+        >
+          <el-radio-group
+            v-model="functionForm.emptyDataStrategy"
+            @change="changeFunctionCfg"
+          >
+            <el-radio :label="'breakLine'">{{ $t('chart.break_line') }}</el-radio>
+            <el-radio :label="'setZero'">{{ $t('chart.set_zero') }}</el-radio>
+            <el-radio :label="'ignoreData'">{{ $t('chart.ignore_data') }}</el-radio>
+          </el-radio-group>
         </el-form-item>
       </el-form>
     </el-col>
@@ -60,7 +124,7 @@ export default {
           senior = JSON.parse(chart.senior)
         }
         if (senior.functionCfg) {
-          this.functionForm = senior.functionCfg
+          this.functionForm = { ...DEFAULT_FUNCTION_CFG, ...senior.functionCfg }
         } else {
           this.functionForm = JSON.parse(JSON.stringify(DEFAULT_FUNCTION_CFG))
         }
@@ -73,7 +137,7 @@ export default {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .shape-item{
   padding: 6px;
   border: none;
@@ -107,5 +171,13 @@ span{
 .color-picker-style{
   cursor: pointer;
   z-index: 1003;
+}
+.form-item ::v-deep .el-radio-group{
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  label {
+    line-height: 28px;
+  }
 }
 </style>

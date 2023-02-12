@@ -3,27 +3,31 @@
     <el-row style="margin: 6px 0 16px 0">
       <el-col :span="12">
         <deBtn
-          secondary
           v-if="hasDataPermission('manage', param.privileges)"
+          secondary
           icon="el-icon-plus"
           @click="addCalcField"
-          >{{ $t('dataset.add_calc_field') }}</deBtn
-        >
+        >{{ $t('dataset.add_calc_field') }}
+        </deBtn>
         <deBtn
-          secondary
           v-if="
             hasDataPermission('manage', param.privileges) &&
-            table.type !== 'excel' &&
-            table.type !== 'custom' &&
-            table.type !== 'union'
+              table.type !== 'excel' &&
+              table.type !== 'custom' &&
+              table.type !== 'union'
           "
+          secondary
           :loading="isSyncField"
           icon="el-icon-refresh-left"
           @click="syncField"
-          >{{ $t('dataset.sync_field') }}</deBtn
-        >
+        >{{ $t('dataset.sync_field') }}
+        </deBtn>
+        &nbsp;
       </el-col>
-      <el-col style="text-align: right" :span="12">
+      <el-col
+        style="text-align: right"
+        :span="12"
+      >
         <el-input
           v-model="searchField"
           size="small"
@@ -36,7 +40,10 @@
       </el-col>
     </el-row>
 
-    <el-collapse v-model="fieldActiveNames" class="style-collapse">
+    <el-collapse
+      v-model="fieldActiveNames"
+      class="style-collapse"
+    >
       <el-collapse-item
         class="dimension"
         name="d"
@@ -44,13 +51,18 @@
           tableFields.dimensionListData.length
         })`"
       >
-        <el-table :data="tableFields.dimensionListData" size="mini">
+        <el-table
+          :data="tableFields.dimensionListData"
+          size="mini"
+        >
           <el-table-column
             property="checked"
             :label="$t('dataset.field_check')"
             width="60"
           >
-            <template slot="header" slot-scope="scope">
+            <template
+              #header
+            >
               <el-checkbox
                 v-model="dimensionChecked"
                 :indeterminate="dimensionIndeterminate"
@@ -124,51 +136,53 @@
             </template>
           </el-table-column>
           <el-table-column
-            property="deType"
+            property="deTypeCascader"
             :label="$t('dataset.field_type')"
             min-width="200"
           >
             <template slot-scope="scope">
-              <el-select
-                v-model="scope.row.deType"
+              <el-cascader
+                v-model="scope.row.deTypeCascader"
                 size="small"
-                class="select-type"
+                popper-class="select-date-resolution-format"
                 :disabled="!hasDataPermission('manage', param.privileges)"
+                class="select-type"
+                :options="getFields(scope.row)"
                 @change="saveEdit(scope.row)"
               >
-                <el-option
-                  v-for="item in fields"
-                  :key="item.value"
-                  :label="item.label"
-                  :value="item.value"
-                >
-                  <span style="float: left">
+                <template slot-scope="{ node, data }">
+                  <span
+                    v-if="node.level === 2 && data.label === 'yyyy-MM-dd'"
+                    class="format-title"
+                    :style="popPosition"
+                  >{{ $t('chart.date_format') }}</span>
+                  <span>
                     <svg-icon
-                      v-if="item.value === 0"
+                      v-if="data.value === 0"
                       icon-class="field_text"
                       class="field-icon-text field-icon-dimension"
                     />
                     <svg-icon
-                      v-if="item.value === 1"
+                      v-if="data.value === 1"
                       icon-class="field_time"
                       class="field-icon-time field-icon-dimension"
                     />
                     <svg-icon
-                      v-if="item.value === 2 || item.value === 3"
+                      v-if="data.value === 2 || data.value === 3"
                       icon-class="field_value"
                       class="field-icon-value field-icon-dimension"
                     />
                     <svg-icon
-                      v-if="item.value === 5"
+                      v-if="data.value === 5"
                       icon-class="field_location"
                       class="field-icon-location field-icon-dimension"
                     />
                   </span>
-                  <span style="float: left; color: #8492a6; font-size: 12px">{{
-                    item.label
+                  <span style="color: #8492a6; font-size: 12px">{{
+                    data.label
                   }}</span>
-                </el-option>
-              </el-select>
+                </template>
+              </el-cascader>
               <span class="select-svg-icon">
                 <span v-if="scope.row.deType === 0 || scope.row.deType === 6">
                   <svg-icon
@@ -199,6 +213,16 @@
                   />
                 </span>
               </span>
+              <el-input
+                v-if="scope.row.deType === 1 && scope.row.deExtractType === 0"
+                v-model="scope.row.dateFormat"
+                :placeholder="$t('dataset.date_format')"
+                size="small"
+                class="input-type"
+                :disabled="!hasDataPermission('manage', param.privileges)"
+                @blur="saveEdit(scope.row)"
+                @keyup.enter.native="saveEdit(scope.row)"
+              />
             </template>
           </el-table-column>
           <el-table-column
@@ -211,13 +235,13 @@
                 <span
                   v-if="
                     scope.row.deExtractType === 0 ||
-                    scope.row.deExtractType === 6
+                      scope.row.deExtractType === 6
                   "
                 >
                   <svg-icon
                     v-if="
                       scope.row.deExtractType === 0 ||
-                      scope.row.deExtractType === 6
+                        scope.row.deExtractType === 6
                     "
                     icon-class="field_text"
                     class="field-icon-text field-icon-dimension"
@@ -235,15 +259,15 @@
                 <span
                   v-if="
                     scope.row.deExtractType === 2 ||
-                    scope.row.deExtractType === 3 ||
-                    scope.row.deExtractType === 4
+                      scope.row.deExtractType === 3 ||
+                      scope.row.deExtractType === 4
                   "
                 >
                   <svg-icon
                     v-if="
                       scope.row.deExtractType === 2 ||
-                      scope.row.deExtractType === 3 ||
-                      scope.row.deExtractType === 4
+                        scope.row.deExtractType === 3 ||
+                        scope.row.deExtractType === 4
                     "
                     icon-class="field_value"
                     class="field-icon-value field-icon-dimension"
@@ -251,18 +275,16 @@
                   <span
                     v-if="
                       scope.row.deExtractType === 2 ||
-                      scope.row.deExtractType === 4
+                        scope.row.deExtractType === 4
                     "
                     class="field-class"
-                    >{{ $t('dataset.value') }}</span
-                  >
+                  >{{ $t('dataset.value') }}</span>
                   <span
                     v-if="scope.row.deExtractType === 3"
                     class="field-class"
-                    >{{
-                      $t('dataset.value') + '(' + $t('dataset.float') + ')'
-                    }}</span
-                  >
+                  >{{
+                    $t('dataset.value') + '(' + $t('dataset.float') + ')'
+                  }}</span>
                 </span>
                 <span v-if="scope.row.deExtractType === 5">
                   <svg-icon
@@ -290,7 +312,10 @@
               </span>
             </template>
           </el-table-column>
-          <el-table-column min-width="182" :label="$t('dataset.operator')">
+          <el-table-column
+            min-width="182"
+            :label="$t('dataset.operator')"
+          >
             <template slot-scope="scope">
               <el-button
                 class="de-text-btn"
@@ -298,8 +323,8 @@
                 style="margin-left: -4px"
                 :disabled="!hasDataPermission('manage', param.privileges)"
                 @click="dqTrans(scope.row, 'd')"
-                >{{ $t('deDataset.convert_to_indicator') }}</el-button
-              >
+              >{{ $t('deDataset.convert_to_indicator') }}
+              </el-button>
               <template v-if="scope.row.extField !== 0">
                 <el-button
                   :disabled="!hasDataPermission('manage', param.privileges)"
@@ -307,8 +332,8 @@
                   class="de-text-btn"
                   style="margin-left: 8px"
                   @click="editField(scope.row)"
-                  >{{ $t('dataset.edit') }}</el-button
-                >
+                >{{ $t('dataset.edit') }}
+                </el-button>
                 <el-dropdown
                   size="medium"
                   trigger="click"
@@ -318,8 +343,11 @@
                     style="margin-left: 8px"
                     class="el-icon-more de-text-btn"
                     type="text"
-                  ></el-button>
-                  <el-dropdown-menu class="de-card-dropdown" slot="dropdown">
+                  />
+                  <el-dropdown-menu
+                    slot="dropdown"
+                    class="de-card-dropdown"
+                  >
                     <slot>
                       <el-dropdown-item
                         :disabled="
@@ -327,7 +355,7 @@
                         "
                         command="copy"
                       >
-                        <i class="el-icon-document-copy"></i>
+                        <i class="el-icon-document-copy" />
                         {{ $t('dataset.copy') }}
                       </el-dropdown-item>
                       <el-dropdown-item
@@ -336,7 +364,7 @@
                         "
                         command="delete"
                       >
-                        <i class="el-icon-delete"></i>
+                        <i class="el-icon-delete" />
                         {{ $t('chart.delete') }}
                       </el-dropdown-item>
                     </slot>
@@ -350,8 +378,8 @@
                 style="margin-left: 8px"
                 class="de-text-btn"
                 @click="copyField(scope.row)"
-                >{{ $t('dataset.copy') }}</el-button
-              >
+              >{{ $t('dataset.copy') }}
+              </el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -362,13 +390,18 @@
         name="q"
         :title="`${$t('chart.quota')} (${tableFields.quotaListData.length})`"
       >
-        <el-table :data="tableFields.quotaListData" size="mini">
+        <el-table
+          :data="tableFields.quotaListData"
+          size="mini"
+        >
           <el-table-column
             property="checked"
             :label="$t('dataset.field_check')"
             width="60"
           >
-            <template slot="header" slot-scope="scope">
+            <template
+              #header
+            >
               <el-checkbox
                 v-model="quotaChecked"
                 :indeterminate="quotaIndeterminate"
@@ -442,51 +475,53 @@
             </template>
           </el-table-column>
           <el-table-column
-            property="deType"
+            property="deTypeCascader"
             :label="$t('dataset.field_type')"
             min-width="200"
           >
             <template slot-scope="scope">
-              <el-select
-                v-model="scope.row.deType"
+              <el-cascader
+                v-model="scope.row.deTypeCascader"
                 size="small"
-                class="select-type"
+                popper-class="select-date-resolution-format"
                 :disabled="!hasDataPermission('manage', param.privileges)"
+                class="select-type"
+                :options="getFields(scope.row)"
                 @change="saveEdit(scope.row)"
               >
-                <el-option
-                  v-for="item in fields"
-                  :key="item.value"
-                  :label="item.label"
-                  :value="item.value"
-                >
-                  <span style="float: left">
+                <template slot-scope="{ node, data }">
+                  <span
+                    v-if="node.level === 2 && data.label === 'yyyy-MM-dd'"
+                    class="format-title"
+                    :style="popPosition"
+                  >{{ $t('chart.date_format') }}</span>
+                  <span>
                     <svg-icon
-                      v-if="item.value === 0"
+                      v-if="data.value === 0"
                       icon-class="field_text"
-                      class="field-icon-text field-icon-quota"
+                      class="field-icon-text field-icon-dimension"
                     />
                     <svg-icon
-                      v-if="item.value === 1"
+                      v-if="data.value === 1"
                       icon-class="field_time"
-                      class="field-icon-time field-icon-quota"
+                      class="field-icon-time field-icon-dimension"
                     />
                     <svg-icon
-                      v-if="item.value === 2 || item.value === 3"
+                      v-if="data.value === 2 || data.value === 3"
                       icon-class="field_value"
-                      class="field-icon-value field-icon-quota"
+                      class="field-icon-value field-icon-dimension"
                     />
                     <svg-icon
-                      v-if="item.value === 5"
+                      v-if="data.value === 5"
                       icon-class="field_location"
-                      class="field-icon-location field-icon-quota"
+                      class="field-icon-location field-icon-dimension"
                     />
                   </span>
-                  <span style="float: left; color: #8492a6; font-size: 12px">{{
-                    item.label
+                  <span style="color: #8492a6; font-size: 12px">{{
+                    data.label
                   }}</span>
-                </el-option>
-              </el-select>
+                </template>
+              </el-cascader>
               <span class="select-svg-icon">
                 <span v-if="scope.row.deType === 0">
                   <svg-icon
@@ -517,6 +552,16 @@
                   />
                 </span>
               </span>
+              <el-input
+                v-if="scope.row.deType === 1 && scope.row.deExtractType === 0"
+                v-model="scope.row.dateFormat"
+                :placeholder="$t('dataset.date_format')"
+                size="small"
+                class="input-type"
+                :disabled="!hasDataPermission('manage', param.privileges)"
+                @blur="saveEdit(scope.row)"
+                @keyup.enter.native="saveEdit(scope.row)"
+              />
             </template>
           </el-table-column>
           <el-table-column
@@ -545,15 +590,15 @@
                 <span
                   v-if="
                     scope.row.deExtractType === 2 ||
-                    scope.row.deExtractType === 3 ||
-                    scope.row.deExtractType === 4
+                      scope.row.deExtractType === 3 ||
+                      scope.row.deExtractType === 4
                   "
                 >
                   <svg-icon
                     v-if="
                       scope.row.deExtractType === 2 ||
-                      scope.row.deExtractType === 3 ||
-                      scope.row.deExtractType === 4
+                        scope.row.deExtractType === 3 ||
+                        scope.row.deExtractType === 4
                     "
                     icon-class="field_value"
                     class="field-icon-value field-icon-quota"
@@ -561,18 +606,16 @@
                   <span
                     v-if="
                       scope.row.deExtractType === 2 ||
-                      scope.row.deExtractType === 4
+                        scope.row.deExtractType === 4
                     "
                     class="field-class"
-                    >{{ $t('dataset.value') }}</span
-                  >
+                  >{{ $t('dataset.value') }}</span>
                   <span
                     v-if="scope.row.deExtractType === 3"
                     class="field-class"
-                    >{{
-                      $t('dataset.value') + '(' + $t('dataset.float') + ')'
-                    }}</span
-                  >
+                  >{{
+                    $t('dataset.value') + '(' + $t('dataset.float') + ')'
+                  }}</span>
                 </span>
                 <span v-if="scope.row.deExtractType === 5">
                   <svg-icon
@@ -612,8 +655,8 @@
                 style="margin-left: -4px"
                 :disabled="!hasDataPermission('manage', param.privileges)"
                 @click="dqTrans(scope.row, 'q')"
-                >{{ $t('deDataset.convert_to_dimension') }}</el-button
-              >
+              >{{ $t('deDataset.convert_to_dimension') }}
+              </el-button>
               <template v-if="scope.row.extField !== 0">
                 <el-button
                   :disabled="!hasDataPermission('manage', param.privileges)"
@@ -621,8 +664,8 @@
                   class="de-text-btn"
                   style="margin-left: 8px"
                   @click="editField(scope.row)"
-                  >{{ $t('dataset.edit') }}</el-button
-                >
+                >{{ $t('dataset.edit') }}
+                </el-button>
                 <el-dropdown
                   size="medium"
                   trigger="click"
@@ -632,8 +675,11 @@
                     style="margin-left: 8px"
                     class="el-icon-more de-text-btn"
                     type="text"
-                  ></el-button>
-                  <el-dropdown-menu class="de-card-dropdown" slot="dropdown">
+                  />
+                  <el-dropdown-menu
+                    slot="dropdown"
+                    class="de-card-dropdown"
+                  >
                     <slot>
                       <el-dropdown-item
                         :disabled="
@@ -641,7 +687,7 @@
                         "
                         command="copy"
                       >
-                        <i class="el-icon-document-copy"></i>
+                        <i class="el-icon-document-copy" />
                         {{ $t('dataset.copy') }}
                       </el-dropdown-item>
                       <el-dropdown-item
@@ -650,7 +696,7 @@
                         "
                         command="delete"
                       >
-                        <i class="el-icon-delete"></i>
+                        <i class="el-icon-delete" />
                         {{ $t('chart.delete') }}
                       </el-dropdown-item>
                     </slot>
@@ -664,8 +710,8 @@
                 style="margin-left: 8px"
                 class="de-text-btn"
                 @click="copyField(scope.row)"
-                >{{ $t('dataset.copy') }}</el-button
-              >
+              >{{ $t('dataset.copy') }}
+              </el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -694,10 +740,11 @@
 </template>
 
 <script>
-import { post, fieldListDQ, batchEdit } from '@/api/dataset/dataset'
+import { batchEdit, dateformats, fieldListDQ, post } from '@/api/dataset/dataset'
 import CalcFieldEdit from './CalcFieldEdit'
 import { getFieldName } from '@/views/dataset/data/utils'
 import msgCfm from '@/components/msgCfm/index'
+
 export default {
   name: 'FieldEdit',
   components: { CalcFieldEdit },
@@ -721,17 +768,8 @@ export default {
         dimensionListData: [],
         quotaListData: []
       },
-      fields: [
-        { label: this.$t('dataset.text'), value: 0 },
-        { label: this.$t('dataset.time'), value: 1 },
-        { label: this.$t('dataset.value'), value: 2 },
-        {
-          label:
-            this.$t('dataset.value') + '(' + this.$t('dataset.float') + ')',
-          value: 3
-        },
-        { label: this.$t('dataset.location'), value: 5 }
-      ],
+      popPosition: {},
+      dateformats: [],
       fieldActiveNames: ['d', 'q'],
       searchField: '',
       editCalcField: false,
@@ -744,24 +782,25 @@ export default {
     }
   },
   watch: {
-    param: function () {
+    param: function() {
       this.initField()
     },
     searchField(val) {
       this.filterField(val)
     }
   },
+  beforeDestroy() {
+    window.removeEventListener('resize', this.calcHeight)
+  },
   mounted() {
-    window.onresize = () => {
-      this.calcHeight()
-    }
+    window.addEventListener('resize', this.calcHeight)
     this.calcHeight()
     this.initField()
   },
   methods: {
     calcHeight() {
       const that = this
-      setTimeout(function () {
+      setTimeout(function() {
         const currentHeight = document.documentElement.clientHeight
         that.maxHeight = currentHeight - 56 - 30 - 35 - 26 - 10 - 10 + 'px'
       }, 10)
@@ -779,13 +818,54 @@ export default {
         this.dimensionChange()
         this.quotaChange()
       })
+      dateformats(this.param.id).then((response) => {
+        const children = (response?.data || []).map(ele => ({ label: ele.dateformat + (ele.desc !== null ? ('(' + ele.desc) + ')' : ''), value: ele.dateformat }))
+        children.push({ label: this.$t('commons.custom'), value: 'custom' })
+        this.dateformats = children
+      })
+    },
+    getFields(item) {
+      if (item.deExtractType === 0) {
+        const children = this.dateformats
+        return [
+          { label: this.$t('dataset.text'), value: 0 },
+          { label: this.$t('dataset.time'), value: 1, children },
+          { label: this.$t('dataset.value'), value: 2 },
+          {
+            label:
+              this.$t('dataset.value') + '(' + this.$t('dataset.float') + ')',
+            value: 3
+          },
+          { label: this.$t('dataset.location'), value: 5 }
+        ]
+      } else {
+        return [
+          { label: this.$t('dataset.text'), value: 0 },
+          { label: this.$t('dataset.time'), value: 1 },
+          { label: this.$t('dataset.value'), value: 2 },
+          { label: this.$t('dataset.value') + '(' + this.$t('dataset.float') + ')', value: 3 },
+          { label: this.$t('dataset.location'), value: 5 }
+        ]
+      }
     },
     saveEdit(item) {
       if (item.name && item.name.length > 50) {
         this.$message.error(this.$t('dataset.field_name_less_50'))
         return
       }
-
+      item.deType = item.deTypeCascader[0]
+      if (item.deTypeCascader.length === 2) { // 时间
+        item.dateFormatType = item.deTypeCascader[1]
+        if (item.dateFormatType !== 'custom') {
+          item.dateFormat = item.dateFormatType
+        }
+      }else {
+        item.dateFormatType = ''
+        item.dateFormat = ''
+      }
+      if (item.dateFormatType === 'custom' && !item.dateFormat) {
+        return
+      }
       post('/dataset/field/save', item)
         .then((response) => {
           this.initField()
@@ -820,7 +900,7 @@ export default {
       if (val && val !== '') {
         this.tableFields.dimensionListData = JSON.parse(
           JSON.stringify(
-            this.tableFields.dimensionListData.filter((ele) => {
+            this.tableFields.dimensionList.filter((ele) => {
               return ele.name
                 .toLocaleLowerCase()
                 .includes(val.toLocaleLowerCase())
@@ -882,7 +962,8 @@ export default {
             localStorage.setItem('reloadDsData', 'true')
           })
         })
-        .catch(() => {})
+        .catch(() => {
+        })
     },
 
     syncField() {
@@ -1018,35 +1099,48 @@ export default {
 .el-divider--horizontal {
   margin: 12px 0;
 }
+
 span {
   font-size: 14px;
 }
+
 .field-class {
   font-size: 12px !important;
 }
+
 .el-select ::v-deep input {
   padding-right: 10px;
 }
+
 .el-select ::v-deep .el-input__suffix {
   right: 0;
 }
+
 .el-radio {
   margin-right: 10px !important;
 }
 
 .style-collapse {
   border: none;
+
   .select-type {
     width: 180px;
+
     ::v-deep.el-input__inner {
       padding-left: 32px;
     }
   }
+
+  .input-type {
+    width: 180px;
+  }
+
   .select-svg-icon {
     position: absolute;
     left: 24px;
     top: 10px;
   }
+
   ::v-deep.el-collapse-item__header {
     height: 30px;
     line-height: 30px;
@@ -1054,6 +1148,7 @@ span {
     position: relative;
     border-bottom: 1px solid rgba(31, 35, 41, 0.15);
   }
+
   ::v-deep.el-checkbox {
     margin-left: 8px;
   }
@@ -1063,6 +1158,7 @@ span {
       background-color: rgba(51, 112, 255, 0.1);
     }
   }
+
   .quota {
     ::v-deep.el-collapse-item__header {
       background-color: rgba(4, 180, 156, 0.1);
@@ -1084,18 +1180,22 @@ span {
     transform: rotate(90deg);
   }
 }
+
 .style-collapse ::v-deep .el-collapse-item__wrap {
   border-bottom: 0 solid #e6ebf5 !important;
 }
 </style>
 
 <style lang="scss">
-.de-center-dialog {
-  .el-dialog {
-    margin: 0 !important;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+.select-date-resolution-format {
+  .format-title {
+    position: fixed;
+    display: inline-block;
+    height: 30px;
+    transform: translate(-30px, -37px);
+    background: #dfe6ec;
+    width: 180px;
+    padding-left: 30px;
   }
 }
 </style>

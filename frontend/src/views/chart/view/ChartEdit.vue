@@ -1,5 +1,8 @@
 <template>
-  <el-row v-loading="loading" style="height: 100%;overflow-y: hidden;width: 100%;border-left: 1px solid #E6E6E6">
+  <el-row
+    v-loading="loading"
+    style="height: 100%;overflow-y: hidden;width: 100%;border-left: 1px solid #E6E6E6"
+  >
     <el-tooltip :content="$t('chart.draw_back')">
       <el-button
         class="el-icon-d-arrow-right"
@@ -9,7 +12,10 @@
         @click="closePanelEdit"
       />
     </el-tooltip>
-    <el-row style="height: 40px;" class="padding-lr">
+    <el-row
+      style="height: 40px;"
+      class="padding-lr"
+    >
       <el-popover
         placement="right-start"
         width="400"
@@ -17,24 +23,48 @@
         @show="showTab"
         @hide="hideTab"
       >
-        <dataset-chart-detail type="chart" :data="view" :tab-status="tabStatus" />
+        <dataset-chart-detail
+          type="chart"
+          :data="view"
+          :tab-status="tabStatus"
+        />
         <i
           slot="reference"
           class="el-icon-warning icon-class"
           style="position:absolute; margin-left: 30px; top:14px;cursor: pointer;"
         />
       </el-popover>
-      <span class="title-text view-title-name" style="line-height: 40px;">{{ view.name }}</span>
+      <span
+        class="title-text view-title-name"
+        style="line-height: 40px;"
+      >{{ view.name }}</span>
       <span style="float: right;line-height: 40px;">
-        <el-button round size="mini" :disabled="!hasEdit" @click="reset">
+        <el-button
+          round
+          size="mini"
+          :disabled="!hasEdit"
+          @click="reset"
+        >
           {{ $t('chart.recover') }}
         </el-button>
       </span>
     </el-row>
     <el-row class="view-panel-row">
-      <el-tabs v-model="tabActive" :stretch="true" class="tab-header">
-        <el-tab-pane name="data" :label="$t('chart.chart_data')" class="padding-tab" style="width: 350px">
-          <div v-if="view.dataFrom==='template'" class="view-panel-Mask">
+      <el-tabs
+        v-model="tabActive"
+        :stretch="true"
+        class="tab-header"
+      >
+        <el-tab-pane
+          name="data"
+          :label="$t('chart.chart_data')"
+          class="padding-tab"
+          style="width: 350px"
+        >
+          <div
+            v-if="view.dataFrom==='template'"
+            class="view-panel-Mask"
+          >
             <span style="opacity: 1;">
               <el-button
                 style="opacity: 1!important;"
@@ -44,12 +74,18 @@
                 round
                 @click="changeDs"
               >
-                <span style="font-weight: bold">{{ $t('panel.template_view_tips') }}<i class="el-icon-refresh el-icon--right" /></span>
+                <span style="font-weight: bold">{{ $t('panel.template_view_tips') }}<i
+                  class="el-icon-refresh el-icon--right"
+                /></span>
               </el-button>
             </span>
           </div>
           <el-row class="view-panel">
-            <el-col class="theme-border-class" :span="11" style="border-right: 1px solid #E6E6E6;">
+            <el-col
+              class="theme-border-class"
+              :span="11"
+              style="border-right: 1px solid #E6E6E6;"
+            >
               <div style="display: flex;align-items: center;justify-content: center;padding: 6px;">
                 <el-input
                   v-model="searchField"
@@ -59,7 +95,11 @@
                   clearable
                   class="main-area-input"
                 />
-                <el-dropdown trigger="click" size="mini" @command="fieldEdit">
+                <el-dropdown
+                  trigger="click"
+                  size="mini"
+                  @command="fieldEdit"
+                >
                   <span class="el-dropdown-link">
                     <el-button
                       :title="$t('dataset.field_manage')"
@@ -95,9 +135,15 @@
                 />
               </div>
 
-              <div v-if="fieldShow && tabActive === 'data'" class="field-split">
-                <fu-split-pane top="50%" direction="vertical">
-                  <template v-slot:top>
+              <div
+                v-if="fieldShow && tabActive === 'data'"
+                class="field-split"
+              >
+                <fu-split-pane
+                  top="50%"
+                  direction="vertical"
+                >
+                  <template #top>
                     <div class="padding-lr field-height">
                       <span>{{ $t('chart.dimension') }}</span>
                       <draggable
@@ -110,25 +156,58 @@
                         @add="moveToDimension"
                       >
                         <transition-group>
-                          <span v-for="item in dimensionData" :key="item.id" class="item-dimension father" :title="item.name">
-                            <svg-icon v-if="item.deType === 0" icon-class="field_text" class="field-icon-text" />
-                            <svg-icon v-if="item.deType === 1" icon-class="field_time" class="field-icon-time" />
+                          <span
+                            v-for="item in dimensionData"
+                            :key="item.id"
+                            class="item-dimension father"
+                            :title="item.name"
+                          >
+                            <svg-icon
+                              v-if="item.deType === 0"
+                              icon-class="field_text"
+                              class="field-icon-text"
+                            />
+                            <svg-icon
+                              v-if="item.deType === 1"
+                              icon-class="field_time"
+                              class="field-icon-time"
+                            />
                             <svg-icon
                               v-if="item.deType === 2 || item.deType === 3"
                               icon-class="field_value"
                               class="field-icon-value"
                             />
-                            <svg-icon v-if="item.deType === 5" icon-class="field_location" class="field-icon-location" />
+                            <svg-icon
+                              v-if="item.deType === 5"
+                              icon-class="field_location"
+                              class="field-icon-location"
+                            />
                             <span class="field-name">{{ item.name }}</span>
-                            <el-dropdown v-show="false" placement="right-start" trigger="click" size="mini" class="field-setting child" @command="chartFieldEdit">
+                            <el-dropdown
+                              v-show="false"
+                              placement="right-start"
+                              trigger="click"
+                              size="mini"
+                              class="field-setting child"
+                              @command="chartFieldEdit"
+                            >
                               <span class="el-dropdown-link">
                                 <i class="el-icon-s-tools" />
                               </span>
                               <el-dropdown-menu slot="dropdown">
-                                <el-dropdown-item :command="handleChartFieldEdit(item,'copy')" icon="el-icon-document-copy">{{ $t('commons.copy') }}</el-dropdown-item>
+                                <el-dropdown-item
+                                  :command="handleChartFieldEdit(item,'copy')"
+                                  icon="el-icon-document-copy"
+                                >{{ $t('commons.copy') }}</el-dropdown-item>
                                 <span v-if="item.chartId">
-                                  <el-dropdown-item :command="handleChartFieldEdit(item,'edit')" icon="el-icon-edit">{{ $t('commons.edit') }}</el-dropdown-item>
-                                  <el-dropdown-item :command="handleChartFieldEdit(item,'delete')" icon="el-icon-delete">{{ $t('commons.delete') }}</el-dropdown-item>
+                                  <el-dropdown-item
+                                    :command="handleChartFieldEdit(item,'edit')"
+                                    icon="el-icon-edit"
+                                  >{{ $t('commons.edit') }}</el-dropdown-item>
+                                  <el-dropdown-item
+                                    :command="handleChartFieldEdit(item,'delete')"
+                                    icon="el-icon-delete"
+                                  >{{ $t('commons.delete') }}</el-dropdown-item>
                                 </span>
                               </el-dropdown-menu>
                             </el-dropdown>
@@ -137,7 +216,7 @@
                       </draggable>
                     </div>
                   </template>
-                  <template v-slot:bottom>
+                  <template #bottom>
                     <div class="padding-lr field-height">
                       <span>{{ $t('chart.quota') }}</span>
                       <draggable
@@ -157,24 +236,53 @@
                             class="item-quota father"
                             :title="item.name"
                           >
-                            <svg-icon v-if="item.deType === 0" icon-class="field_text" class="field-icon-text" />
-                            <svg-icon v-if="item.deType === 1" icon-class="field_time" class="field-icon-time" />
+                            <svg-icon
+                              v-if="item.deType === 0"
+                              icon-class="field_text"
+                              class="field-icon-text"
+                            />
+                            <svg-icon
+                              v-if="item.deType === 1"
+                              icon-class="field_time"
+                              class="field-icon-time"
+                            />
                             <svg-icon
                               v-if="item.deType === 2 || item.deType === 3"
                               icon-class="field_value"
                               class="field-icon-value"
                             />
-                            <svg-icon v-if="item.deType === 5" icon-class="field_location" class="field-icon-location" />
+                            <svg-icon
+                              v-if="item.deType === 5"
+                              icon-class="field_location"
+                              class="field-icon-location"
+                            />
                             <span class="field-name">{{ item.name }}</span>
-                            <el-dropdown v-show="false" v-if="item.id !== 'count'" placement="right-start" trigger="click" size="mini" class="field-setting child" @command="chartFieldEdit">
+                            <el-dropdown
+                              v-show="false"
+                              v-if="item.id !== 'count'"
+                              placement="right-start"
+                              trigger="click"
+                              size="mini"
+                              class="field-setting child"
+                              @command="chartFieldEdit"
+                            >
                               <span class="el-dropdown-link">
                                 <i class="el-icon-s-tools" />
                               </span>
                               <el-dropdown-menu slot="dropdown">
-                                <el-dropdown-item :command="handleChartFieldEdit(item,'copy')" icon="el-icon-document-copy">{{ $t('commons.copy') }}</el-dropdown-item>
+                                <el-dropdown-item
+                                  :command="handleChartFieldEdit(item,'copy')"
+                                  icon="el-icon-document-copy"
+                                >{{ $t('commons.copy') }}</el-dropdown-item>
                                 <span v-if="item.chartId">
-                                  <el-dropdown-item :command="handleChartFieldEdit(item,'edit')" icon="el-icon-edit">{{ $t('commons.edit') }}</el-dropdown-item>
-                                  <el-dropdown-item :command="handleChartFieldEdit(item,'delete')" icon="el-icon-delete">{{ $t('commons.delete') }}</el-dropdown-item>
+                                  <el-dropdown-item
+                                    :command="handleChartFieldEdit(item,'edit')"
+                                    icon="el-icon-edit"
+                                  >{{ $t('commons.edit') }}</el-dropdown-item>
+                                  <el-dropdown-item
+                                    :command="handleChartFieldEdit(item,'delete')"
+                                    icon="el-icon-delete"
+                                  >{{ $t('commons.delete') }}</el-dropdown-item>
                                 </span>
                               </el-dropdown-menu>
                             </el-dropdown>
@@ -192,12 +300,18 @@
               style="height: 100%;border-right: 1px solid #E6E6E6;"
               class="theme-border-class"
             >
-              <div style="height: 60px;overflow:auto" class="padding-lr theme-border-class">
+              <div
+                style="height: 60px;overflow:auto"
+                class="padding-lr theme-border-class"
+              >
                 <span class="theme-border-class">
                   <span>{{ $t('chart.chart_type') }}</span>
                   <el-row style="padding: 4px 0 4px 10px;">
                     <span>
-                      <svg-icon :icon-class="view.isPlugin && view.type && view.type !== 'buddle-map' ? ('/api/pluginCommon/staticInfo/' + view.type + '/svg') : view.type" class="chart-icon" />
+                      <svg-icon
+                        :icon-class="view.isPlugin && view.type && view.type !== 'buddle-map' ? ('/api/pluginCommon/staticInfo/' + view.type + '/svg') : view.type"
+                        class="chart-icon"
+                      />
                     </span>
                     <span style="float: right;">
                       <el-popover
@@ -233,7 +347,11 @@
                                 style="width: 100%"
                                 @change="changeChartType()"
                               >
-                                <chart-type ref="cu-chart-type" :chart="view" style="height: 480px" />
+                                <chart-type
+                                  ref="cu-chart-type"
+                                  :chart="view"
+                                  style="height: 480px"
+                                />
                               </el-radio-group>
                             </div>
                           </el-row>
@@ -251,13 +369,22 @@
                   </el-row>
                 </span>
               </div>
-              <div style="overflow:auto;border-top: 1px solid #e6e6e6" class="attr-style theme-border-class">
+              <div
+                style="overflow:auto;border-top: 1px solid #e6e6e6"
+                class="attr-style theme-border-class"
+              >
                 <el-row style="height: 100%;">
                   <el-row class="padding-lr">
-                    <span v-show="view.type==='richTextView'" style="color: #909399; font-size: 8px;width: 80px;text-align: right;">
+                    <span
+                      v-show="view.type==='richTextView'"
+                      style="color: #909399; font-size: 8px;width: 80px;text-align: right;"
+                    >
                       Tips:{{ $t('chart.rich_text_view_result_tips') }}
                     </span>
-                    <span v-show="view.type!=='richTextView'" style="width: 80px;text-align: right;">
+                    <span
+                      v-show="view.type!=='richTextView'"
+                      style="width: 80px;text-align: right;"
+                    >
                       {{ $t('chart.result_count') }}
                     </span>
                     <el-row v-show="view.type!=='richTextView'">
@@ -287,7 +414,10 @@
                   />
                   <div v-else>
 
-                    <el-row v-if="view.type ==='map'" class="padding-lr">
+                    <el-row
+                      v-if="view.type ==='map'"
+                      class="padding-lr"
+                    >
                       <span style="width: 80px;text-align: right;">
                         <span>{{ $t('chart.map_range') }}</span>
                       </span>
@@ -312,10 +442,14 @@
                       v-if="view.type === 'table-pivot'"
                       class="padding-lr"
                     >
-                      <span style="width: 80px;text-align: right;">
+                      <span class="data-area-label">
                         <span>{{ $t('chart.table_pivot_row') }}</span>
                         /
                         <span>{{ $t('chart.dimension') }}</span>
+                        <i
+                          class="el-icon-arrow-down el-icon-delete data-area-clear"
+                          @click="clearData('xaxisExt')"
+                        />
                       </span>
                       <draggable
                         v-model="view.xaxisExt"
@@ -342,7 +476,10 @@
                           />
                         </transition-group>
                       </draggable>
-                      <div v-if="!view.xaxisExt || view.xaxisExt.length === 0" class="drag-placeholder-style">
+                      <div
+                        v-if="!view.xaxisExt || view.xaxisExt.length === 0"
+                        class="drag-placeholder-style"
+                      >
                         <span class="drag-placeholder-style-span">{{ $t('chart.placeholder_field') }}</span>
                       </div>
                     </el-row>
@@ -351,7 +488,7 @@
                       v-if="view.type !=='text' && view.type !== 'gauge' && view.type !== 'liquid'"
                       class="padding-lr"
                     >
-                      <span style="width: 80px;text-align: right;">
+                      <span class="data-area-label">
                         <span v-if="view.type && view.type.includes('table')">{{
                           $t('chart.drag_block_table_data_column')
                         }}</span>
@@ -380,6 +517,10 @@
                         <span
                           v-else-if="view.type && view.type === 'table-info'"
                         >{{ $t('chart.dimension_or_quota') }}</span>
+                        <i
+                          class="el-icon-arrow-down el-icon-delete data-area-clear"
+                          @click="clearData('xaxis')"
+                        />
                       </span>
                       <draggable
                         v-model="view.xaxis"
@@ -409,28 +550,48 @@
                           />
                         </transition-group>
                       </draggable>
-                      <div v-if="!view.xaxis || view.xaxis.length === 0" class="drag-placeholder-style">
+                      <div
+                        v-if="!view.xaxis || view.xaxis.length === 0"
+                        class="drag-placeholder-style"
+                      >
                         <span class="drag-placeholder-style-span">{{ $t('chart.placeholder_field') }}</span>
                       </div>
                     </el-row>
                     <!--group field,use xaxisExt-->
                     <el-row
-                      v-if="view.type === 'bar-group'"
+                      v-if="view.type === 'bar-group'
+                        || view.type === 'bar-group-stack'
+                        || (view.render === 'antv' && view.type === 'line')"
                       class="padding-lr"
                     >
-                      <span style="width: 80px;text-align: right;">
+                      <span class="data-area-label">
                         <span>
                           {{ $t('chart.chart_group') }}
-                          <span style="color:#F54A45;">*</span>
+                          <span
+                            v-show="view.type !== 'line'"
+                            style="color:#F54A45;"
+                          >*</span>
                         </span>
                         /
                         <span>{{ $t('chart.dimension') }}</span>
-                        <el-tooltip class="item" effect="dark" placement="bottom">
+                        <el-tooltip
+                          v-show="view.type !== 'line'"
+                          class="item"
+                          effect="dark"
+                          placement="bottom"
+                        >
                           <div slot="content">
-                            该字段为必填项，且不应使用类别轴中字段，若无需该字段，请选择基础柱状图展示；否则展示结果不理想
+                            {{ $t('chart.sub_dimension_tip') }}
                           </div>
-                          <i class="el-icon-info" style="cursor: pointer;color: #606266;" />
+                          <i
+                            class="el-icon-info"
+                            style="cursor: pointer;color: #606266;"
+                          />
                         </el-tooltip>
+                        <i
+                          class="el-icon-arrow-down el-icon-delete data-area-clear"
+                          @click="clearData('xaxisExt')"
+                        />
                       </span>
                       <draggable
                         v-model="view.xaxisExt"
@@ -457,7 +618,10 @@
                           />
                         </transition-group>
                       </draggable>
-                      <div v-if="!view.xaxisExt || view.xaxisExt.length === 0" class="drag-placeholder-style">
+                      <div
+                        v-if="!view.xaxisExt || view.xaxisExt.length === 0"
+                        class="drag-placeholder-style"
+                      >
                         <span class="drag-placeholder-style-span">{{ $t('chart.placeholder_field') }}</span>
                       </div>
                     </el-row>
@@ -467,7 +631,7 @@
                       class="padding-lr"
                       style="margin-top: 6px;"
                     >
-                      <span style="width: 80px;text-align: right;">
+                      <span class="data-area-label">
                         <span v-if="view.type && view.type.includes('table')">{{
                           $t('chart.drag_block_table_data_column')
                         }}</span>
@@ -504,6 +668,10 @@
                         }}</span>
                         <span v-show="view.type !== 'richTextView'"> / </span>
                         <span>{{ $t('chart.quota') }}</span>
+                        <i
+                          class="el-icon-arrow-down el-icon-delete data-area-clear"
+                          @click="clearData('yaxis')"
+                        />
                       </span>
                       <draggable
                         v-model="view.yaxis"
@@ -533,16 +701,27 @@
                           />
                         </transition-group>
                       </draggable>
-                      <div v-if="!view.yaxis || view.yaxis.length === 0" class="drag-placeholder-style">
+                      <div
+                        v-if="!view.yaxis || view.yaxis.length === 0"
+                        class="drag-placeholder-style"
+                      >
                         <span class="drag-placeholder-style-span">{{ $t('chart.placeholder_field') }}</span>
                       </div>
                     </el-row>
                     <!--yAxisExt-->
-                    <el-row v-if="view.type && view.type === 'chart-mix'" class="padding-lr" style="margin-top: 6px;">
-                      <span style="width: 80px;text-align: right;">
+                    <el-row
+                      v-if="view.type && view.type === 'chart-mix'"
+                      class="padding-lr"
+                      style="margin-top: 6px;"
+                    >
+                      <span class="data-area-label">
                         <span>{{ $t('chart.drag_block_value_axis_ext') }}</span>
                         /
                         <span>{{ $t('chart.quota') }}</span>
+                        <i
+                          class="el-icon-arrow-down el-icon-delete data-area-clear"
+                          @click="clearData('yaxisExt')"
+                        />
                       </span>
                       <draggable
                         v-model="view.yaxisExt"
@@ -571,16 +750,27 @@
                           />
                         </transition-group>
                       </draggable>
-                      <div v-if="!view.yaxisExt || view.yaxisExt.length === 0" class="drag-placeholder-style">
+                      <div
+                        v-if="!view.yaxisExt || view.yaxisExt.length === 0"
+                        class="drag-placeholder-style"
+                      >
                         <span class="drag-placeholder-style-span">{{ $t('chart.placeholder_field') }}</span>
                       </div>
                     </el-row>
                     <!--extStack-->
-                    <el-row v-if="view.type && view.type.includes('stack')" class="padding-lr" style="margin-top: 6px;">
-                      <span style="width: 80px;text-align: right;">
+                    <el-row
+                      v-if="view.type && view.type.includes('stack')"
+                      class="padding-lr"
+                      style="margin-top: 6px;"
+                    >
+                      <span class="data-area-label">
                         <span>{{ $t('chart.stack_item') }}</span>
                         /
                         <span>{{ $t('chart.dimension') }}</span>
+                        <i
+                          class="el-icon-arrow-down el-icon-delete data-area-clear"
+                          @click="clearData('extStack')"
+                        />
                       </span>
                       <draggable
                         v-model="view.extStack"
@@ -607,7 +797,10 @@
                           />
                         </transition-group>
                       </draggable>
-                      <div v-if="!view.extStack || view.extStack.length === 0" class="drag-placeholder-style">
+                      <div
+                        v-if="!view.extStack || view.extStack.length === 0"
+                        class="drag-placeholder-style"
+                      >
                         <span class="drag-placeholder-style-span">{{ $t('chart.placeholder_field') }}</span>
                       </div>
                     </el-row>
@@ -617,16 +810,27 @@
                       class="padding-lr"
                       style="margin-top: 6px;"
                     >
-                      <span style="width: 80px;text-align: right;">
+                      <span class="data-area-label">
                         <span>{{ $t('chart.bubble_size') }}</span>
                         /
                         <span>{{ $t('chart.quota') }}</span>
-                        <el-tooltip class="item" effect="dark" placement="bottom">
+                        <el-tooltip
+                          class="item"
+                          effect="dark"
+                          placement="bottom"
+                        >
                           <div slot="content">
-                            该指标生效时，样式大小中的气泡大小属性将失效
+                            {{ $t('chart.scatter_tip') }}
                           </div>
-                          <i class="el-icon-info" style="cursor: pointer;color: #606266;" />
+                          <i
+                            class="el-icon-info"
+                            style="cursor: pointer;color: #606266;"
+                          />
                         </el-tooltip>
+                        <i
+                          class="el-icon-arrow-down el-icon-delete data-area-clear"
+                          @click="clearData('extBubble')"
+                        />
                       </span>
                       <draggable
                         v-model="view.extBubble"
@@ -652,11 +856,17 @@
                           />
                         </transition-group>
                       </draggable>
-                      <div v-if="!view.extBubble || view.extBubble.length === 0" class="drag-placeholder-style">
+                      <div
+                        v-if="!view.extBubble || view.extBubble.length === 0"
+                        class="drag-placeholder-style"
+                      >
                         <span class="drag-placeholder-style-span">{{ $t('chart.placeholder_field') }}</span>
                       </div>
                     </el-row>
-                    <el-row class="padding-lr" style="margin-top: 6px;">
+                    <el-row
+                      class="padding-lr"
+                      style="margin-top: 6px;"
+                    >
                       <span>{{ $t('chart.result_filter') }}</span>
                       <draggable
                         v-model="view.customFilter"
@@ -682,7 +892,10 @@
                           />
                         </transition-group>
                       </draggable>
-                      <div v-if="!view.customFilter || view.customFilter.length === 0" class="drag-placeholder-style">
+                      <div
+                        v-if="!view.customFilter || view.customFilter.length === 0"
+                        class="drag-placeholder-style"
+                      >
                         <span class="drag-placeholder-style-span">{{ $t('chart.placeholder_field') }}</span>
                       </div>
                     </el-row>
@@ -695,11 +908,18 @@
                         <span>{{ $t('chart.drill') }}</span>
                         /
                         <span>{{ $t('chart.dimension') }}</span>
-                        <el-tooltip class="item" effect="dark" placement="bottom">
+                        <el-tooltip
+                          class="item"
+                          effect="dark"
+                          placement="bottom"
+                        >
                           <div slot="content">
-                            钻取字段仅支持数据集中的字段
+                            {{ $t('chart.drill_dimension_tip') }}
                           </div>
-                          <i class="el-icon-info" style="cursor: pointer;color: #606266;" />
+                          <i
+                            class="el-icon-info"
+                            style="cursor: pointer;color: #606266;"
+                          />
                         </el-tooltip>
                       </span>
                       <draggable
@@ -725,7 +945,10 @@
                           />
                         </transition-group>
                       </draggable>
-                      <div v-if="!view.drillFields || view.drillFields.length === 0" class="drag-placeholder-style">
+                      <div
+                        v-if="!view.drillFields || view.drillFields.length === 0"
+                        class="drag-placeholder-style"
+                      >
                         <span class="drag-placeholder-style-span">{{ $t('chart.placeholder_field') }}</span>
                       </div>
                     </el-row>
@@ -735,7 +958,12 @@
             </el-col>
           </el-row>
         </el-tab-pane>
-        <el-tab-pane name="style" :label="$t('chart.chart_style')" class="padding-tab" style="width: 350px">
+        <el-tab-pane
+          name="style"
+          :label="$t('chart.chart_style')"
+          class="padding-tab"
+          style="width: 350px"
+        >
           <chart-style
             v-if="chartProperties || view.isPlugin"
             :param="param"
@@ -759,9 +987,15 @@
             @onLegendChange="onLegendChange"
             @onMarginChange="onMarginChange"
             @onChangeBackgroundForm="onChangeBackgroundForm"
+            @onSuspensionChange="onSuspensionChange"
           />
         </el-tab-pane>
-        <el-tab-pane name="senior" :label="$t('chart.senior')" class="padding-tab" style="width: 350px;">
+        <el-tab-pane
+          name="senior"
+          :label="$t('chart.senior')"
+          class="padding-tab"
+          style="width: 350px;"
+        >
           <el-row class="view-panel">
             <div
               v-if="view.type && (view.type.includes('bar') || view.type.includes('line') || view.type.includes('area') || view.type.includes('mix') || view.type.includes('gauge') || view.type === 'text' || view.type.includes('table') || view.type === 'map' || view.type === 'buddle-map')"
@@ -772,8 +1006,15 @@
                 v-if="view.type && (view.type.includes('bar') || view.type.includes('line') || view.type.includes('area') || view.type.includes('mix') || view.type === 'table-normal' || view.type === 'table-info')"
               >
                 <span class="padding-lr">{{ $t('chart.senior_cfg') }}</span>
-                <el-collapse v-model="attrActiveNames" class="style-collapse">
-                  <el-collapse-item v-if="view.type && (view.type.includes('bar') || view.type.includes('line') || view.type.includes('area') || view.type.includes('mix'))" name="function" :title="$t('chart.function_cfg')">
+                <el-collapse
+                  v-model="attrActiveNames"
+                  class="style-collapse"
+                >
+                  <el-collapse-item
+                    v-if="view.type && (view.type.includes('bar') || view.type.includes('line') || view.type.includes('area') || view.type.includes('mix'))"
+                    name="function"
+                    :title="$t('chart.function_cfg')"
+                  >
                     <function-cfg
                       :param="param"
                       class="attr-selector"
@@ -781,7 +1022,11 @@
                       @onFunctionCfgChange="onFunctionCfgChange"
                     />
                   </el-collapse-item>
-                  <el-collapse-item v-if="view.type && (view.type === 'table-normal' || view.type === 'table-info')" name="scroll" :title="$t('chart.scroll_cfg')">
+                  <el-collapse-item
+                    v-if="view.type && (view.type === 'table-normal' || view.type === 'table-info')"
+                    name="scroll"
+                    :title="$t('chart.scroll_cfg')"
+                  >
                     <scroll-cfg
                       :param="param"
                       class="attr-selector"
@@ -795,7 +1040,10 @@
                 v-if="view.type && (view.type.includes('bar') || view.type.includes('line') || view.type.includes('area') || view.type.includes('mix') || view.type.includes('gauge') || view.type === 'text' || (view.render === 'antv' && view.type.includes('table')))"
               >
                 <span class="padding-lr">{{ $t('chart.analyse_cfg') }}</span>
-                <el-collapse v-model="styleActiveNames" class="style-collapse">
+                <el-collapse
+                  v-model="styleActiveNames"
+                  class="style-collapse"
+                >
                   <el-collapse-item
                     v-if="view.type && (view.type.includes('bar') || view.type.includes('line') || view.type.includes('area') || view.type.includes('mix'))"
                     name="analyse"
@@ -826,10 +1074,19 @@
 
               <el-row v-if="view.type && (view.type === 'map' || view.type === 'buddle-map')">
 
-                <span v-if="false" class="padding-lr">{{ $t('chart.senior_cfg') }}</span>
-                <el-collapse v-model="mapActiveNames" class="style-collapse">
+                <span
+                  v-if="false"
+                  class="padding-lr"
+                >{{ $t('chart.senior_cfg') }}</span>
+                <el-collapse
+                  v-model="mapActiveNames"
+                  class="style-collapse"
+                >
 
-                  <el-collapse-item title="地名映射" name="map-mapping">
+                  <el-collapse-item
+                    :title="$t('chart.place_name_mapping')"
+                    name="map-mapping"
+                  >
                     <map-mapping
                       :param="param"
                       class="attr-selector"
@@ -844,17 +1101,53 @@
               </el-row>
 
             </div>
-            <div v-else class="no-senior">
+            <div
+              v-else
+              class="no-senior"
+            >
               {{ $t('chart.chart_no_senior') }}
             </div>
           </el-row>
         </el-tab-pane>
+        <el-tab-pane
+          v-if="!curComponent.auxiliaryMatrix"
+          name="position"
+          :label="$t('panel.position_adjust')"
+          class="padding-tab"
+          style="width: 350px;"
+        >
+          <div class="attr-style theme-border-class">
+            <el-collapse
+              v-model="positionActiveNames"
+              class="style-collapse"
+            >
+              <el-collapse-item
+                :title="$t('panel.position_adjust_component')"
+                :name="'positionAdjust'"
+              >
+                <position-adjust />
+              </el-collapse-item>
+            </el-collapse>
+          </div>
+
+        </el-tab-pane>
+
       </el-tabs>
 
-      <el-col v-if="editFrom==='view'" style="height: 100%;min-width: 500px;border-top: 1px solid #E6E6E6;">
-        <el-row style="width: 100%;height: 100%;" class="padding-lr">
-          <div ref="imageWrapper" style="height: 100%">
-            <plugin-com v-if="httpRequest.status && chart.type && view.isPlugin"
+      <el-col
+        v-if="editFrom==='view'"
+        style="height: 100%;min-width: 500px;border-top: 1px solid #E6E6E6;"
+      >
+        <el-row
+          style="width: 100%;height: 100%;"
+          class="padding-lr"
+        >
+          <div
+            ref="imageWrapper"
+            style="height: 100%"
+          >
+            <plugin-com
+              v-if="httpRequest.status && chart.type && view.isPlugin"
               ref="dynamicChart"
               :component-name="chart.type + '-view'"
               :obj="{chart}"
@@ -864,9 +1157,8 @@
               class="chart-class"
               @onChartClick="chartClick"
             />
-            <chart-component v-else-if="httpRequest.status && chart.type
-                && !chart.type.includes('table') && !chart.type.includes('text')
-                && chart.type !== 'label' && renderComponent() === 'echarts'"
+            <chart-component
+              v-else-if="httpRequest.status && chart.type && !chart.type.includes('table') && !chart.type.includes('text') && chart.type !== 'label' && renderComponent() === 'echarts'"
               ref="dynamicChart"
               :chart-id="chart.id"
               :chart="chart"
@@ -874,40 +1166,43 @@
               :theme-style="curComponent.commonBackground"
               @onChartClick="chartClick"
             />
-            <chart-component-g2 v-else-if="httpRequest.status && chart.type
-                && !chart.type.includes('table') && !chart.type.includes('text')
-                && chart.type !== 'label' && renderComponent() === 'antv'"
+            <chart-component-g2
+              v-else-if="httpRequest.status && chart.type && !chart.type.includes('table') && !chart.type.includes('text') && chart.type !== 'label' && renderComponent() === 'antv'"
               ref="dynamicChart"
               :chart-id="chart.id"
               :chart="chart"
               class="chart-class"
               @onChartClick="chartClick"
             />
-            <chart-component-s2 v-else-if="httpRequest.status
-                && chart.type && chart.type.includes('table') && !chart.type.includes('text')
-                && chart.type !== 'label' && renderComponent() === 'antv'"
+            <chart-component-s2
+              v-else-if="httpRequest.status && chart.type && chart.type.includes('table') && !chart.type.includes('text') && chart.type !== 'label' && renderComponent() === 'antv'"
               ref="dynamicChart"
               :chart-id="chart.id"
               :chart="chart"
               class="chart-class"
               @onChartClick="chartClick"
             />
-            <table-normal v-else-if="httpRequest.status
-                && chart.type && chart.type.includes('table') && renderComponent() === 'echarts' && chart.type !== 'table-pivot'"
+            <table-normal
+              v-else-if="httpRequest.status && chart.type && chart.type.includes('table') && renderComponent() === 'echarts' && chart.type !== 'table-pivot'"
               :show-summary="chart.type === 'table-normal'"
               :chart="chart"
               class="table-class"
             />
-            <label-normal v-else-if="httpRequest.status
-                && chart.type && chart.type.includes('text')"
+            <label-normal
+              v-else-if="httpRequest.status && chart.type && chart.type.includes('text')"
               :chart="chart"
               class="table-class"
             />
-            <label-normal-text v-else-if="httpRequest.status && chart.type && chart.type === 'label'"
+            <label-normal-text
+              v-else-if="httpRequest.status && chart.type && chart.type === 'label'"
               :chart="chart"
               class="table-class"
             />
-            <div v-if="!httpRequest.status" class="chart-error-class"><div
+            <div
+              v-if="!httpRequest.status"
+              class="chart-error-class"
+            >
+              <div
                 style="font-size: 12px; color: #9ea6b2;height: 100%;display: flex;align-items: center;justify-content: center;"
               >
                 {{ httpRequest.msg }},{{ $t('chart.chart_show_error') }}
@@ -917,25 +1212,62 @@
             </div>
           </div>
           <div style="position: absolute;left: 8px;bottom:8px;">
-            <drill-path :drill-filters="drillFilters" @onDrillJump="drillJump" />
+            <drill-path
+              :drill-filters="drillFilters"
+              @onDrillJump="drillJump"
+            />
           </div>
         </el-row>
       </el-col>
     </el-row>
 
     <!--显示名修改-->
-    <el-dialog v-dialogDrag :title="$t('chart.show_name_set')" :visible="renameItem" :show-close="false" width="30%">
-      <el-form ref="itemForm" label-width="80px" :model="itemForm" :rules="itemFormRules">
-        <el-form-item :label="$t('dataset.field_origin_name')" class="form-item">
+    <el-dialog
+      v-dialogDrag
+      :title="$t('chart.show_name_set')"
+      :visible="renameItem"
+      :show-close="false"
+      width="30%"
+    >
+      <el-form
+        ref="itemForm"
+        label-width="80px"
+        :model="itemForm"
+        :rules="itemFormRules"
+      >
+        <el-form-item
+          :label="$t('dataset.field_origin_name')"
+          class="form-item"
+        >
           <span style="padding: 0 16px;">{{ itemForm.dsFieldName }}</span>
         </el-form-item>
-        <el-form-item :label="$t('chart.show_name')" class="form-item">
-          <el-input v-model="itemForm.name" style="width: 200px" size="mini" clearable />
+        <el-form-item
+          :label="$t('chart.show_name')"
+          class="form-item"
+        >
+          <el-input
+            v-model="itemForm.name"
+            style="width: 200px"
+            size="mini"
+            clearable
+          />
         </el-form-item>
       </el-form>
-      <div slot="footer" class="dialog-footer">
-        <el-button size="mini" @click="closeRename()">{{ $t('chart.cancel') }}</el-button>
-        <el-button type="primary" size="mini" @click="saveRename">{{ $t('chart.confirm') }}</el-button>
+      <div
+        slot="footer"
+        class="dialog-footer"
+      >
+        <el-button
+          size="mini"
+          @click="closeRename()"
+        >{{ $t('chart.cancel') }}
+        </el-button>
+        <el-button
+          type="primary"
+          size="mini"
+          @click="saveRename"
+        >{{ $t('chart.confirm') }}
+        </el-button>
       </div>
     </el-dialog>
 
@@ -950,9 +1282,21 @@
       class="dialog-css"
     >
       <quota-filter-editor :item="quotaItem" />
-      <div slot="footer" class="dialog-footer">
-        <el-button size="mini" @click="closeQuotaFilter">{{ $t('chart.cancel') }}</el-button>
-        <el-button type="primary" size="mini" @click="saveQuotaFilter">{{ $t('chart.confirm') }}</el-button>
+      <div
+        slot="footer"
+        class="dialog-footer"
+      >
+        <el-button
+          size="mini"
+          @click="closeQuotaFilter"
+        >{{ $t('chart.cancel') }}
+        </el-button>
+        <el-button
+          type="primary"
+          size="mini"
+          @click="saveQuotaFilter"
+        >{{ $t('chart.confirm') }}
+        </el-button>
       </div>
     </el-dialog>
     <el-dialog
@@ -965,9 +1309,21 @@
       class="dialog-css"
     >
       <dimension-filter-editor :item="dimensionItem" />
-      <div slot="footer" class="dialog-footer">
-        <el-button size="mini" @click="closeDimensionFilter">{{ $t('chart.cancel') }}</el-button>
-        <el-button type="primary" size="mini" @click="saveDimensionFilter">{{ $t('chart.confirm') }}</el-button>
+      <div
+        slot="footer"
+        class="dialog-footer"
+      >
+        <el-button
+          size="mini"
+          @click="closeDimensionFilter"
+        >{{ $t('chart.cancel') }}
+        </el-button>
+        <el-button
+          type="primary"
+          size="mini"
+          @click="saveDimensionFilter"
+        >{{ $t('chart.confirm') }}
+        </el-button>
       </div>
     </el-dialog>
     <el-dialog
@@ -979,10 +1335,25 @@
       width="800px"
       class="dialog-css"
     >
-      <result-filter-editor :chart="chartForFilter" :item="filterItem" />
-      <div slot="footer" class="dialog-footer">
-        <el-button size="mini" @click="closeResultFilter">{{ $t('chart.cancel') }}</el-button>
-        <el-button type="primary" size="mini" @click="saveResultFilter">{{ $t('chart.confirm') }}</el-button>
+      <result-filter-editor
+        :chart="chartForFilter"
+        :item="filterItem"
+      />
+      <div
+        slot="footer"
+        class="dialog-footer"
+      >
+        <el-button
+          size="mini"
+          @click="closeResultFilter"
+        >{{ $t('chart.cancel') }}
+        </el-button>
+        <el-button
+          type="primary"
+          size="mini"
+          @click="saveResultFilter"
+        >{{ $t('chart.confirm') }}
+        </el-button>
       </div>
     </el-dialog>
 
@@ -996,11 +1367,26 @@
       width="70%"
       class="dialog-css"
     >
-      <table-selector :checked-table="table" @getTable="getTable" />
+      <table-selector
+        :checked-table="table"
+        @getTable="getTable"
+      />
       <p style="margin-top: 10px;color:#F56C6C;font-size: 12px;">{{ $t('chart.change_ds_tip') }}</p>
-      <div slot="footer" class="dialog-footer">
-        <el-button size="mini" @click="closeChangeChart">{{ $t('chart.cancel') }}</el-button>
-        <el-button type="primary" size="mini" :disabled="!changeTable || !changeTable.id" @click="changeChart">
+      <div
+        slot="footer"
+        class="dialog-footer"
+      >
+        <el-button
+          size="mini"
+          @click="closeChangeChart"
+        >{{ $t('chart.cancel') }}
+        </el-button>
+        <el-button
+          type="primary"
+          size="mini"
+          :disabled="!changeTable || !changeTable.id"
+          @click="changeChart"
+        >
           {{ $t('chart.confirm') }}
         </el-button>
       </div>
@@ -1014,13 +1400,24 @@
       class="dialog-css"
       :fullscreen="true"
     >
-      <field-edit :param="table" :table="table" />
-      <div slot="title" class="dialog-footer title-text">
+      <field-edit
+        :param="table"
+        :table="table"
+      />
+      <div
+        slot="title"
+        class="dialog-footer title-text"
+      >
         <span style="font-size: 14px;">
           {{ $t('chart.ds_field_edit') }}
           <span v-if="table">[{{ table.name }}]</span>
         </span>
-        <el-button size="mini" style="float: right;" @click="closeEditDsField">{{ $t('chart.close') }}</el-button>
+        <el-button
+          size="mini"
+          style="float: right;"
+          @click="closeEditDsField"
+        >{{ $t('chart.close') }}
+        </el-button>
       </div>
     </el-dialog>
 
@@ -1032,13 +1429,25 @@
       class="dialog-css"
       :fullscreen="true"
     >
-      <chart-field-edit :param="chart" :table="table" :chart="chart" />
-      <div slot="title" class="dialog-footer title-text">
+      <chart-field-edit
+        :param="chart"
+        :table="table"
+        :chart="chart"
+      />
+      <div
+        slot="title"
+        class="dialog-footer title-text"
+      >
         <span style="font-size: 14px;">
           {{ $t('chart.chart_field_edit') }}
           <span v-if="table">[{{ chart.title }}]</span>
         </span>
-        <el-button size="mini" style="float: right;" @click="closeEditChartField">{{ $t('chart.close') }}</el-button>
+        <el-button
+          size="mini"
+          style="float: right;"
+          @click="closeEditChartField"
+        >{{ $t('chart.close') }}
+        </el-button>
       </div>
     </el-dialog>
 
@@ -1052,10 +1461,25 @@
       width="600px"
       class="dialog-css"
     >
-      <compare-edit :compare-item="quotaItemCompare" :chart="chart" />
-      <div slot="footer" class="dialog-footer">
-        <el-button size="mini" @click="closeQuotaEditCompare">{{ $t('chart.cancel') }}</el-button>
-        <el-button type="primary" size="mini" @click="saveQuotaEditCompare">{{ $t('chart.confirm') }}</el-button>
+      <compare-edit
+        :compare-item="quotaItemCompare"
+        :chart="chart"
+      />
+      <div
+        slot="footer"
+        class="dialog-footer"
+      >
+        <el-button
+          size="mini"
+          @click="closeQuotaEditCompare"
+        >{{ $t('chart.cancel') }}
+        </el-button>
+        <el-button
+          type="primary"
+          size="mini"
+          @click="saveQuotaEditCompare"
+        >{{ $t('chart.confirm') }}
+        </el-button>
       </div>
     </el-dialog>
 
@@ -1069,10 +1493,25 @@
       width="600px"
       class="dialog-css"
     >
-      <value-formatter-edit :formatter-item="valueFormatterItem" :chart="chart" />
-      <div slot="footer" class="dialog-footer">
-        <el-button size="mini" @click="closeValueFormatter">{{ $t('chart.cancel') }}</el-button>
-        <el-button type="primary" size="mini" @click="saveValueFormatter">{{ $t('chart.confirm') }}</el-button>
+      <value-formatter-edit
+        :formatter-item="valueFormatterItem"
+        :chart="chart"
+      />
+      <div
+        slot="footer"
+        class="dialog-footer"
+      >
+        <el-button
+          size="mini"
+          @click="closeValueFormatter"
+        >{{ $t('chart.cancel') }}
+        </el-button>
+        <el-button
+          type="primary"
+          size="mini"
+          @click="saveValueFormatter"
+        >{{ $t('chart.confirm') }}
+        </el-button>
       </div>
     </el-dialog>
 
@@ -1086,10 +1525,27 @@
       width="500px"
       class="dialog-css"
     >
-      <custom-sort-edit :chart="chart" field-type="xAxis" :field="customSortField" @onSortChange="customSortChange" />
-      <div slot="footer" class="dialog-footer">
-        <el-button size="mini" @click="closeCustomSort">{{ $t('chart.cancel') }}</el-button>
-        <el-button type="primary" size="mini" @click="saveCustomSort">{{ $t('chart.confirm') }}</el-button>
+      <custom-sort-edit
+        :chart="chart"
+        field-type="xAxis"
+        :field="customSortField"
+        @onSortChange="customSortChange"
+      />
+      <div
+        slot="footer"
+        class="dialog-footer"
+      >
+        <el-button
+          size="mini"
+          @click="closeCustomSort"
+        >{{ $t('chart.cancel') }}
+        </el-button>
+        <el-button
+          type="primary"
+          size="mini"
+          @click="saveCustomSort"
+        >{{ $t('chart.confirm') }}
+        </el-button>
       </div>
     </el-dialog>
 
@@ -1103,10 +1559,27 @@
       width="500px"
       class="dialog-css"
     >
-      <custom-sort-edit :chart="chart" field-type="extStack" :field="customSortField" @onSortChange="customSortChange" />
-      <div slot="footer" class="dialog-footer">
-        <el-button size="mini" @click="closeStackCustomSort">{{ $t('chart.cancel') }}</el-button>
-        <el-button type="primary" size="mini" @click="saveStackCustomSort">{{ $t('chart.confirm') }}</el-button>
+      <custom-sort-edit
+        :chart="chart"
+        field-type="extStack"
+        :field="customSortField"
+        @onSortChange="customSortChange"
+      />
+      <div
+        slot="footer"
+        class="dialog-footer"
+      >
+        <el-button
+          size="mini"
+          @click="closeStackCustomSort"
+        >{{ $t('chart.cancel') }}
+        </el-button>
+        <el-button
+          type="primary"
+          size="mini"
+          @click="saveStackCustomSort"
+        >{{ $t('chart.confirm') }}
+        </el-button>
       </div>
     </el-dialog>
 
@@ -1133,16 +1606,18 @@
 <script>
 import {
   ajaxGetDataOnly,
-  post,
   getChartDetails,
+  pluginTypes,
+  post,
+  resetViewCacheCallBack,
   viewEditSave,
-  resetViewCacheCallBack
+  tableField
 } from '@/api/chart/chart'
-import DimensionItem from '../components/drag-item/DimensionItem'
-import QuotaItem from '../components/drag-item/QuotaItem'
-import FilterItem from '../components/drag-item/FilterItem'
-import ChartDragItem from '../components/drag-item/ChartDragItem'
-import DrillItem from '../components/drag-item/DrillItem'
+import DimensionItem from '../components/dragItem/DimensionItem'
+import QuotaItem from '../components/dragItem/QuotaItem'
+import FilterItem from '../components/dragItem/FilterItem'
+import ChartDragItem from '../components/dragItem/ChartDragItem'
+import DrillItem from '../components/dragItem/DrillItem'
 import ResultFilterEditor from '../components/filter/ResultFilterEditor'
 import ChartComponent from '../components/ChartComponent'
 import DrillPath from '@/views/chart/view/DrillPath'
@@ -1172,13 +1647,13 @@ import LabelNormal from '../components/normal/LabelNormal'
 import TableSelector from './TableSelector'
 import FieldEdit from '../../dataset/data/FieldEdit'
 import { areaMapping } from '@/api/map/map'
-import QuotaExtItem from '@/views/chart/components/drag-item/QuotaExtItem'
+import QuotaExtItem from '@/views/chart/components/dragItem/QuotaExtItem'
 import ChartComponentG2 from '@/views/chart/components/ChartComponentG2'
 import ChartType from '@/views/chart/view/ChartType'
 import CompareEdit from '@/views/chart/components/compare/CompareEdit'
 import { compareItem } from '@/views/chart/chart/compare'
 import ChartComponentS2 from '@/views/chart/components/ChartComponentS2'
-import DimensionExtItem from '@/views/chart/components/drag-item/DimensionExtItem'
+import DimensionExtItem from '@/views/chart/components/dragItem/DimensionExtItem'
 import PluginCom from '@/views/system/plugin/PluginCom'
 import { mapState } from 'vuex'
 
@@ -1187,17 +1662,19 @@ import MapMapping from '@/views/chart/components/senior/MapMapping'
 import AssistLine from '@/views/chart/components/senior/AssistLine'
 import Threshold from '@/views/chart/components/senior/Threshold'
 import LabelNormalText from '@/views/chart/components/normal/LabelNormalText'
-import { pluginTypes } from '@/api/chart/chart'
-import ValueFormatterEdit from '@/views/chart/components/value-formatter/ValueFormatterEdit'
+import ValueFormatterEdit from '@/views/chart/components/valueFormatter/ValueFormatterEdit'
 import ChartStyle from '@/views/chart/view/ChartStyle'
 import CustomSortEdit from '@/views/chart/components/compare/CustomSortEdit'
 import ScrollCfg from '@/views/chart/components/senior/ScrollCfg'
 import ChartFieldEdit from '@/views/chart/view/ChartFieldEdit'
 import CalcChartFieldEdit from '@/views/chart/view/CalcChartFieldEdit'
+import { equalsAny } from '@/utils/StringUtils'
+import PositionAdjust from '@/views/chart/view/PositionAdjust'
 
 export default {
   name: 'ChartEdit',
   components: {
+    PositionAdjust,
     ScrollCfg,
     CalcChartFieldEdit,
     ChartFieldEdit,
@@ -1242,7 +1719,7 @@ export default {
       required: false,
       default: 'view'
     },
-    editStatue: {
+    editStatus: {
       type: Boolean,
       required: false,
       default: false
@@ -1250,6 +1727,7 @@ export default {
   },
   data() {
     return {
+      positionActiveNames: 'positionAdjust',
       loading: false,
       table: {},
       dimension: [],
@@ -1353,7 +1831,6 @@ export default {
       tabActive: 'data',
       currentAreaCode: '',
       showStackCustomSort: false
-
     }
   },
   computed: {
@@ -1388,16 +1865,14 @@ export default {
       'allViewRender'
 
     ])
-    /* pluginRenderOptions() {
-      const plugins = localStorage.getItem('plugin-views') && JSON.parse(localStorage.getItem('plugin-views')) || []
-      const pluginOptions = plugins.filter(plugin => !this.renderOptions.some(option => option.value === plugin.render)).map(plugin => {
-        return { name: plugin.render, value: plugin.render }
-      })
-      return [...this.renderOptions, ...pluginOptions]
-    } */
   },
   watch: {
-    'editStatue': function(val) {
+    'curComponent.auxiliaryMatrix': function(val) {
+      if (val && this.tabActive === 'position') {
+        this.tabActive = 'data'
+      }
+    },
+    'editStatus': function(val) {
       if (val && this.param.id !== this.preChartId) {
         this.preChartId = this.param.id
         this.chartInit()
@@ -1406,7 +1881,7 @@ export default {
     'param': function(val) {
       if (this.param.optType === 'new') {
         //
-      } else if (this.param.id !== this.preChartId && this.editStatue) {
+      } else if (this.param.id !== this.preChartId && this.editStatus) {
         this.preChartId = this.param.id
         this.chartInit()
       }
@@ -1459,7 +1934,14 @@ export default {
   },
 
   methods: {
-    resetChartData(){
+    setTitle(title, id) {
+      if (this.view.id !== id) return
+      this.view.customStyle.text = { ...this.view.customStyle.text, title }
+      this.view.title = title
+      this.view.name = title
+      this.calcStyle()
+    },
+    resetChartData() {
       this.getChart(this.param.id)
     },
     setDynamicAreaCode(code) {
@@ -1481,6 +1963,22 @@ export default {
     },
     initFromPanel() {
       this.hasEdit = (this.panelViewEditInfo[this.param.id] || false)
+    },
+    convertChart(chart) {
+      if (equalsAny(chart.type, 'pie', 'pie-rose')) {
+        let customAttr = chart.customAttr
+        if (typeof chart.customAttr === 'string') {
+          customAttr = JSON.parse(customAttr)
+        }
+        if (customAttr.size.pieInnerRadius > 0) {
+          if (chart.type === 'pie') {
+            chart.type = 'pie-donut'
+          }
+          if (chart.type === 'pie-rose') {
+            chart.type = 'pie-donut-rose'
+          }
+        }
+      }
     },
     chartInit() {
       this.fieldShow = false
@@ -1504,7 +2002,7 @@ export default {
     },
     initTableData(id, optType) {
       if (id != null) {
-        post('/dataset/table/getWithPermission/' + id, null).then(response => {
+        tableField(id).then(response => {
           // If click too fast on the panel, the data here may be inconsistent, so make a verification
           if (this.view.tableId === id) {
             this.table = response.data
@@ -1635,7 +2133,7 @@ export default {
           ele.filter = []
         }
       })
-      if (view.type === 'table-pivot' || view.type === 'bar-group') {
+      if (view.type === 'table-pivot' || view.type === 'bar-group' || (view.render === 'antv' && view.type === 'line')) {
         view.xaxisExt.forEach(function(ele) {
           if (!ele.dateStyle || ele.dateStyle === '') {
             ele.dateStyle = 'y_M_d'
@@ -1651,9 +2149,7 @@ export default {
           }
         })
       }
-      if (view.type === 'map' && view.yaxis.length > 1) {
-        view.yaxis = [view.yaxis[0]]
-      }
+
       view.yaxis.forEach(function(ele) {
         if (!ele.chartType) {
           ele.chartType = 'bar'
@@ -1752,9 +2248,6 @@ export default {
       if (view.type === 'line' && trigger === 'chart') {
         view.customAttr.size.lineArea = false
       }
-      if (view.type === 'treemap' && trigger === 'chart') {
-        view.customAttr.label.show = true
-      }
       if (view.type === 'liquid' ||
         (view.type.includes('table') && view.render === 'echarts') ||
         view.type.includes('text') ||
@@ -1791,7 +2284,11 @@ export default {
       if (!view) return
       viewEditSave(this.panelInfo.id, view).then(() => {
         // this.getData(this.param.id)
-        bus.$emit('view-in-cache', { type: 'propChange', viewId: this.param.id })
+        bus.$emit('view-in-cache', {
+          type: 'propChange',
+          viewId: this.param.id,
+          view: view
+        })
       })
     },
     calcStyle(modifyName) {
@@ -1821,7 +2318,12 @@ export default {
       viewEditSave(this.panelInfo.id, viewSave)
 
       if (modifyName === 'color') {
-        bus.$emit('view-in-cache', { type: 'styleChange', viewId: this.view.id, viewInfo: view, refreshProp: 'customAttr' })
+        bus.$emit('view-in-cache', {
+          type: 'styleChange',
+          viewId: this.view.id,
+          viewInfo: view,
+          refreshProp: 'customAttr'
+        })
       } else {
         bus.$emit('view-in-cache', { type: 'styleChange', viewId: this.view.id, viewInfo: view })
       }
@@ -1940,6 +2442,12 @@ export default {
           this.httpRequest.status = err.response.data.success
           this.httpRequest.msg = err.response.data.message
           return true
+        }).then(() => {
+          // 视图为编辑状态才进行转换
+          if (this.editStatus) {
+            this.convertChart(this.chart)
+            this.convertChart(this.view)
+          }
         })
       } else {
         this.view = {}
@@ -1986,6 +2494,10 @@ export default {
     onColorChange(val) {
       this.view.customAttr.color = val
       this.calcStyle('color')
+    },
+    onSuspensionChange(val) {
+      this.view.customAttr.suspension = val
+      this.calcStyle()
     },
 
     onSizeChange(val) {
@@ -2117,7 +2629,7 @@ export default {
           })
           return
         }
-        if (parseFloat(f.value).toString() === 'NaN') {
+        if (isNaN(f.value)) {
           this.$message({
             message: this.$t('chart.filter_value_can_not_str'),
             type: 'error',
@@ -2174,7 +2686,7 @@ export default {
             return
           }
           if (this.filterItem.deType === 2 || this.filterItem.deType === 3) {
-            if (parseFloat(f.value).toString() === 'NaN') {
+            if (isNaN(f.value)) {
               this.$message({
                 message: this.$t('chart.filter_value_can_not_str'),
                 type: 'error',
@@ -2331,6 +2843,8 @@ export default {
     closeEditChartField() {
       this.showEditChartField = false
       this.initTableField(this.table.id)
+      // 因动态计算较多，更新字段后重新计算视图数据
+      this.calcData()
     },
 
     // drag
@@ -2390,7 +2904,7 @@ export default {
     addYaxis(e) {
       this.dragCheckType(this.view.yaxis, 'q')
       this.dragMoveDuplicate(this.view.yaxis, e)
-      if ((this.view.type === 'map' || this.view.type === 'waterfall' || this.view.type === 'word-cloud' || this.view.type.includes('group')) && this.view.yaxis.length > 1) {
+      if ((this.view.type === 'waterfall' || this.view.type === 'word-cloud' || this.view.type.includes('group')) && this.view.yaxis.length > 1) {
         this.view.yaxis = [this.view.yaxis[0]]
       }
       this.calcData(true)
@@ -2420,6 +2934,7 @@ export default {
           }
         }
       }
+      this.view.customFilter[e.newDraggableIndex].filter = []
       this.dragMoveDuplicate(this.view.customFilter, e)
       this.dragRemoveChartField(this.view.customFilter, e)
       this.calcData(true)
@@ -2531,7 +3046,10 @@ export default {
         const current = this.$refs.dynamicChart
         this.setDetailMapCode(null)
         if (this.view.isPlugin) {
-          current && current.callPluginInner && current.callPluginInner({ methodName: 'registerDynamicMap', methodParam: null })
+          current && current.callPluginInner && current.callPluginInner({
+            methodName: 'registerDynamicMap',
+            methodParam: null
+          })
         } else {
           current && current.registerDynamicMap && current.registerDynamicMap(null)
         }
@@ -2655,11 +3173,24 @@ export default {
 
     setChartDefaultOptions() {
       const type = this.view.type
+      const customAttr = this.view.customAttr
+      const customStyle = this.view.customStyle
       if (type.includes('pie')) {
         if (this.view.render === 'echarts') {
-          this.view.customAttr.label.position = 'inside'
+          customAttr.label.position = 'inside'
         } else {
-          this.view.customAttr.label.position = 'inner'
+          customStyle.legend.show = false
+          customAttr.label.show = true
+          customAttr.label.position = 'outer'
+        }
+        if (type === 'pie-donut') {
+          customAttr.size.pieInnerRadius = Math.round(customAttr.size.pieOuterRadius * 0.75)
+        }
+        if (type === 'pie-donut-rose') {
+          customAttr.size.pieInnerRadius = Math.round(customAttr.size.pieOuterRadius * 0.5)
+        }
+        if (equalsAny(type, 'pie', 'pie-rose')) {
+          customAttr.size.pieInnerRadius = 0
         }
       } else if (type.includes('line')) {
         this.view.customAttr.label.position = 'top'
@@ -2815,12 +3346,16 @@ export default {
         })
       }).catch(() => {
       })
+    },
+    clearData(data) {
+      this.view[data] = []
+      this.calcData(true)
     }
   }
 }
 </script>
 
-<style lang='scss' scoped>
+<style lang="scss" scoped>
 .padding-lr {
   padding: 0 6px;
 }
@@ -2854,13 +3389,13 @@ export default {
 .view-panel-Mask {
   display: flex;
   height: calc(100vh - 80px);
-  background-color: rgba(92,94,97, 0.7);
-  position:absolute;
-  top:0px;
+  background-color: rgba(92, 94, 97, 0.7);
+  position: absolute;
+  top: 0px;
   left: 0px;
   width: 350px;
   z-index: 2;
-  cursor:not-allowed;
+  cursor: not-allowed;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3000,8 +3535,8 @@ span {
 }
 
 .chart-icon {
-  width: 20px;
-  height: 20px;
+  width: 20px !important;
+  height: 20px !important;
 }
 
 .el-radio {
@@ -3197,8 +3732,8 @@ span {
   width: 100px !important;
 }
 
-::v-deep .el-slider__runway.show-input{
-  width: 80px!important;
+::v-deep .el-slider__runway.show-input {
+  width: 80px !important;
 }
 
 .no-senior {
@@ -3211,15 +3746,16 @@ span {
   height: 100%;
 }
 
-.form-item-slider::v-deep.el-form-item__label{
+.form-item-slider::v-deep.el-form-item__label {
   font-size: 12px;
   line-height: 38px;
 }
-.form-item::v-deep.el-form-item__label{
+
+.form-item::v-deep.el-form-item__label {
   font-size: 12px;
 }
 
-.field-name{
+.field-name {
   display: inline-block;
   width: 90px;
   word-break: break-all;
@@ -3230,7 +3766,7 @@ span {
   top: 2px;
 }
 
-.field-setting{
+.field-setting {
   position: absolute;
   right: 8px;
 }
@@ -3243,19 +3779,19 @@ span {
   visibility: visible;
 }
 
-.field-split{
+.field-split {
   height: calc(100% - 40px);
 }
 
-.field-split ::v-deep .fu-split-pane__left{
-  padding-right: 0!important;
+.field-split ::v-deep .fu-split-pane__left {
+  padding-right: 0 !important;
 }
 
-.field-split ::v-deep .fu-split-pane__right{
-  padding-left: 0!important;
+.field-split ::v-deep .fu-split-pane__right {
+  padding-left: 0 !important;
 }
 
-.view-panel-row ::v-deep .el-collapse-item__header{
+.view-panel-row ::v-deep .el-collapse-item__header {
   height: 34px !important;
   line-height: 34px !important;
   padding: 0 0 0 6px !important;
@@ -3263,4 +3799,19 @@ span {
   font-weight: 400 !important;
 }
 
+.data-area-label {
+  text-align: left;
+  position: relative;
+  width: 100%;
+  display: inline-block;
+}
+
+.data-area-clear {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  color: rgb(135, 141, 159);
+  cursor: pointer;
+  z-index: 1;
+}
 </style>

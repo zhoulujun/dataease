@@ -1,5 +1,6 @@
 package io.dataease.provider.query.pg;
 
+import com.alibaba.fastjson.JSONArray;
 import com.google.gson.Gson;
 import io.dataease.plugins.common.base.domain.ChartViewWithBLOBs;
 import io.dataease.plugins.common.base.domain.DatasetTableField;
@@ -18,7 +19,9 @@ import io.dataease.plugins.common.dto.sqlObj.SQLObj;
 import io.dataease.plugins.common.request.chart.ChartExtFilterRequest;
 import io.dataease.plugins.common.request.permission.DataSetRowPermissionsTreeDTO;
 import io.dataease.plugins.common.request.permission.DatasetRowPermissionsTreeItem;
+import io.dataease.plugins.datasource.entity.Dateformat;
 import io.dataease.plugins.datasource.entity.JdbcConfiguration;
+import io.dataease.plugins.datasource.entity.PageInfo;
 import io.dataease.plugins.datasource.query.QueryProvider;
 import io.dataease.plugins.datasource.query.Utils;
 import org.apache.commons.collections4.CollectionUtils;
@@ -144,7 +147,7 @@ public class PgQueryProvider extends QueryProvider {
                     } else if (f.getDeType() == DeTypeConstants.DE_FLOAT) {
                         fieldName = String.format(PgConstants.CAST, originField, PgConstants.DEFAULT_FLOAT_FORMAT);
                     } else if (f.getDeType() == DeTypeConstants.DE_TIME) {
-                        fieldName = String.format(PgConstants.CAST, originField, "timestamp");
+                        fieldName = String.format(PgConstants.STR_TO_DATE, originField, StringUtils.isNotEmpty(f.getDateFormat()) ? f.getDateFormat() : PgConstants.DEFAULT_DATE_FORMAT);
                     } else {
                         fieldName = originField;
                     }
@@ -218,7 +221,7 @@ public class PgQueryProvider extends QueryProvider {
             } else if (f.getDeType() == DeTypeConstants.DE_FLOAT) {
                 fieldName = String.format(PgConstants.CAST, originField, PgConstants.DEFAULT_FLOAT_FORMAT);
             } else if (f.getDeType() == DeTypeConstants.DE_TIME) {
-                fieldName = String.format(PgConstants.CAST, originField, "timestamp");
+                fieldName = String.format(PgConstants.STR_TO_DATE, originField, StringUtils.isNotEmpty(f.getDateFormat()) ? f.getDateFormat() : PgConstants.DEFAULT_DATE_FORMAT);
             } else {
                 fieldName = originField;
             }
@@ -373,7 +376,16 @@ public class PgQueryProvider extends QueryProvider {
     }
 
     @Override
-    public String getSQLTableInfo(String table, List<ChartViewFieldDTO> xAxis, List<ChartFieldCustomFilterDTO> fieldCustomFilter, List<DataSetRowPermissionsTreeDTO> rowPermissionsTree, List<ChartExtFilterRequest> extFilterRequestList, Datasource ds, ChartViewWithBLOBs view) {
+    public String getSQLWithPage(boolean isTable, String table, List<ChartViewFieldDTO> xAxis, List<ChartFieldCustomFilterDTO> fieldCustomFilter, List<DataSetRowPermissionsTreeDTO> rowPermissionsTree, List<ChartExtFilterRequest> extFilterRequestList, Datasource ds, ChartViewWithBLOBs view, PageInfo pageInfo) {
+        String limit = ((pageInfo.getGoPage() != null && pageInfo.getPageSize() != null) ? " LIMIT " + pageInfo.getPageSize() + " offset " + (pageInfo.getGoPage() - 1) * pageInfo.getPageSize() : "");
+        if (isTable) {
+            return originalTableInfo(table, xAxis, fieldCustomFilter, rowPermissionsTree, extFilterRequestList, ds, view) + limit;
+        } else {
+            return originalTableInfo("(" + sqlFix(table) + ")", xAxis, fieldCustomFilter, rowPermissionsTree, extFilterRequestList, ds, view) + limit;
+        }
+    }
+
+    private String originalTableInfo(String table, List<ChartViewFieldDTO> xAxis, List<ChartFieldCustomFilterDTO> fieldCustomFilter, List<DataSetRowPermissionsTreeDTO> rowPermissionsTree, List<ChartExtFilterRequest> extFilterRequestList, Datasource ds, ChartViewWithBLOBs view) {
         SQLObj tableObj = SQLObj.builder()
                 .tableName((table.startsWith("(") && table.endsWith(")")) ? table : String.format(PgConstants.KEYWORD_TABLE, table))
                 .tableAlias(String.format(TABLE_ALIAS_PREFIX, 0))
@@ -445,7 +457,12 @@ public class PgQueryProvider extends QueryProvider {
                 .build();
         if (CollectionUtils.isNotEmpty(orders)) st.add("orders", orders);
         if (ObjectUtils.isNotEmpty(tableSQL)) st.add("table", tableSQL);
-        return sqlLimit(st.render(), view);
+        return st.render();
+    }
+
+    @Override
+    public String getSQLTableInfo(String table, List<ChartViewFieldDTO> xAxis, List<ChartFieldCustomFilterDTO> fieldCustomFilter, List<DataSetRowPermissionsTreeDTO> rowPermissionsTree, List<ChartExtFilterRequest> extFilterRequestList, Datasource ds, ChartViewWithBLOBs view) {
+        return sqlLimit(originalTableInfo(table, xAxis, fieldCustomFilter, rowPermissionsTree, extFilterRequestList, ds, view), view);
     }
 
     @Override
@@ -823,7 +840,7 @@ public class PgQueryProvider extends QueryProvider {
         }
         if (field.getDeType() == 1) {
             if (field.getDeExtractType() == 0 || field.getDeExtractType() == 5) {
-                whereName = String.format(PgConstants.CAST, originName, "timestamp");
+                whereName = String.format(PgConstants.STR_TO_DATE, originName, StringUtils.isNotEmpty(field.getDateFormat()) ? field.getDateFormat() : PgConstants.DEFAULT_DATE_FORMAT);
             }
             if (field.getDeExtractType() == 2 || field.getDeExtractType() == 3 || field.getDeExtractType() == 4) {
                 String cast = String.format(PgConstants.CAST, originName, "bigint");
@@ -947,7 +964,7 @@ public class PgQueryProvider extends QueryProvider {
             }
             if (field.getDeType() == 1) {
                 if (field.getDeExtractType() == 0 || field.getDeExtractType() == 5) {
-                    whereName = String.format(PgConstants.CAST, originName, "timestamp");
+                    whereName = String.format(PgConstants.STR_TO_DATE, originName,  StringUtils.isNotEmpty(field.getDateFormat()) ? field.getDateFormat() : PgConstants.DEFAULT_DATE_FORMAT);
                 }
                 if (field.getDeExtractType() == 2 || field.getDeExtractType() == 3 || field.getDeExtractType() == 4) {
                     String cast = String.format(PgConstants.CAST, originName, "bigint");
@@ -1046,7 +1063,7 @@ public class PgQueryProvider extends QueryProvider {
 
                 if (field.getDeType() == 1) {
                     if (field.getDeExtractType() == 0 || field.getDeExtractType() == 5) {
-                        whereName = String.format(PgConstants.CAST, originName, "timestamp");
+                        whereName = String.format(PgConstants.STR_TO_DATE, originName,  StringUtils.isNotEmpty(field.getDateFormat()) ? field.getDateFormat() : PgConstants.DEFAULT_DATE_FORMAT);
                     }
                     if (field.getDeExtractType() == 2 || field.getDeExtractType() == 3 || field.getDeExtractType() == 4) {
                         String cast = String.format(PgConstants.CAST, originName, "bigint");
@@ -1160,7 +1177,9 @@ public class PgQueryProvider extends QueryProvider {
             if (x.getDeType() == DeTypeConstants.DE_TIME) {
                 String format = transDateFormat(x.getDateStyle(), x.getDatePattern());
                 if (x.getDeExtractType() == DeTypeConstants.DE_STRING) {
-                    fieldName = String.format(PgConstants.DATE_FORMAT, String.format(PgConstants.CAST, originField, "timestamp"), format);
+                    fieldName = String.format(PgConstants.DATE_FORMAT,
+                            String.format(PgConstants.STR_TO_DATE, originField,  StringUtils.isNotEmpty(x.getDateFormat()) ? x.getDateFormat() : PgConstants.DEFAULT_DATE_FORMAT),
+                            format);
                 } else {
                     String cast = String.format(PgConstants.CAST, originField, "bigint");
                     String from_unixtime = String.format(PgConstants.FROM_UNIXTIME, cast);
@@ -1281,9 +1300,20 @@ public class PgQueryProvider extends QueryProvider {
     }
 
     @Override
-    public String sqlForPreview(String table, Datasource ds){
+    public String sqlForPreview(String table, Datasource ds) {
         String schema = new Gson().fromJson(ds.getConfiguration(), JdbcConfiguration.class).getSchema();
         schema = String.format(PgConstants.KEYWORD_TABLE, schema);
         return "SELECT * FROM " + schema + "." + String.format(PgConstants.KEYWORD_TABLE, table);
+    }
+
+    public List<Dateformat> dateformat() {
+        return JSONArray.parseArray("[\n" +
+                "{\"dateformat\": \"YYYY-MM-DD\"},\n" +
+                "{\"dateformat\": \"YYYY/MM/DD\"},\n" +
+                "{\"dateformat\": \"YYYYMMDD\"},\n" +
+                "{\"dateformat\": \"YYYY-MM-DD HH24:MI:SS\"},\n" +
+                "{\"dateformat\": \"YYYY/MM/DD HH24:MI:SS\"},\n" +
+                "{\"dateformat\": \"YYYYMMDD HH24:MI:SS\"}\n" +
+                "]", Dateformat.class);
     }
 }

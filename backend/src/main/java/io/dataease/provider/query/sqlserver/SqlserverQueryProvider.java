@@ -1,5 +1,7 @@
 package io.dataease.provider.query.sqlserver;
 
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.google.gson.Gson;
 import io.dataease.plugins.common.base.domain.ChartViewWithBLOBs;
 import io.dataease.plugins.common.base.domain.DatasetTableField;
@@ -17,6 +19,7 @@ import io.dataease.plugins.common.dto.sqlObj.SQLObj;
 import io.dataease.plugins.common.request.chart.ChartExtFilterRequest;
 import io.dataease.plugins.common.request.permission.DataSetRowPermissionsTreeDTO;
 import io.dataease.plugins.common.request.permission.DatasetRowPermissionsTreeItem;
+import io.dataease.plugins.datasource.entity.Dateformat;
 import io.dataease.plugins.datasource.entity.JdbcConfiguration;
 import io.dataease.plugins.datasource.query.QueryProvider;
 import io.dataease.plugins.datasource.query.Utils;
@@ -143,7 +146,7 @@ public class SqlserverQueryProvider extends QueryProvider {
                     } else if (f.getDeType() == DeTypeConstants.DE_FLOAT) {
                         fieldName = String.format(SqlServerSQLConstants.CONVERT, SqlServerSQLConstants.DEFAULT_FLOAT_FORMAT, originField);
                     } else if (f.getDeType() == DeTypeConstants.DE_TIME) { //字符串转时间
-                        fieldName = String.format(SqlServerSQLConstants.STRING_TO_DATE, originField);
+                        fieldName = String.format(SqlServerSQLConstants.STRING_TO_DATE, originField, StringUtils.isNotEmpty(f.getDateFormat()) ? f.getDateFormat() : SqlServerSQLConstants.DEFAULT_DATE_FORMAT);
                     } else {
                         fieldName = originField;
                     }
@@ -216,7 +219,7 @@ public class SqlserverQueryProvider extends QueryProvider {
             } else if (f.getDeType() == DeTypeConstants.DE_FLOAT) {
                 fieldName = String.format(SqlServerSQLConstants.CONVERT, SqlServerSQLConstants.DEFAULT_FLOAT_FORMAT, originField);
             } else if (f.getDeType() == DeTypeConstants.DE_TIME) { //字符串转时间
-                fieldName = String.format(SqlServerSQLConstants.STRING_TO_DATE, originField);
+                fieldName = String.format(SqlServerSQLConstants.STRING_TO_DATE, originField, StringUtils.isNotEmpty(f.getDateFormat()) ? f.getDateFormat() : SqlServerSQLConstants.DEFAULT_DATE_FORMAT);
             } else {
                 fieldName = originField;
             }
@@ -854,7 +857,7 @@ public class SqlserverQueryProvider extends QueryProvider {
         }
         if (field.getDeType() == 1) {
             if (field.getDeExtractType() == 0 || field.getDeExtractType() == 5) {
-                whereName = String.format(SqlServerSQLConstants.STRING_TO_DATE, originName);
+                whereName = String.format(SqlServerSQLConstants.STRING_TO_DATE, originName, StringUtils.isNotEmpty(field.getDateFormat()) ? field.getDateFormat() : SqlServerSQLConstants.DEFAULT_DATE_FORMAT);
             }
             if (field.getDeExtractType() == 2 || field.getDeExtractType() == 3 || field.getDeExtractType() == 4) {
                 String cast = String.format(SqlServerSQLConstants.LONG_TO_DATE, originName + "/1000");
@@ -979,7 +982,7 @@ public class SqlserverQueryProvider extends QueryProvider {
             }
             if (field.getDeType() == 1) {
                 if (field.getDeExtractType() == 0 || field.getDeExtractType() == 5) {
-                    whereName = String.format(SqlServerSQLConstants.STRING_TO_DATE, originName);
+                    whereName = String.format(SqlServerSQLConstants.STRING_TO_DATE, originName, StringUtils.isNotEmpty(field.getDateFormat()) ? field.getDateFormat() : SqlServerSQLConstants.DEFAULT_DATE_FORMAT);
                 }
                 if (field.getDeExtractType() == 2 || field.getDeExtractType() == 3 || field.getDeExtractType() == 4) {
                     String cast = String.format(SqlServerSQLConstants.LONG_TO_DATE, originName + "/1000");
@@ -1078,7 +1081,7 @@ public class SqlserverQueryProvider extends QueryProvider {
 
                 if (field.getDeType() == 1) {
                     if (field.getDeExtractType() == 0 || field.getDeExtractType() == 5) {
-                        whereName = String.format(SqlServerSQLConstants.STRING_TO_DATE, originName);
+                        whereName = String.format(SqlServerSQLConstants.STRING_TO_DATE, originName, StringUtils.isNotEmpty(field.getDateFormat()) ? field.getDateFormat() : SqlServerSQLConstants.DEFAULT_DATE_FORMAT);
                     }
                     if (field.getDeExtractType() == 2 || field.getDeExtractType() == 3 || field.getDeExtractType() == 4) {
                         String cast = String.format(SqlServerSQLConstants.LONG_TO_DATE, originName + "/1000");
@@ -1207,7 +1210,7 @@ public class SqlserverQueryProvider extends QueryProvider {
         } else {
             if (x.getDeType() == DeTypeConstants.DE_TIME) {
                 if (x.getDeExtractType() == DeTypeConstants.DE_STRING) {// 字符串转时间
-                    String cast = String.format(SqlServerSQLConstants.STRING_TO_DATE, originField);
+                    String cast = String.format(SqlServerSQLConstants.STRING_TO_DATE, originField, StringUtils.isNotEmpty(x.getDateFormat()) ? x.getDateFormat() : SqlServerSQLConstants.DEFAULT_DATE_FORMAT);
                     fieldName = transDateFormat(x.getDateStyle(), x.getDatePattern(), cast);
                 } else {// 数值转时间
                     String cast = String.format(SqlServerSQLConstants.LONG_TO_DATE, originField + "/1000");
@@ -1326,9 +1329,23 @@ public class SqlserverQueryProvider extends QueryProvider {
     }
 
     @Override
-    public String sqlForPreview(String table, Datasource ds){
+    public String sqlForPreview(String table, Datasource ds) {
         String schema = new Gson().fromJson(ds.getConfiguration(), JdbcConfiguration.class).getSchema();
         schema = String.format(SqlServerSQLConstants.KEYWORD_TABLE, schema);
         return "SELECT * FROM " + schema + "." + String.format(SqlServerSQLConstants.KEYWORD_TABLE, table);
+    }
+
+    public List<Dateformat> dateformat() {
+        return JSONArray.parseArray("[\n" +
+                "{\"dateformat\": \"102\", \"desc\": \"yyyy.mm.dd\"},\n" +
+                "{\"dateformat\": \"120\", \"desc\": \"yyyy-mm-dd\"},\n" +
+                "{\"dateformat\": \"111\", \"desc\": \"yyyy/mm/dd\"},\n" +
+                "{\"dateformat\": \"112\", \"desc\": \"yyyymmdd\"},\n" +
+                "{\"dateformat\": \"120\", \"desc\": \"yyyy-mm-dd hh:mi:ss\"}\n" +
+                "]", Dateformat.class);
+    }
+
+    public String getResultCount(boolean isTable, String sql, List<ChartViewFieldDTO> xAxis, List<ChartFieldCustomFilterDTO> fieldCustomFilter, List<DataSetRowPermissionsTreeDTO> rowPermissionsTree, List<ChartExtFilterRequest> extFilterRequestList, Datasource ds, ChartViewWithBLOBs view) {
+        return null;
     }
 }

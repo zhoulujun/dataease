@@ -9,6 +9,8 @@ import io.dataease.commons.exception.DEException;
 import io.dataease.commons.utils.DeLogUtils;
 import io.dataease.commons.utils.LogUtil;
 import io.dataease.commons.utils.ServletUtils;
+import io.dataease.exception.DataEaseException;
+import io.dataease.i18n.Translator;
 import io.dataease.plugins.common.base.domain.SysUserAssist;
 import io.dataease.plugins.config.SpringContextUtil;
 
@@ -98,10 +100,14 @@ public class XLarkServer {
             String username = larkUserInfo.getUser_id();
             SysUserEntity sysUserEntity = authUserService.getUserByLarkId(username);
             if (null == sysUserEntity) {
+                if (authUserService.checkScanCreateLimit())
+                    DEException.throwException(Translator.get("I18N_PROHIBIT_SCANNING_TO_CREATE_USER"));
                 String email = StringUtils.isNotBlank(larkUserInfo.getEmail()) ? larkUserInfo.getEmail() : (username + "@lark.work");
                 sysUserService.validateExistUser(username, larkUserInfo.getName(), email);
                 sysUserService.saveLarkCUser(larkUserInfo, email);
                 sysUserEntity = authUserService.getUserByLarkId(username);
+            } else if (sysUserEntity.getEnabled() == 0) {
+                DataEaseException.throwException(Translator.get("i18n_user_is_disable"));
             }
             TokenInfo tokenInfo = TokenInfo.builder().userId(sysUserEntity.getUserId()).username(sysUserEntity.getUsername()).build();
             String realPwd = sysUserEntity.getPassword();
@@ -185,7 +191,7 @@ public class XLarkServer {
                 sysUserAssist.setUserId(Long.parseLong(state));
             }
             sysUserAssist.setLarkId(userId);
-            sysUserService.saveAssist(sysUserAssist.getUserId(), sysUserAssist.getWecomId(), sysUserAssist.getDingtalkId(), sysUserAssist.getLarkId());
+            sysUserService.saveAssist(sysUserAssist.getUserId(), sysUserAssist.getWecomId(), sysUserAssist.getDingtalkId(), sysUserAssist.getLarkId(), sysUserAssist.getLarksuiteId());
             response.sendRedirect(url);
         } catch (Exception e) {
 

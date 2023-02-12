@@ -5,14 +5,23 @@
         <span style="font-weight:600;margin-right: 20px;font-size: 14px">{{ $t('panel.component_style') }}</span>
       </el-col>
     </el-row>
-    <el-row class="main-content" disabled="!curComponent.commonBackground.enable">
+    <el-row
+      class="main-content"
+      disabled="!curComponent.commonBackground.enable"
+    >
 
       <el-row style="height: 50px;overflow: hidden">
         <el-col :span="3">
           <span class="params-title">{{ $t('panel.inner_padding') }}</span>
         </el-col>
         <el-col :span="15">
-          <el-slider v-model="curComponent.commonBackground.innerPadding" show-input :show-input-controls="false" input-size="mini" :max="50" />
+          <el-slider
+            v-model="curComponent.commonBackground.innerPadding"
+            show-input
+            :show-input-controls="false"
+            input-size="mini"
+            :max="50"
+          />
         </el-col>
       </el-row>
       <el-row style="height: 50px;overflow: hidden">
@@ -20,27 +29,53 @@
           <span class="params-title">{{ $t('panel.board_radio') }}</span>
         </el-col>
         <el-col :span="15">
-          <el-slider v-model="curComponent.commonBackground.borderRadius" show-input :show-input-controls="false" input-size="mini" />
+          <el-slider
+            v-model="curComponent.commonBackground.borderRadius"
+            show-input
+            :show-input-controls="false"
+            input-size="mini"
+          />
         </el-col>
       </el-row>
 
       <el-row style="height: 40px;overflow: hidden;">
-        <el-col :span="3" style="padding-left: 10px;padding-top: 5px">
-          <el-checkbox v-model="curComponent.commonBackground.backgroundColorSelect">颜色</el-checkbox>
+        <el-col
+          :span="3"
+          style="padding-left: 10px;padding-top: 5px"
+        >
+          <el-checkbox v-model="curComponent.commonBackground.backgroundColorSelect">{{ $t('chart.color') }}</el-checkbox>
         </el-col>
-        <el-col :span="1" style="padding-top: 5px">
-          <el-color-picker v-model="curComponent.commonBackground.color" :disabled="!curComponent.commonBackground.backgroundColorSelect" size="mini" class="color-picker-style" :predefine="predefineColors" />
+        <el-col
+          :span="1"
+          style="padding-top: 5px"
+        >
+          <el-color-picker
+            v-model="curComponent.commonBackground.color"
+            :disabled="!curComponent.commonBackground.backgroundColorSelect"
+            size="mini"
+            class="color-picker-style"
+            :predefine="predefineColors"
+          />
         </el-col>
         <el-col :span="3">
-          <span class="params-title-small">不透明度：</span>
+          <span class="params-title-small">{{ $t('chart.not_alpha') }}</span>
         </el-col>
         <el-col :span="11">
-          <el-slider v-model="curComponent.commonBackground.alpha" :disabled="!curComponent.commonBackground.backgroundColorSelect" show-input :show-input-controls="false" input-size="mini" />
+          <el-slider
+            v-model="curComponent.commonBackground.alpha"
+            :disabled="!curComponent.commonBackground.backgroundColorSelect"
+            show-input
+            :show-input-controls="false"
+            input-size="mini"
+          />
         </el-col>
       </el-row>
 
       <el-row style="height: 50px">
-        <el-col :span="3" style="padding-left: 10px;padding-top: 5px">
+        <el-col
+          :span="3"
+          style="padding-left: 10px;padding-top: 5px"
+        >
           <el-checkbox v-model="curComponent.commonBackground.enable">{{ $t('panel.background') }}</el-checkbox>
         </el-col>
         <el-col :span="21">
@@ -49,10 +84,21 @@
           </span>
         </el-col>
       </el-row>
-      <el-row v-if="curComponent.commonBackground.enable" style="padding-left: 10px">
-        <el-row style="height: 80px;margin-top:10px;margin-bottom:20px;overflow: hidden">
-          <el-col :span="4" style="padding-left: 10px">
-            <el-radio v-model="curComponent.commonBackground.backgroundType" label="outerImage" @change="onChangeType">{{ $t('panel.photo') }}</el-radio>
+      <el-row
+        v-if="curComponent.commonBackground.enable"
+        style="padding-left: 10px"
+      >
+        <el-row style="height: 80px;margin-top:0px;margin-bottom:20px;overflow: hidden">
+          <el-col
+            :span="4"
+            style="padding-left: 10px"
+          >
+            <el-radio
+              v-model="curComponent.commonBackground.backgroundType"
+              label="outerImage"
+              @change="onChangeType"
+            >{{ $t('panel.photo') }}
+            </el-radio>
           </el-col>
           <el-col style="width: 130px!important;">
             <el-upload
@@ -68,18 +114,49 @@
             >
               <i class="el-icon-plus" />
             </el-upload>
-            <el-dialog top="25vh" width="600px" :append-to-body="true" :destroy-on-close="true" :visible.sync="dialogVisible">
-              <img width="100%" :src="dialogImageUrl">
+            <el-dialog
+              top="25vh"
+              width="600px"
+              :append-to-body="true"
+              :destroy-on-close="true"
+              :visible.sync="dialogVisible"
+            >
+              <img
+                width="100%"
+                :src="dialogImageUrl"
+              >
             </el-dialog>
           </el-col>
         </el-row>
         <el-row>
-          <el-col :span="4" style="padding-left: 10px;position: relative">
-            <el-radio v-model="curComponent.commonBackground.backgroundType" label="innerImage" @change="onChangeType">边框</el-radio>
-            <el-color-picker v-model="curComponent.commonBackground.innerImageColor" :title="'边框配色'" style="position: absolute;right:15px;top: -3px" size="mini" class="color-picker-style" :predefine="predefineColors" />
+          <el-col
+            :span="4"
+            style="padding-left: 10px;position: relative"
+          >
+            <el-radio
+              v-model="curComponent.commonBackground.backgroundType"
+              label="innerImage"
+              @change="onChangeType"
+            >{{ $t('panel.board') }}
+            </el-radio>
+            <el-color-picker
+              v-model="curComponent.commonBackground.innerImageColor"
+              :title="'边框配色'"
+              style="position: absolute;right:15px;top: -3px"
+              size="mini"
+              class="color-picker-style"
+              :predefine="predefineColors"
+            />
           </el-col>
-          <el-col :span="20" class="main-row">
-            <el-row v-for="(value, key) in BackgroundShowMap" :key="key">
+          <el-col
+            :span="20"
+            :style="customStyle"
+            class="main-row"
+          >
+            <el-row
+              v-for="(value, key) in BackgroundShowMap"
+              :key="key"
+            >
 
               <el-col
                 v-for="item in value"
@@ -94,35 +171,83 @@
           </el-col>
         </el-row>
       </el-row>
-      <el-row v-if="isFilterComponent" style="height: 40px;overflow: hidden;">
-        <el-col :span="5" style="padding-left: 10px;padding-top: 8px">
+      <el-row
+        v-if="isFilterComponent"
+        style="height: 40px;overflow: hidden;"
+      >
+        <el-col
+          :span="5"
+          style="padding-left: 10px;padding-top: 8px"
+        >
           输入框样式(颜色):
         </el-col>
-        <el-col :span="2" style="padding-left: 10px;padding-top: 8px">
+        <el-col
+          :span="2"
+          style="padding-left: 10px;padding-top: 8px"
+        >
           边框
         </el-col>
-        <el-col :span="3" style="padding-top: 5px">
-          <el-color-picker v-model="curComponent.style.brColor" size="mini" class="color-picker-style" :predefine="predefineColors" />
+        <el-col
+          :span="3"
+          style="padding-top: 5px"
+        >
+          <el-color-picker
+            v-model="curComponent.style.brColor"
+            size="mini"
+            class="color-picker-style"
+            :predefine="predefineColors"
+          />
         </el-col>
-        <el-col :span="2" style="padding-left: 10px;padding-top: 8px">
+        <el-col
+          :span="2"
+          style="padding-left: 10px;padding-top: 8px"
+        >
           文字
         </el-col>
-        <el-col :span="3" style="padding-top: 5px">
-          <el-color-picker v-model="curComponent.style.wordColor" size="mini" class="color-picker-style" :predefine="predefineColors" />
+        <el-col
+          :span="3"
+          style="padding-top: 5px"
+        >
+          <el-color-picker
+            v-model="curComponent.style.wordColor"
+            size="mini"
+            class="color-picker-style"
+            :predefine="predefineColors"
+          />
         </el-col>
-        <el-col :span="2" style="padding-left: 10px;padding-top: 8px">
+        <el-col
+          :span="2"
+          style="padding-left: 10px;padding-top: 8px"
+        >
           背景
         </el-col>
-        <el-col :span="3" style="padding-top: 5px">
-          <el-color-picker v-model="curComponent.style.innerBgColor" size="mini" class="color-picker-style" :predefine="predefineColors" />
+        <el-col
+          :span="3"
+          style="padding-top: 5px"
+        >
+          <el-color-picker
+            v-model="curComponent.style.innerBgColor"
+            size="mini"
+            class="color-picker-style"
+            :predefine="predefineColors"
+          />
         </el-col>
       </el-row>
 
     </el-row>
     <el-row class="root-class">
       <el-col :span="24">
-        <el-button size="mini" @click="cancel()">{{ $t('commons.cancel') }}</el-button>
-        <el-button type="primary" size="mini" @click="save()">{{ $t('commons.confirm') }}</el-button>
+        <el-button
+          size="mini"
+          @click="cancel()"
+        >{{ $t('commons.cancel') }}
+        </el-button>
+        <el-button
+          type="primary"
+          size="mini"
+          @click="save()"
+        >{{ $t('commons.confirm') }}
+        </el-button>
       </el-col>
     </el-row>
   </el-row>
@@ -135,7 +260,7 @@ import { mapState } from 'vuex'
 import { deepCopy, imgUrlTrans } from '@/components/canvas/utils/utils'
 import { COLOR_PANEL } from '@/views/chart/chart/chart'
 import { uploadFileResult } from '@/api/staticResource/staticResource'
-import { COMMON_BACKGROUND_NONE } from '@/components/canvas/custom-component/component-list'
+import { COMMON_BACKGROUND_NONE } from '@/components/canvas/customComponent/component-list'
 
 export default {
   name: 'Background',
@@ -153,20 +278,38 @@ export default {
       predefineColors: COLOR_PANEL
     }
   },
-  created() {
-    this.init()
-  },
-  mounted() {
-
-  },
   computed: {
+    customStyle() {
+      let style = {}
+      if (this.canvasStyleData.openCommonStyle) {
+        if (this.canvasStyleData.panel.backgroundType === 'image' && this.canvasStyleData.panel.imageUrl) {
+          style = {
+            background: `url(${imgUrlTrans(this.canvasStyleData.panel.imageUrl)}) no-repeat`,
+            ...style
+          }
+        } else if (this.canvasStyleData.panel.backgroundType === 'color') {
+          style = {
+            background: this.canvasStyleData.panel.color,
+            ...style
+          }
+        }
+      }
+      if (!style.background) {
+        style.background = '#FFFFFF'
+      }
+      return style
+    },
     ...mapState([
       'curComponent',
+      'canvasStyleData',
       'componentData'
     ]),
     isFilterComponent() {
       return ['de-select', 'de-select-grid', 'de-date', 'de-input-search', 'de-number-range', 'de-select-tree'].includes(this.curComponent.component)
     }
+  },
+  created() {
+    this.init()
   },
   methods: {
     init() {
@@ -224,73 +367,85 @@ export default {
 </script>
 
 <style scoped>
-  .el-card-template {
-    min-width: 260px;
-    min-width: 460px;
-    width: 100%;
-    height: 100%;
-  }
+.el-card-template {
+  min-width: 260px;
+  min-width: 460px;
+  width: 100%;
+  height: 100%;
+}
 
-  .main-row{
-    height: 140px;
-    overflow-y: auto;
-  }
+.main-row {
+  background-size: 100% 100% !important;
+  padding-left: 10px;
+  height: 250px;
+  overflow-y: auto;
+}
 
-  .root-class {
-    margin: 15px 0px 5px;
-    text-align: center;
-  }
-  .avatar-uploader ::v-deep .el-upload {
-    width: 120px;
-    height: 80px;
-    line-height: 90px;
-  }
-  .avatar-uploader ::v-deep .el-upload-list li{
-    width: 120px !important;
-    height: 80px !important;
-  }
-  .disabled ::v-deep .el-upload--picture-card {
-    display: none;
-  }
-  .shape-item{
-    padding: 6px;
-    border: none;
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .form-item-slider ::v-deep .el-form-item__label{
-    font-size: 12px;
-    line-height: 38px;
-  }
-  .form-item ::v-deep .el-form-item__label{
-    font-size: 12px;
-  }
-  .el-select-dropdown__item{
-    padding: 0 20px;
-  }
-  span{
-    font-size: 12px
-  }
-  .el-form-item{
-    margin-bottom: 6px;
-  }
-  .main-content{
-    border:1px solid #E6E6E6;
-  }
+.root-class {
+  margin: 15px 0px 5px;
+  text-align: center;
+}
 
-  .params-title{
-    font-weight: bold;
-    line-height: 40px;
-    margin-left: 10px;
-    font-size: 14px;
-  }
+.avatar-uploader ::v-deep .el-upload {
+  width: 120px;
+  height: 80px;
+  line-height: 90px;
+}
 
-  .params-title-small{
-    font-weight: bold;
-    line-height: 40px;
-    margin-left: 10px;
-    font-size: 12px;
-  }
+.avatar-uploader ::v-deep .el-upload-list li {
+  width: 120px !important;
+  height: 80px !important;
+}
+
+.disabled ::v-deep .el-upload--picture-card {
+  display: none;
+}
+
+.shape-item {
+  padding: 6px;
+  border: none;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.form-item-slider ::v-deep .el-form-item__label {
+  font-size: 12px;
+  line-height: 38px;
+}
+
+.form-item ::v-deep .el-form-item__label {
+  font-size: 12px;
+}
+
+.el-select-dropdown__item {
+  padding: 0 20px;
+}
+
+span {
+  font-size: 12px
+}
+
+.el-form-item {
+  margin-bottom: 6px;
+}
+
+.main-content {
+  border: 1px solid #E6E6E6;
+}
+
+.params-title {
+  font-weight: bold;
+  line-height: 40px;
+  margin-left: 10px;
+  font-size: 14px;
+}
+
+.params-title-small {
+  font-weight: bold;
+  line-height: 40px;
+  margin-left: 10px;
+  font-size: 12px;
+}
 </style>

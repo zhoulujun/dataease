@@ -6,6 +6,34 @@
   "description": "",
   "glyphs": [
     {
+      "icon_id": "1567487",
+      "name": "command",
+      "font_class": "command",
+      "unicode": "e644",
+      "unicode_decimal": 58948
+    },
+    {
+      "icon_id": "109745",
+      "name": "font",
+      "font_class": "font",
+      "unicode": "e63d",
+      "unicode_decimal": 58941
+    },
+    {
+      "icon_id": "23072499",
+      "name": "WATERMARK",
+      "font_class": "WATERMARK",
+      "unicode": "ea16",
+      "unicode_decimal": 59926
+    },
+    {
+      "icon_id": "10904998",
+      "name": "图层",
+      "font_class": "layer",
+      "unicode": "e63b",
+      "unicode_decimal": 58939
+    },
+    {
       "icon_id": "12253601",
       "name": "application",
       "font_class": "application",

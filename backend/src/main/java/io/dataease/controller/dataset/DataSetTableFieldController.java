@@ -13,13 +13,21 @@ import io.dataease.commons.exception.DEException;
 import io.dataease.controller.request.dataset.DataSetTableRequest;
 import io.dataease.controller.request.dataset.MultFieldValuesRequest;
 import io.dataease.controller.response.DatasetTableField4Type;
+import io.dataease.dto.dataset.DatasetTableFieldDTO;
 import io.dataease.i18n.Translator;
 import io.dataease.plugins.common.base.domain.DatasetTable;
 import io.dataease.plugins.common.base.domain.DatasetTableField;
+import io.dataease.plugins.common.base.domain.Datasource;
+import io.dataease.plugins.datasource.entity.Dateformat;
+import io.dataease.plugins.datasource.query.QueryProvider;
+import io.dataease.plugins.xpack.auth.dto.request.ColumnPermissionItem;
+import io.dataease.provider.ProviderFactory;
 import io.dataease.service.dataset.DataSetFieldService;
 import io.dataease.service.dataset.DataSetTableFieldsService;
 import io.dataease.service.dataset.DataSetTableService;
 import io.dataease.service.dataset.PermissionService;
+import io.dataease.service.datasource.DatasourceService;
+import io.dataease.service.engine.EngineService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.apache.commons.lang3.ObjectUtils;
@@ -46,14 +54,16 @@ import java.util.stream.Collectors;
 public class DataSetTableFieldController {
     @Resource
     private DataSetTableFieldsService dataSetTableFieldsService;
-
     @Autowired
     private DataSetFieldService dataSetFieldService;
-
     @Resource
     private DataSetTableService dataSetTableService;
     @Resource
     private PermissionService permissionService;
+    @Resource
+    private EngineService engineService;
+    @Resource
+    private DatasourceService datasourceService;
 
     @DePermission(type = DePermissionType.DATASET)
     @ApiOperation("查询表下属字段")
@@ -62,7 +72,7 @@ public class DataSetTableFieldController {
         DatasetTableField datasetTableField = DatasetTableField.builder().build();
         datasetTableField.setTableId(tableId);
         List<DatasetTableField> fields = dataSetTableFieldsService.list(datasetTableField);
-        fields = permissionService.filterColumnPermissons(fields, new ArrayList<>(), tableId, null);
+        fields = permissionService.filterColumnPermissions(fields, new HashMap<>(), tableId, null);
         return fields;
     }
 
@@ -73,9 +83,9 @@ public class DataSetTableFieldController {
         DatasetTableField datasetTableField = DatasetTableField.builder().build();
         datasetTableField.setTableId(tableId);
         List<DatasetTableField> fields = dataSetTableFieldsService.list(datasetTableField);
-        List<String> desensitizationList = new ArrayList<>();
-        fields = permissionService.filterColumnPermissons(fields, desensitizationList, tableId, null);
-        fields = fields.stream().filter(item -> !desensitizationList.contains(item.getDataeaseName())).collect(Collectors.toList());
+        Map<String, ColumnPermissionItem> desensitizationList = new HashMap<>();
+        fields = permissionService.filterColumnPermissions(fields, desensitizationList, tableId, null);
+        fields = fields.stream().filter(item -> !desensitizationList.keySet().contains(item.getDataeaseName())).collect(Collectors.toList());
         return fields;
     }
 
@@ -98,9 +108,33 @@ public class DataSetTableFieldController {
         DatasetTableField datasetTableField = DatasetTableField.builder().build();
         datasetTableField.setTableId(tableId);
         datasetTableField.setGroupType("d");
-        List<DatasetTableField> dimensionList = dataSetTableFieldsService.list(datasetTableField);
+        List<DatasetTableFieldDTO> dimensionList = new ArrayList<>();
+        dataSetTableFieldsService.list(datasetTableField).forEach(o -> {
+            DatasetTableFieldDTO datasetTableFieldDTO = new DatasetTableFieldDTO();
+            BeanUtils.copyProperties(o, datasetTableFieldDTO);
+            List<Object> deTypeCascader = new ArrayList<>();
+            deTypeCascader.add(datasetTableFieldDTO.getDeType());
+            if (datasetTableFieldDTO.getDeExtractType() == 0 && datasetTableFieldDTO.getDeType() == 1) {
+                deTypeCascader.add(datasetTableFieldDTO.getDateFormatType());
+            }
+            datasetTableFieldDTO.setDeTypeCascader(deTypeCascader);
+            dimensionList.add(datasetTableFieldDTO);
+        });
+
+
         datasetTableField.setGroupType("q");
-        List<DatasetTableField> quotaList = dataSetTableFieldsService.list(datasetTableField);
+        List<DatasetTableFieldDTO> quotaList = new ArrayList<>();
+        dataSetTableFieldsService.list(datasetTableField).forEach(o -> {
+            DatasetTableFieldDTO datasetTableFieldDTO = new DatasetTableFieldDTO();
+            BeanUtils.copyProperties(o, datasetTableFieldDTO);
+            List<Object> deTypeCascader = new ArrayList<>();
+            deTypeCascader.add(datasetTableFieldDTO.getDeType());
+            if (datasetTableFieldDTO.getDeExtractType() == 0 && datasetTableFieldDTO.getDeType() == 1) {
+                deTypeCascader.add(datasetTableFieldDTO.getDateFormatType());
+            }
+            datasetTableFieldDTO.setDeTypeCascader(deTypeCascader);
+            quotaList.add(datasetTableFieldDTO);
+        });
 
         DatasetTableField4Type datasetTableField4Type = new DatasetTableField4Type();
         datasetTableField4Type.setDimensionList(dimensionList);
@@ -125,7 +159,7 @@ public class DataSetTableFieldController {
             DatasetTable datasetTable = dataSetTableService.get(datasetTableField.getTableId());
             DataSetTableRequest dataSetTableRequest = new DataSetTableRequest();
             BeanUtils.copyProperties(datasetTable, dataSetTableRequest);
-            dataSetTableService.getPreviewData(dataSetTableRequest, 1, 1, Collections.singletonList(datasetTableField));
+            dataSetTableService.getPreviewData(dataSetTableRequest, 1, 1, Collections.singletonList(datasetTableField), null);
         } catch (Exception e) {
             DEException.throwException(Translator.get("i18n_calc_field_error"));
         }
@@ -177,7 +211,7 @@ public class DataSetTableFieldController {
         DecodedJWT jwt = JWT.decode(linkToken);
         Long userId = jwt.getClaim("userId").asLong();
         multFieldValuesRequest.setUserId(userId);
-        return dataSetFieldService.fieldValues(multFieldValuesRequest.getFieldIds(), multFieldValuesRequest.getSort(), multFieldValuesRequest.getUserId(), true, true,false);
+        return dataSetFieldService.fieldValues(multFieldValuesRequest.getFieldIds(), multFieldValuesRequest.getSort(), multFieldValuesRequest.getUserId(), true, true, false);
     }
 
     @ApiIgnore
@@ -207,5 +241,15 @@ public class DataSetTableFieldController {
                                 }))),
                         ArrayList::new));
         return list;
+    }
+
+    @DePermission(type = DePermissionType.DATASET)
+    @ApiOperation("时间格式")
+    @PostMapping("dateformats/{tableId}")
+    public List<Dateformat> dateformats(@PathVariable String tableId) throws Exception{
+        DatasetTable datasetTable = dataSetTableService.get(tableId);
+        Datasource ds = datasetTable.getMode() == 0 ? datasourceService.get(datasetTable.getDataSourceId()) : engineService.getDeEngine();
+        QueryProvider qp = ProviderFactory.getQueryProvider(ds.getType());
+        return qp.dateformat();
     }
 }

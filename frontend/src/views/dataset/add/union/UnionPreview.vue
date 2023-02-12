@@ -38,7 +38,7 @@ export default {
     unionHeight: {
       type: Number,
       default: 298
-    },
+    }
   },
   data() {
     return {
@@ -48,21 +48,22 @@ export default {
     }
   },
   watch: {
-    table: function () {
+    table: function() {
       this.initPreview()
     },
     unionHeight: {
-      handler: function () {
+      handler: function() {
         this.calHeight()
       }
     }
   },
+  beforeDestroy() {
+    window.removeEventListener('resize', this.calHeight)
+  },
   mounted() {
     this.initPreview()
     this.calHeight()
-    window.onresize = () => {
-      this.calHeight()
-    }
+    window.addEventListener('resize', this.calHeight)
   },
   methods: {
     calHeight: _.debounce(function() {
@@ -75,14 +76,14 @@ export default {
         post('/dataset/table/unionPreview', this.table).then((response) => {
           this.fields = response.data.fields
           this.data = response.data.data
-          const datas = this.data
-          this.$refs.plxTable.reloadData(datas)
+          const data = this.data
+          this.$refs.plxTable.reloadData(data)
         })
       } else {
         this.fields = []
         this.data = []
-        const datas = this.data
-        this.$refs.plxTable.reloadData(datas)
+        const data = this.data
+        this.$refs.plxTable.reloadData(data)
       }
     }
   }

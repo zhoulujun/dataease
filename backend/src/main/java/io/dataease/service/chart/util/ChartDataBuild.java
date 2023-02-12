@@ -1,9 +1,9 @@
 package io.dataease.service.chart.util;
 
 import io.dataease.plugins.common.base.domain.ChartViewWithBLOBs;
-import io.dataease.commons.constants.ColumnPermissionConstants;
 import io.dataease.dto.chart.*;
 import io.dataease.plugins.common.dto.chart.ChartViewFieldDTO;
+import io.dataease.plugins.xpack.auth.dto.request.ColumnPermissionItem;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -18,7 +18,7 @@ public class ChartDataBuild {
     public static Map<String, Object> transChartDataAntV(List<ChartViewFieldDTO> xAxis, List<ChartViewFieldDTO> yAxis, ChartViewWithBLOBs view, List<String[]> data, boolean isDrill) {
         Map<String, Object> map = new HashMap<>();
 
-        List<AxisChartDataAntVDTO> datas = new ArrayList<>();
+        List<AxisChartDataAntVDTO> dataList = new ArrayList<>();
         for (int i1 = 0; i1 < data.size(); i1++) {
             String[] row = data.get(i1);
 
@@ -65,7 +65,7 @@ public class ChartDataBuild {
                         }
                         axisChartDataDTO.setCategory(yAxis.get(j).getName());
                     }
-                    datas.add(axisChartDataDTO);
+                    dataList.add(axisChartDataDTO);
                 }
             } else {
                 for (int i = xAxis.size(); i < xAxis.size() + yAxis.size(); i++) {
@@ -95,18 +95,18 @@ public class ChartDataBuild {
                         axisChartDataDTO.setValue(new BigDecimal(0));
                     }
                     axisChartDataDTO.setCategory(yAxis.get(j).getName());
-                    datas.add(axisChartDataDTO);
+                    dataList.add(axisChartDataDTO);
                 }
             }
         }
-        map.put("datas", datas);
+        map.put("data", dataList);
         return map;
     }
 
     public static Map<String, Object> transBaseGroupDataAntV(List<ChartViewFieldDTO> xAxisBase, List<ChartViewFieldDTO> xAxis, List<ChartViewFieldDTO> xAxisExt, List<ChartViewFieldDTO> yAxis, ChartViewWithBLOBs view, List<String[]> data, boolean isDrill) {
         Map<String, Object> map = new HashMap<>();
 
-        List<AxisChartDataAntVDTO> datas = new ArrayList<>();
+        List<AxisChartDataAntVDTO> dataList = new ArrayList<>();
         for (int i1 = 0; i1 < data.size(); i1++) {
             String[] row = data.get(i1);
 
@@ -159,10 +159,19 @@ public class ChartDataBuild {
                     axisChartDataDTO.setValue(new BigDecimal(0));
                 }
                 axisChartDataDTO.setCategory(b.toString());
-                datas.add(axisChartDataDTO);
+                dataList.add(axisChartDataDTO);
+
+                if ("line".equals(view.getType())) {
+                    if (CollectionUtils.isEmpty(xAxisExt)) {
+                        axisChartDataDTO.setCategory(yAxis.get(j).getName());
+                    } else {
+                        // 多指标只取第一个
+                        break;
+                    }
+                }
             }
         }
-        map.put("datas", datas);
+        map.put("data", dataList);
         return map;
     }
 
@@ -170,7 +179,7 @@ public class ChartDataBuild {
     public static Map<String, Object> transStackChartDataAntV(List<ChartViewFieldDTO> xAxis, List<ChartViewFieldDTO> yAxis, ChartViewWithBLOBs view, List<String[]> data, List<ChartViewFieldDTO> extStack, boolean isDrill) {
         Map<String, Object> map = new HashMap<>();
 
-        List<AxisChartDataAntVDTO> datas = new ArrayList<>();
+        List<AxisChartDataAntVDTO> dataList = new ArrayList<>();
 
         if (CollectionUtils.isNotEmpty(extStack)) {
             for (int i1 = 0; i1 < data.size(); i1++) {
@@ -202,6 +211,10 @@ public class ChartDataBuild {
                     chartDimensionDTO.setValue(row[k]);
                     dimensionList.add(chartDimensionDTO);
                 }
+                ChartDimensionDTO chartDimensionDTO = new ChartDimensionDTO();
+                chartDimensionDTO.setId(extStack.get(0).getId());
+                chartDimensionDTO.setValue(row[xAxis.size()]);
+                dimensionList.add(chartDimensionDTO);
                 axisChartDataDTO.setDimensionList(dimensionList);
 
                 if (CollectionUtils.isNotEmpty(yAxis)) {
@@ -219,7 +232,7 @@ public class ChartDataBuild {
                     axisChartDataDTO.setQuotaList(quotaList);
                     axisChartDataDTO.setValue(new BigDecimal(0));
                 }
-                datas.add(axisChartDataDTO);
+                dataList.add(axisChartDataDTO);
             }
         } else {
             for (int i1 = 0; i1 < data.size(); i1++) {
@@ -265,11 +278,11 @@ public class ChartDataBuild {
                         axisChartDataDTO.setValue(new BigDecimal(0));
                     }
                     axisChartDataDTO.setCategory(yAxis.get(j).getName());
-                    datas.add(axisChartDataDTO);
+                    dataList.add(axisChartDataDTO);
                 }
             }
         }
-        map.put("datas", datas);
+        map.put("data", dataList);
         return map;
     }
 
@@ -277,7 +290,7 @@ public class ChartDataBuild {
     public static Map<String, Object> transScatterDataAntV(List<ChartViewFieldDTO> xAxis, List<ChartViewFieldDTO> yAxis, ChartViewWithBLOBs view, List<String[]> data, List<ChartViewFieldDTO> extBubble, boolean isDrill) {
         Map<String, Object> map = new HashMap<>();
 
-        List<AxisChartDataAntVDTO> datas = new ArrayList<>();
+        List<AxisChartDataAntVDTO> dataList = new ArrayList<>();
         for (int i1 = 0; i1 < data.size(); i1++) {
             String[] row = data.get(i1);
 
@@ -329,10 +342,10 @@ public class ChartDataBuild {
                         axisChartDataDTO.setPopSize(new BigDecimal(0));
                     }
                 }
-                datas.add(axisChartDataDTO);
+                dataList.add(axisChartDataDTO);
             }
         }
-        map.put("datas", datas);
+        map.put("data", dataList);
         return map;
     }
 
@@ -340,7 +353,7 @@ public class ChartDataBuild {
     public static Map<String, Object> transRadarChartDataAntV(List<ChartViewFieldDTO> xAxis, List<ChartViewFieldDTO> yAxis, ChartViewWithBLOBs view, List<String[]> data, boolean isDrill) {
         Map<String, Object> map = new HashMap<>();
 
-        List<AxisChartDataAntVDTO> datas = new ArrayList<>();
+        List<AxisChartDataAntVDTO> dataList = new ArrayList<>();
         for (int i1 = 0; i1 < data.size(); i1++) {
             String[] row = data.get(i1);
 
@@ -384,10 +397,10 @@ public class ChartDataBuild {
                     axisChartDataDTO.setValue(new BigDecimal(0));
                 }
                 axisChartDataDTO.setCategory(yAxis.get(j).getName());
-                datas.add(axisChartDataDTO);
+                dataList.add(axisChartDataDTO);
             }
         }
-        map.put("datas", datas);
+        map.put("data", dataList);
         return map;
     }
 
@@ -445,11 +458,12 @@ public class ChartDataBuild {
                 } catch (Exception e) {
                     axisChartDataDTO.setValue(new BigDecimal(0));
                 }
+                axisChartDataDTO.setCategory(yAxis.get(j).getName());
                 series.get(j).getData().add(axisChartDataDTO);
             }
         }
 
-        map.put("datas", series);
+        map.put("data", series);
         return map;
     }
 
@@ -924,7 +938,7 @@ public class ChartDataBuild {
     }
 
     // 表格
-    public static Map<String, Object> transTableNormal(List<ChartViewFieldDTO> xAxis, List<ChartViewFieldDTO> yAxis, ChartViewWithBLOBs view, List<String[]> data, List<ChartViewFieldDTO> extStack, List<String> desensitizationList) {
+    public static Map<String, Object> transTableNormal(List<ChartViewFieldDTO> xAxis, List<ChartViewFieldDTO> yAxis, ChartViewWithBLOBs view, List<String[]> data, List<ChartViewFieldDTO> extStack, Map<String, ColumnPermissionItem> desensitizationList) {
         List<ChartViewFieldDTO> fields = new ArrayList<>();
         if (ObjectUtils.isNotEmpty(xAxis)) {
             fields.addAll(xAxis);
@@ -939,7 +953,7 @@ public class ChartDataBuild {
     }
 
     // 表格
-    public static Map<String, Object> transTableNormal(Map<String, List<ChartViewFieldDTO>> fieldMap, ChartViewWithBLOBs view, List<String[]> data, List<String> desensitizationList) {
+    public static Map<String, Object> transTableNormal(Map<String, List<ChartViewFieldDTO>> fieldMap, ChartViewWithBLOBs view, List<String[]> data, Map<String, ColumnPermissionItem> desensitizationList) {
 
         List<ChartViewFieldDTO> fields = new ArrayList<>();
         List<ChartViewFieldDTO> yfields = new ArrayList<>();
@@ -947,7 +961,7 @@ public class ChartDataBuild {
         if (CollectionUtils.isNotEmpty(fieldMap.get("tooltipAxis"))) {
             fieldMap.get("tooltipAxis").forEach(field -> {
                 Integer deType = field.getDeType();
-                if(deType == 2 || deType == 3) {
+                if (deType == 2 || deType == 3) {
                     yfields.add(field);
                 } else {
                     fields.add(field);
@@ -957,7 +971,7 @@ public class ChartDataBuild {
         if (CollectionUtils.isNotEmpty(fieldMap.get("labelAxis"))) {
             fieldMap.get("labelAxis").forEach(field -> {
                 Integer deType = field.getDeType();
-                if(deType == 2 || deType == 3) {
+                if (deType == 2 || deType == 3) {
                     yfields.add(field);
                 } else {
                     fields.add(field);
@@ -969,14 +983,73 @@ public class ChartDataBuild {
         return transTableNormal(fields, view, data, desensitizationList);
     }
 
-    private static Map<String, Object> transTableNormal(List<ChartViewFieldDTO> fields, ChartViewWithBLOBs view, List<String[]> data, List<String> desensitizationList) {
+    public static String desensitizationValue(ColumnPermissionItem columnPermissionItem, String originStr) {
+        String desensitizationStr = "";
+        if (!columnPermissionItem.getDesensitizationRule().getBuiltInRule().toString().equalsIgnoreCase("custom")) {
+            switch (columnPermissionItem.getDesensitizationRule().getBuiltInRule()) {
+                case CompleteDesensitization:
+                    desensitizationStr = ColumnPermissionItem.CompleteDesensitization;
+                    break;
+                case KeepMiddleThreeCharacters:
+                    if (StringUtils.isEmpty(originStr) || originStr.length() < 4) {
+                        desensitizationStr = ColumnPermissionItem.KeepMiddleThreeCharacters;
+                    } else {
+                        desensitizationStr = "***" + StringUtils.substring(originStr, originStr.length() / 2 - 1, originStr.length() / 2 + 2) + "***";
+                    }
+                    break;
+                case KeepFirstAndLastThreeCharacters:
+                    if (StringUtils.isEmpty(originStr) || originStr.length() < 7) {
+                        desensitizationStr = ColumnPermissionItem.KeepFirstAndLastThreeCharacters;
+                    } else {
+                        desensitizationStr = StringUtils.substring(originStr, 0, 3) + "***" + StringUtils.substring(originStr, originStr.length() - 3, originStr.length());
+                    }
+                    break;
+                default:
+                    break;
+
+            }
+        } else {
+            switch (columnPermissionItem.getDesensitizationRule().getCustomBuiltInRule()) {
+                case RetainBeforeMAndAfterN:
+                    if (StringUtils.isEmpty(originStr) || originStr.length() <= columnPermissionItem.getDesensitizationRule().getM() + columnPermissionItem.getDesensitizationRule().getN() + 1) {
+                        desensitizationStr = String.join("", Collections.nCopies(columnPermissionItem.getDesensitizationRule().getM(), "X")) + "***" + String.join("", Collections.nCopies(columnPermissionItem.getDesensitizationRule().getN(), "X"));
+                    } else {
+                        desensitizationStr = StringUtils.substring(originStr, 0, columnPermissionItem.getDesensitizationRule().getM() - 1) + "***" + StringUtils.substring(originStr, originStr.length() - columnPermissionItem.getDesensitizationRule().getN(), originStr.length() - 1);
+                    }
+                    break;
+                case RetainMToN:
+                    if (columnPermissionItem.getDesensitizationRule().getM() > columnPermissionItem.getDesensitizationRule().getN()) {
+                        desensitizationStr = "*** ***";
+                        break;
+                    }
+                    if (StringUtils.isEmpty(originStr) || originStr.length() < columnPermissionItem.getDesensitizationRule().getM()) {
+                        desensitizationStr = "*** ***";
+                        break;
+                    }
+                    if (originStr.length() >= columnPermissionItem.getDesensitizationRule().getM() && originStr.length() >= columnPermissionItem.getDesensitizationRule().getN()) {
+                        desensitizationStr = "***" + StringUtils.substring(originStr, columnPermissionItem.getDesensitizationRule().getM() - 1, columnPermissionItem.getDesensitizationRule().getN()) + "***";
+                        break;
+                    }
+                    if (originStr.length() >= columnPermissionItem.getDesensitizationRule().getM() && originStr.length() < columnPermissionItem.getDesensitizationRule().getN()) {
+                        desensitizationStr = "***" + StringUtils.substring(originStr, columnPermissionItem.getDesensitizationRule().getM() - 1, originStr.length());
+                    }
+                    break;
+                default:
+                    break;
+
+            }
+        }
+        return desensitizationStr;
+    }
+
+    private static Map<String, Object> transTableNormal(List<ChartViewFieldDTO> fields, ChartViewWithBLOBs view, List<String[]> data, Map<String, ColumnPermissionItem> desensitizationList) {
         Map<String, Object> map = new TreeMap<>();
         List<Map<String, Object>> tableRow = new ArrayList<>();
         data.forEach(ele -> {
             Map<String, Object> d = new HashMap<>();
             for (int i = 0; i < fields.size(); i++) {
-                if (CollectionUtils.isNotEmpty(desensitizationList) && desensitizationList.contains(fields.get(i).getDataeaseName())) {
-                    d.put(fields.get(i).getDataeaseName(), ColumnPermissionConstants.Desensitization_desc);
+                if (CollectionUtils.isNotEmpty(desensitizationList.keySet()) && desensitizationList.keySet().contains(fields.get(i).getDataeaseName())) {
+                    d.put(fields.get(i).getDataeaseName(), desensitizationValue(desensitizationList.get(fields.get(i).getDataeaseName()), String.valueOf(ele[i])));
                     continue;
                 }
                 if (i == ele.length) break;
@@ -992,5 +1065,94 @@ public class ChartDataBuild {
         map.put("fields", fields);
         map.put("tableRow", tableRow);
         return map;
+    }
+
+    public static Map<String, Object> transGroupStackDataAntV(List<ChartViewFieldDTO> xAxisBase, List<ChartViewFieldDTO> xAxis, List<ChartViewFieldDTO> xAxisExt, List<ChartViewFieldDTO> yAxis, List<ChartViewFieldDTO> extStack, List<String[]> data, ChartViewWithBLOBs view, boolean isDrill) {
+        // 堆叠柱状图
+        if (CollectionUtils.isEmpty(xAxisExt)) {
+            return transStackChartDataAntV(xAxis, yAxis, view, data, extStack, isDrill);
+            //  分组柱状图
+        } else if (CollectionUtils.isNotEmpty(xAxisExt) && CollectionUtils.isEmpty(extStack)) {
+            return transBaseGroupDataAntV(xAxisBase, xAxis, xAxisExt, yAxis, view, data, isDrill);
+            // 分组堆叠柱状图
+        } else {
+            Map<String, Object> map = new HashMap<>();
+
+            List<AxisChartDataAntVDTO> dataList = new ArrayList<>();
+            for (int i1 = 0; i1 < data.size(); i1++) {
+                String[] row = data.get(i1);
+
+                StringBuilder xField = new StringBuilder();
+                if (isDrill) {
+                    xField.append(row[xAxis.size() - 1]);
+                } else {
+                    for (int i = 0; i < xAxisBase.size(); i++) {
+                        if (i == xAxisBase.size() - 1) {
+                            xField.append(row[i]);
+                        } else {
+                            xField.append(row[i]).append("\n");
+                        }
+                    }
+                }
+
+                StringBuilder groupField = new StringBuilder();
+                for (int i = xAxisBase.size(); i < xAxisBase.size() + xAxisExt.size(); i++) {
+                    if (i == xAxisBase.size() + xAxisExt.size() - 1) {
+                        groupField.append(row[i]);
+                    } else {
+                        groupField.append(row[i]).append("\n");
+                    }
+                }
+
+                StringBuilder stackField = new StringBuilder();
+                for (int i = xAxis.size(); i < xAxis.size() + extStack.size(); i++) {
+                    if (i == xAxis.size() + extStack.size() - 1) {
+                        stackField.append(row[i]);
+                    } else {
+                        stackField.append(row[i]).append("\n");
+                    }
+                }
+
+                AxisChartDataAntVDTO axisChartDataDTO = new AxisChartDataAntVDTO();
+                axisChartDataDTO.setField(xField.toString());
+                axisChartDataDTO.setName(xField.toString());
+
+                List<ChartDimensionDTO> dimensionList = new ArrayList<>();
+                List<ChartQuotaDTO> quotaList = new ArrayList<>();
+
+                for (int j = 0; j < xAxis.size(); j++) {
+                    ChartDimensionDTO chartDimensionDTO = new ChartDimensionDTO();
+                    chartDimensionDTO.setId(xAxis.get(j).getId());
+                    chartDimensionDTO.setValue(row[j]);
+                    dimensionList.add(chartDimensionDTO);
+                }
+                ChartDimensionDTO chartDimensionDTO = new ChartDimensionDTO();
+                chartDimensionDTO.setId(extStack.get(0).getId());
+                chartDimensionDTO.setValue(row[xAxis.size()]);
+                dimensionList.add(chartDimensionDTO);
+                axisChartDataDTO.setDimensionList(dimensionList);
+
+                if (CollectionUtils.isNotEmpty(yAxis)) {
+                    int valueIndex = xAxis.size() + extStack.size();
+                    ChartQuotaDTO chartQuotaDTO = new ChartQuotaDTO();
+                    chartQuotaDTO.setId(yAxis.get(0).getId());
+                    quotaList.add(chartQuotaDTO);
+                    axisChartDataDTO.setQuotaList(quotaList);
+                    try {
+                        axisChartDataDTO.setValue(StringUtils.isEmpty(row[valueIndex]) ? null : new BigDecimal(row[valueIndex]));
+                    } catch (Exception e) {
+                        axisChartDataDTO.setValue(new BigDecimal(0));
+                    }
+                } else {
+                    axisChartDataDTO.setQuotaList(quotaList);
+                    axisChartDataDTO.setValue(new BigDecimal(0));
+                }
+                axisChartDataDTO.setGroup(groupField.toString());
+                axisChartDataDTO.setCategory(stackField.toString());
+                dataList.add(axisChartDataDTO);
+            }
+            map.put("data", dataList);
+            return map;
+        }
     }
 }

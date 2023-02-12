@@ -14,19 +14,19 @@ public abstract class FilterBuildTemplate {
 
     protected abstract FilterParamTO buildParam(Map<String, Object> component);
 
-    public Map<String, List<ChartExtFilterRequest>> buildFilters(List<Map<String, Object>> components) {
+    public static Map<String, List<ChartExtFilterRequest>> buildFilters(List<Map<String, Object>> components) {
         Map<String, Object> searchButton = components.stream().filter(item -> {
             if (ObjectUtils.isEmpty(item.get("type"))) return false;
             if (ObjectUtils.isEmpty(item.get("serviceName"))) return false;
             return StringUtils.equals("custom-button", item.get("type").toString()) && StringUtils.equals("buttonSureWidget", item.get("serviceName").toString());
-        }).findFirst().orElseGet(null);
+        }).findFirst().orElse(null);
 
         List<Map<String, Object>> filters = componentsFilter(components, "custom", null, null);
 
-        if(ObjectUtils.isNotEmpty(searchButton)) {
+        if (ObjectUtils.isNotEmpty(searchButton)) {
             Map<String, Object> options = (Map<String, Object>) searchButton.get("options");
             Map<String, Object> attrs = (Map<String, Object>) options.get("attrs");
-            Boolean customRange = (Boolean)attrs.get("customRange");
+            Boolean customRange = (Boolean) attrs.get("customRange");
             Boolean autoTrigger = (Boolean) attrs.get("autoTrigger");
             List<String> filterIds = (List<String>) attrs.get("filterIds");
             if (!autoTrigger) { // 不是自动触发 // 需要过滤掉按钮关联的条件组件
@@ -45,9 +45,11 @@ public abstract class FilterBuildTemplate {
         return emptyResult;
     }
 
-    private Map<String, List<ChartExtFilterRequest>> fillFilters(Map<String, List<ChartExtFilterRequest>> emptyResult, List<Map<String, Object>> filters) {
+    private static Map<String, List<ChartExtFilterRequest>> fillFilters(Map<String, List<ChartExtFilterRequest>> emptyResult, List<Map<String, Object>> filters) {
         filters.forEach(element -> {
-            FilterParamTO filterParamTO = buildParam(element);
+            String serviceName = element.get("serviceName").toString();
+            FilterBuildTemplate template = getInstance(serviceName);
+            FilterParamTO filterParamTO = template.buildParam(element);
             ChartExtFilterRequest condition = formatCondition(filterParamTO);
             Boolean vValid = valueValid(condition);
             String filterComponentId = condition.getComponentId();
@@ -71,22 +73,22 @@ public abstract class FilterBuildTemplate {
         return emptyResult;
     }
 
-    private Boolean valueValid(ChartExtFilterRequest condition) {
+    private static Boolean valueValid(ChartExtFilterRequest condition) {
         return ObjectUtils.isNotEmpty(condition) && CollectionUtils.isNotEmpty(condition.getValue()) && StringUtils.isNotBlank(condition.getValue().get(0));
     }
 
-    private Boolean viewIdMatch(List<String>  viewIds, String viewId) {
+    private static Boolean viewIdMatch(List<String> viewIds, String viewId) {
         return CollectionUtils.isEmpty(viewIds) || viewIds.contains(viewId);
     }
 
-    private ChartExtFilterRequest formatCondition(FilterParamTO filterParamTO) {
+    private static ChartExtFilterRequest formatCondition(FilterParamTO filterParamTO) {
 
         Boolean isTree = filterParamTO.getIsTree();
         List<String> value = filterParamTO.getValue();
         Map<String, Object> component = filterParamTO.getComponent();
         Map<String, Object> attrs = (Map<String, Object>) ((Map<String, Object>) component.get("options")).get("attrs");
         String fieldId = attrs.get("fieldId").toString();
-        List<String> viewIds = (List<String>)attrs.get("viewIds");
+        List<String> viewIds = (List<String>) attrs.get("viewIds");
         List<String> parameters = (List<String>) attrs.get("parameters");
         Boolean multiple = ObjectUtils.isNotEmpty(attrs.get("multiple")) && (Boolean) attrs.get("multiple");
         if (isTree && !multiple && CollectionUtils.isNotEmpty(value)) {
@@ -111,14 +113,14 @@ public abstract class FilterBuildTemplate {
         return condition;
     }
 
-    private Map<String, List<ChartExtFilterRequest>> buildEmpty(List<Map<String, Object>> components) {
+    public static Map<String, List<ChartExtFilterRequest>> buildEmpty(List<Map<String, Object>> components) {
         Map<String, List<ChartExtFilterRequest>> result = new HashMap<>();
         components.forEach(element -> {
-            if (StringUtils.equals(element.get("type").toString(), "'view'")) {
+            if (StringUtils.equals(element.get("type").toString(), "view")) {
                 String viewId = ((Map<String, Object>) element.get("propValue")).get("viewId").toString();
                 result.put(viewId, new ArrayList<>());
             }
-            if (StringUtils.equals(element.get("type").toString(), "'de-tabs'")) {
+            if (StringUtils.equals(element.get("type").toString(), "de-tabs")) {
                 List<Map<String, Object>> tabs = (List<Map<String, Object>>) ((Map<String, Object>) element.get("options")).get("tabList");
                 if (CollectionUtils.isNotEmpty(tabs)) {
                     tabs.forEach(tab -> {
@@ -145,9 +147,9 @@ public abstract class FilterBuildTemplate {
     }
 
     public static List<Map<String, Object>> componentsFilter(List<Map<String, Object>> components, String type,
-                                                       String componentType, String serviceName) {
+                                                             String componentType, String serviceName) {
         return components.stream().filter(component -> {
-            String ctype =  Optional.ofNullable(component.get("type")).orElse("").toString();
+            String ctype = Optional.ofNullable(component.get("type")).orElse("").toString();
             String cComponentType = Optional.ofNullable(component.get("component")).orElse("").toString();
             String cServiceName = Optional.ofNullable(component.get("serviceName")).orElse("").toString();
 
@@ -178,10 +180,20 @@ public abstract class FilterBuildTemplate {
         beanMapping.put("numberRangeWidget", "numberRangeWidget");
         beanMapping.put("textSelectTreeWidget", "textSelectTreeWidget");
         beanMapping.put("textInputWidget", "textInputWidget");
+        beanMapping.put("timeDateWidget", "timeDateWidget");
+        beanMapping.put("timeMonthWidget", "timeMonthWidget");
+        beanMapping.put("timeYearWidget", "timeYearWidget");
+        beanMapping.put("timeDateRangeWidget", "timeDateRangeWidget");
         String beanName = beanMapping.get(serviceName);
-        if (StringUtils.isBlank(beanName) && StringUtils.contains(serviceName, "select")) {
+        if (StringUtils.isBlank(beanName) && StringUtils.containsIgnoreCase(serviceName, "select")) {
             beanName = "selectWidget";
         }
-        return (FilterBuildTemplate)CommonBeanFactory.getBean(beanName);
+
+        return (FilterBuildTemplate) CommonBeanFactory.getBean(beanName);
+    }
+
+    protected Map<String, Object> buildAttrs(Map<String, Object> component) {
+        Map<String, Object> attrs = (Map<String, Object>) ((Map<String, Object>) component.get("options")).get("attrs");
+        return attrs;
     }
 }

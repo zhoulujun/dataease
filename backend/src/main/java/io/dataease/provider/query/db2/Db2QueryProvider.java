@@ -1,5 +1,6 @@
 package io.dataease.provider.query.db2;
 
+import com.alibaba.fastjson.JSONArray;
 import com.google.gson.Gson;
 import io.dataease.dto.datasource.Db2Configuration;
 import io.dataease.plugins.common.base.domain.ChartViewWithBLOBs;
@@ -18,7 +19,9 @@ import io.dataease.plugins.common.dto.sqlObj.SQLObj;
 import io.dataease.plugins.common.request.chart.ChartExtFilterRequest;
 import io.dataease.plugins.common.request.permission.DataSetRowPermissionsTreeDTO;
 import io.dataease.plugins.common.request.permission.DatasetRowPermissionsTreeItem;
+import io.dataease.plugins.datasource.entity.Dateformat;
 import io.dataease.plugins.datasource.entity.JdbcConfiguration;
+import io.dataease.plugins.datasource.entity.PageInfo;
 import io.dataease.plugins.datasource.query.QueryProvider;
 import io.dataease.plugins.datasource.query.Utils;
 import org.apache.commons.collections4.CollectionUtils;
@@ -131,6 +134,9 @@ public class Db2QueryProvider extends QueryProvider {
                     } else if (f.getDeType() == DeTypeConstants.DE_FLOAT) {
                         fieldName = String.format(Db2Constants.CAST, originField, Db2Constants.DEFAULT_FLOAT_FORMAT);
                     } else if (f.getDeType() == DeTypeConstants.DE_TIME) {
+                        if (StringUtils.isNotEmpty(f.getDateFormat())) {
+                            originField = String.format(Db2Constants.TO_DATE, originField, f.getDateFormat());
+                        }
                         fieldName = String.format(Db2Constants.DATE_FORMAT, originField, Db2Constants.DEFAULT_DATE_FORMAT);
                     } else {
                         fieldName = originField;
@@ -213,6 +219,9 @@ public class Db2QueryProvider extends QueryProvider {
             } else if (f.getDeType() == DeTypeConstants.DE_FLOAT) {
                 fieldName = String.format(Db2Constants.CAST, originField, Db2Constants.DEFAULT_FLOAT_FORMAT);
             } else if (f.getDeType() == DeTypeConstants.DE_TIME) {
+                if (StringUtils.isNotEmpty(f.getDateFormat())) {
+                    originField = String.format(Db2Constants.TO_DATE, originField, f.getDateFormat());
+                }
                 fieldName = String.format(Db2Constants.DATE_FORMAT, originField, Db2Constants.DEFAULT_DATE_FORMAT);
             } else {
                 fieldName = originField;
@@ -370,8 +379,7 @@ public class Db2QueryProvider extends QueryProvider {
         return sqlLimit(st.render(), view);
     }
 
-    @Override
-    public String getSQLTableInfo(String table, List<ChartViewFieldDTO> xAxis, List<ChartFieldCustomFilterDTO> fieldCustomFilter, List<DataSetRowPermissionsTreeDTO> rowPermissionsTree, List<ChartExtFilterRequest> extFilterRequestList, Datasource ds, ChartViewWithBLOBs view) {
+    private String originalTableInfo(String table, List<ChartViewFieldDTO> xAxis, List<ChartFieldCustomFilterDTO> fieldCustomFilter, List<DataSetRowPermissionsTreeDTO> rowPermissionsTree, List<ChartExtFilterRequest> extFilterRequestList, Datasource ds, ChartViewWithBLOBs view) {
         SQLObj tableObj = SQLObj.builder()
                 .tableName((table.startsWith("(") && table.endsWith(")")) ? table : String.format(Db2Constants.KEYWORD_TABLE, table))
                 .tableAlias(String.format(TABLE_ALIAS_PREFIX, 0))
@@ -445,7 +453,22 @@ public class Db2QueryProvider extends QueryProvider {
                 .build();
         if (CollectionUtils.isNotEmpty(orders)) st.add("orders", orders);
         if (ObjectUtils.isNotEmpty(tableSQL)) st.add("table", tableSQL);
-        return sqlLimit(st.render(), view);
+        return st.render();
+    }
+
+    @Override
+    public String getSQLTableInfo(String table, List<ChartViewFieldDTO> xAxis, List<ChartFieldCustomFilterDTO> fieldCustomFilter, List<DataSetRowPermissionsTreeDTO> rowPermissionsTree, List<ChartExtFilterRequest> extFilterRequestList, Datasource ds, ChartViewWithBLOBs view) {
+        return sqlLimit(originalTableInfo(table, xAxis, fieldCustomFilter, rowPermissionsTree, extFilterRequestList, ds, view), view);
+    }
+
+    @Override
+    public String getSQLWithPage(boolean isTable, String table, List<ChartViewFieldDTO> xAxis, List<ChartFieldCustomFilterDTO> fieldCustomFilter, List<DataSetRowPermissionsTreeDTO> rowPermissionsTree, List<ChartExtFilterRequest> extFilterRequestList, Datasource ds, ChartViewWithBLOBs view, PageInfo pageInfo) {
+        String limit = ((pageInfo.getGoPage() != null && pageInfo.getPageSize() != null) ? " LIMIT " + (pageInfo.getGoPage() - 1) * pageInfo.getPageSize() + "," + pageInfo.getPageSize() : "");
+        if (isTable) {
+            return originalTableInfo(table, xAxis, fieldCustomFilter, rowPermissionsTree, extFilterRequestList, ds, view) + limit;
+        } else {
+            return originalTableInfo("(" + sqlFix(table) + ")", xAxis, fieldCustomFilter, rowPermissionsTree, extFilterRequestList, ds, view) + limit;
+        }
     }
 
     @Override
@@ -824,7 +847,11 @@ public class Db2QueryProvider extends QueryProvider {
         }
         if (field.getDeType() == DeTypeConstants.DE_TIME) {
             if (field.getDeExtractType() == DeTypeConstants.DE_STRING || field.getDeExtractType() == 5) {
-                originName = String.format(Db2Constants.STR_TO_DATE, originName);
+                if (StringUtils.isNotEmpty(field.getDateFormat())) {
+                    originName = String.format(Db2Constants.TO_DATE, originName, field.getDateFormat());
+                } else {
+                    originName = String.format(Db2Constants.STR_TO_DATE, originName);
+                }
                 whereName = String.format(Db2Constants.DATE_FORMAT, originName, Db2Constants.DEFAULT_DATE_FORMAT);
             }
             if (field.getDeExtractType() == DeTypeConstants.DE_INT || field.getDeExtractType() == DeTypeConstants.DE_FLOAT) {
@@ -959,7 +986,11 @@ public class Db2QueryProvider extends QueryProvider {
             }
             if (field.getDeType() == DeTypeConstants.DE_TIME) {
                 if (field.getDeExtractType() == DeTypeConstants.DE_STRING || field.getDeExtractType() == 5) {
-                    originName = String.format(Db2Constants.STR_TO_DATE, originName);
+                    if (StringUtils.isNotEmpty(field.getDateFormat())) {
+                        originName = String.format(Db2Constants.TO_DATE, originName, field.getDateFormat());
+                    } else {
+                        originName = String.format(Db2Constants.STR_TO_DATE, originName);
+                    }
                     whereName = String.format(Db2Constants.DATE_FORMAT, originName, Db2Constants.DEFAULT_DATE_FORMAT);
                 }
                 if (field.getDeExtractType() == DeTypeConstants.DE_INT || field.getDeExtractType() == DeTypeConstants.DE_FLOAT) {
@@ -1074,7 +1105,11 @@ public class Db2QueryProvider extends QueryProvider {
 
                 if (field.getDeType() == DeTypeConstants.DE_TIME) {
                     if (field.getDeExtractType() == DeTypeConstants.DE_STRING || field.getDeExtractType() == 5) {
-                        originName = String.format(Db2Constants.STR_TO_DATE, originName);
+                        if (StringUtils.isNotEmpty(field.getDateFormat())) {
+                            originName = String.format(Db2Constants.TO_DATE, originName, field.getDateFormat());
+                        } else {
+                            originName = String.format(Db2Constants.STR_TO_DATE, originName);
+                        }
                         whereName = String.format(Db2Constants.DATE_FORMAT, originName, Db2Constants.DEFAULT_DATE_FORMAT);
                     }
                     if (field.getDeExtractType() == DeTypeConstants.DE_INT || field.getDeExtractType() == 3 || field.getDeExtractType() == 4) {
@@ -1210,6 +1245,9 @@ public class Db2QueryProvider extends QueryProvider {
             if (x.getDeType() == DeTypeConstants.DE_TIME) {
                 String format = transDateFormat(x.getDateStyle(), x.getDatePattern());
                 if (x.getDeExtractType() == DeTypeConstants.DE_STRING) {
+                    if (StringUtils.isNotEmpty(x.getDateFormat())) {
+                        originField = String.format(Db2Constants.TO_DATE, originField, x.getDateFormat());
+                    }
                     fieldName = String.format(Db2Constants.DATE_FORMAT, originField, format);
                 } else {
                     String cast = String.format(Db2Constants.CAST, originField, Db2Constants.DEFAULT_INT_FORMAT);
@@ -1337,9 +1375,20 @@ public class Db2QueryProvider extends QueryProvider {
     }
 
     @Override
-    public String sqlForPreview(String table, Datasource ds){
+    public String sqlForPreview(String table, Datasource ds) {
         String schema = new Gson().fromJson(ds.getConfiguration(), JdbcConfiguration.class).getSchema();
         schema = String.format(Db2Constants.KEYWORD_TABLE, schema);
         return "SELECT * FROM " + schema + "." + String.format(Db2Constants.KEYWORD_TABLE, table);
+    }
+
+    public List<Dateformat> dateformat() {
+        return JSONArray.parseArray("[\n" +
+                "{\"dateformat\": \"YYYYMMDD\"},\n" +
+                "{\"dateformat\": \"YYYY/MM/DD\"},\n" +
+                "{\"dateformat\": \"YYYY-MM-DD\"},\n" +
+                "{\"dateformat\": \"YYYYMMDD HH24:MI:SS\"},\n" +
+                "{\"dateformat\": \"YYYY/MM/DD HH24:MI:SS\"},\n" +
+                "{\"dateformat\": \"YYYY-MM-DD HH24:MI:SS\"}\n" +
+                "]", Dateformat.class);
     }
 }

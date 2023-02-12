@@ -12,6 +12,7 @@ import io.dataease.auth.service.AuthUserService;
 import io.dataease.auth.util.JWTUtils;
 import io.dataease.auth.util.RsaUtil;
 import io.dataease.commons.constants.SysLogConstants;
+import io.dataease.commons.exception.DEException;
 import io.dataease.commons.utils.*;
 import io.dataease.controller.sys.request.LdapAddRequest;
 import io.dataease.exception.DataEaseException;
@@ -80,8 +81,8 @@ public class AuthServer implements AuthApi {
             ValidateResult<XpackLdapUserEntity> validateResult = ldapXpackService.login(request);
 
             if (!validateResult.isSuccess()) {
-                authUserService.recordLoginFail(username, 1);
-                DataEaseException.throwException(validateResult.getMsg());
+                AccountLockStatus lockStatus = authUserService.recordLoginFail(username, 1);
+                DataEaseException.throwException(appendLoginErrorMsg(validateResult.getMsg(), lockStatus));
             }
             XpackLdapUserEntity ldapUserEntity = validateResult.getData();
             if (StringUtils.isBlank(ldapUserEntity.getEmail())) {
@@ -119,19 +120,19 @@ public class AuthServer implements AuthApi {
         SysUserEntity user = authUserService.getUserByName(username);
 
         if (ObjectUtils.isEmpty(user)) {
-            authUserService.recordLoginFail(username, 0);
-            DataEaseException.throwException(Translator.get("i18n_user_do_not_exist"));
+            AccountLockStatus lockStatus = authUserService.recordLoginFail(username, 0);
+            DataEaseException.throwException(appendLoginErrorMsg(Translator.get("i18n_id_or_pwd_error"), lockStatus));
         }
 
         // 验证登录类型是否与用户类型相同
         if (!sysUserService.validateLoginType(user.getFrom(), loginType)) {
-            authUserService.recordLoginFail(username, 0);
-            DataEaseException.throwException(Translator.get("i18n_login_type_error"));
+            AccountLockStatus lockStatus = authUserService.recordLoginFail(username, 0);
+            DataEaseException.throwException(appendLoginErrorMsg(Translator.get("i18n_login_type_error"), lockStatus));
         }
 
         if (user.getEnabled() == 0) {
-            authUserService.recordLoginFail(username, 0);
-            DataEaseException.throwException(Translator.get("i18n_user_is_disable"));
+            AccountLockStatus lockStatus = authUserService.recordLoginFail(username, 0);
+            DataEaseException.throwException(appendLoginErrorMsg(Translator.get("i18n_user_is_disable"), lockStatus));
         }
         String realPwd = user.getPassword();
 
@@ -143,8 +144,8 @@ public class AuthServer implements AuthApi {
             pwd = CodingUtil.md5(pwd);
 
             if (!StringUtils.equals(pwd, realPwd)) {
-                authUserService.recordLoginFail(username, 0);
-                DataEaseException.throwException(Translator.get("i18n_id_or_pwd_error"));
+                AccountLockStatus lockStatus = authUserService.recordLoginFail(username, 0);
+                DataEaseException.throwException(appendLoginErrorMsg(Translator.get("i18n_id_or_pwd_error"), lockStatus));
             }
         }
 
@@ -160,6 +161,15 @@ public class AuthServer implements AuthApi {
         return result;
     }
 
+    private String appendLoginErrorMsg(String msg, AccountLockStatus lockStatus) {
+        if (ObjectUtils.isEmpty(lockStatus)) return msg;
+        if (ObjectUtils.isNotEmpty(lockStatus.getRemainderTimes())) {
+            String i18n = Translator.get("i18n_login_remainder_times");
+            msg += String.format(i18n, lockStatus.getRemainderTimes());
+        }
+        return msg;
+    }
+
     @Override
     public CurrentUserDto userInfo() {
         CurrentUserDto userDto = (CurrentUserDto) SecurityUtils.getSubject().getPrincipal();
@@ -167,13 +177,14 @@ public class AuthServer implements AuthApi {
             String token = ServletUtils.getToken();
             Long userId = JWTUtils.tokenInfoByToken(token).getUserId();
             SysUserEntity user = authUserService.getUserById(userId);
-            CurrentUserDto currentUserDto = BeanUtils.copyBean(new CurrentUserDto(), user);
+            CurrentUserDto currentUserDto = BeanUtils.copyBean(new CurrentUserDto(), user, "password");
             List<CurrentRoleDto> currentRoleDtos = authUserService.roleInfos(user.getUserId());
             List<String> permissions = authUserService.permissions(user.getUserId());
             currentUserDto.setRoles(currentRoleDtos);
             currentUserDto.setPermissions(permissions);
             return currentUserDto;
         }
+        userDto.setPassword(null);
         return userDto;
     }
 
@@ -240,8 +251,13 @@ public class AuthServer implements AuthApi {
             HttpServletRequest request = ServletUtils.request();
             String idToken = request.getHeader("IdToken");
             if (StringUtils.isNotBlank(idToken)) {
-                OidcXpackService oidcXpackService = SpringContextUtil.getBean(OidcXpackService.class);
-                oidcXpackService.logout(idToken);
+                try {
+                    OidcXpackService oidcXpackService = SpringContextUtil.getBean(OidcXpackService.class);
+                    oidcXpackService.logout(idToken);
+                } catch (Exception e) {
+                    LogUtil.error(e.getMessage(), e);
+                    DEException.throwException("oidc_logout_error");
+                }
             }
         }
 
@@ -253,11 +269,16 @@ public class AuthServer implements AuthApi {
         String result = null;
         Integer defaultLoginType = systemParameterService.defaultLoginType();
         if (defaultLoginType == 3 && isOpenCas()) {
-            HttpServletRequest request = ServletUtils.request();
-            HttpSession session = request.getSession();
-            session.invalidate();
-            CasXpackService casXpackService = SpringContextUtil.getBean(CasXpackService.class);
-            result = casXpackService.logout();
+            try {
+                HttpServletRequest request = ServletUtils.request();
+                HttpSession session = request.getSession();
+                session.invalidate();
+                CasXpackService casXpackService = SpringContextUtil.getBean(CasXpackService.class);
+                result = casXpackService.logout();
+            } catch (Exception e) {
+                LogUtil.error(e.getMessage(), e);
+                DEException.throwException("cas_logout_error");
+            }
         }
         try {
             Long userId = JWTUtils.tokenInfoByToken(token).getUserId();
@@ -335,6 +356,14 @@ public class AuthServer implements AuthApi {
             return false;
 
         return authUserService.supportLark();
+    }
+
+    @Override
+    public boolean isOpenLarksuite() {
+        Boolean licValid = PluginUtils.licValid();
+        if (!licValid)
+            return false;
+        return authUserService.supportLarksuite();
     }
 
     @Override

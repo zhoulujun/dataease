@@ -1,6 +1,10 @@
 <template>
-  <div class="calcu-feild">
-    <el-form ref="form" :model="fieldForm" class="de-form-item">
+  <div class="calcu-field">
+    <el-form
+      ref="form"
+      :model="fieldForm"
+      class="de-form-item"
+    >
       <el-form-item :label="$t('dataset.field_edit_name')">
         <el-input
           v-model="fieldForm.name"
@@ -10,19 +14,29 @@
       </el-form-item>
     </el-form>
 
-    <div class="calcu-cont" style="height: 544px">
+    <div
+      class="calcu-cont"
+      style="height: 544px"
+    >
       <div style="flex: 1">
         <el-row>
-          <el-row>
+          <el-row style="max-width: 480px;">
             <span class="mb8">
               {{ $t('dataset.field_exp') }}
-              <el-tooltip class="item" effect="dark" placement="bottom">
+              <el-tooltip
+                class="item"
+                effect="dark"
+                placement="bottom"
+              >
                 <div slot="content">
-                  表达式语法请遵循该数据源对应的数据库语法。
+                  {{ $t('dataset.calc_tips.tip1') }}
                   <br>
-                  数据集中不支持聚合运算。
+                  {{ $t('dataset.calc_tips.tip2') }}
                 </div>
-                <i class="el-icon-info" style="cursor: pointer" />
+                <i
+                  class="el-icon-info"
+                  style="cursor: pointer"
+                />
               </el-tooltip>
             </span>
             <codemirror
@@ -36,12 +50,22 @@
             />
           </el-row>
           <el-row style="margin-top: 28px">
-            <el-form ref="form" :model="fieldForm" class="de-form-item">
+            <el-form
+              ref="form"
+              :model="fieldForm"
+              class="de-form-item"
+            >
               <el-form-item :label="$t('dataset.data_type')">
-                <el-radio v-model="fieldForm.groupType" label="d">{{
+                <el-radio
+                  v-model="fieldForm.groupType"
+                  label="d"
+                >{{
                   $t('chart.dimension')
                 }}</el-radio>
-                <el-radio v-model="fieldForm.groupType" label="q">{{
+                <el-radio
+                  v-model="fieldForm.groupType"
+                  label="q"
+                >{{
                   $t('chart.quota')
                 }}</el-radio>
               </el-form-item>
@@ -60,15 +84,22 @@
       <div class="padding-lr">
         <span class="mb8">
           {{ $t('dataset.click_ref_field') }}
-          <el-tooltip class="item" effect="dark" placement="bottom">
+          <el-tooltip
+            class="item"
+            effect="dark"
+            placement="bottom"
+          >
             <div slot="content">
-              引用字段以 "[" 开始， "]" 结束
+              {{ $t('dataset.calc_tips.tip3') }}
               <br>
-              请勿修改引用内容，否则将引用失败
+              {{ $t('dataset.calc_tips.tip4') }}
               <br>
-              若输入与引用字段相同格式的内容，将被当作引用字段处理
+              {{ $t('dataset.calc_tips.tip5') }}
             </div>
-            <i class="el-icon-info" style="cursor: pointer" />
+            <i
+              class="el-icon-info"
+              style="cursor: pointer"
+            />
           </el-tooltip>
         </span>
         <el-input
@@ -121,7 +152,10 @@
               </span>
             </transition-group>
           </draggable>
-          <div v-else class="class-na">{{ $t('dataset.na') }}</div>
+          <div
+            v-else
+            class="class-na"
+          >{{ $t('dataset.na') }}</div>
         </div>
         <div class="field-height">
           <span>{{ $t('chart.quota') }}</span>
@@ -165,22 +199,32 @@
               </span>
             </transition-group>
           </draggable>
-          <div v-else class="class-na">{{ $t('dataset.na') }}</div>
+          <div
+            v-else
+            class="class-na"
+          >{{ $t('dataset.na') }}</div>
         </div>
       </div>
       <div class="padding-lr">
         <span class="mb8">
           {{ $t('dataset.click_ref_function') }}
-          <el-tooltip class="item" effect="dark" placement="bottom">
+          <el-tooltip
+            class="item"
+            effect="dark"
+            placement="bottom"
+          >
             <div slot="content">
-              使用数据集对应数据库类型所支持的函数，语法同对应数据库
+              {{ $t('dataset.calc_tips.tip6') }}
               <br>
-              如日期格式化：MySQL使用DATE_FORMAT(date,format)；Oracle使用TO_DATE(X,[,fmt])
+              {{ $t('dataset.calc_tips.tip7') }}
               <br>
-              非直连模式数据集，使用Doris数据库函数，可参考Doris官网
+              {{ $t('dataset.calc_tips.tip8') }}
               https://doris.apache.org/zh-CN/
             </div>
-            <i class="el-icon-info" style="cursor: pointer" />
+            <i
+              class="el-icon-info"
+              style="cursor: pointer"
+            />
           </el-tooltip>
         </span>
         <el-input
@@ -215,7 +259,10 @@
     </div>
 
     <div class="de-foot">
-      <deBtn secondary @click="closeCalcField">{{
+      <deBtn
+        secondary
+        @click="closeCalcField"
+      >{{
         $t('dataset.cancel')
       }}</deBtn>
       <deBtn
@@ -674,7 +721,7 @@ export default {
   background: var(--ContentBG);
 }
 .function-height {
-  height: calc(100% - 21px - 32px - 4px - 24px);
+  height: calc(100% - 81px);
   overflow: auto;
   margin-top: 4px;
 }
@@ -696,30 +743,5 @@ export default {
   text-align: center;
   font-size: 14px;
   color: var(--deTextDisable);
-}
-</style>
-
-<style lang="scss">
-.calcu-feild {
-  .calcu-cont {
-    display: flex;
-    justify-content: space-between;
-  }
-  .codemirror {
-    height: 250px;
-    overflow-y: auto;
-    width: 100%;
-    border: 1px solid #bbbfc4;
-    border-radius: 4px;
-  }
-  .codemirror .CodeMirror-scroll {
-    height: 250px;
-    overflow-y: auto;
-  }
-
-  .mb8 {
-    margin-bottom: 8px;
-    display: inline-block;
-  }
 }
 </style>

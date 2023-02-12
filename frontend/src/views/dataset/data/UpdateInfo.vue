@@ -3,13 +3,22 @@
     <el-row style="margin: 6px 0 16px 0">
       <el-col :span="12">
         <deBtn
+          v-if="hasDataPermission('manage', param.privileges)"
           secondary
           icon="el-icon-plus"
           @click="() => addTask()"
         >{{ $t('dataset.add_task') }}</deBtn>
+        &nbsp;
       </el-col>
-      <el-col style="text-align: right" :span="12">
-        <el-button type="text" icon="el-icon-document" @click="showConfig">
+      <el-col
+        style="text-align: right"
+        :span="12"
+      >
+        <el-button
+          type="text"
+          icon="el-icon-document"
+          @click="showConfig"
+        >
           {{ $t('dataset.task.record') }}
         </el-button>
       </el-col>
@@ -59,8 +68,15 @@
               v-if="scope.row.lastExecStatus"
               :class="[`de-${scope.row.lastExecStatus}-pre`, 'de-status']"
             >{{
-              $t(`dataset.${scope.row.lastExecStatus.toLocaleLowerCase()}`)
-            }}
+               $t(`dataset.${scope.row.lastExecStatus.toLocaleLowerCase()}`)
+             }}
+              <svg-icon
+                v-if="scope.row.lastExecStatus === 'Error'"
+                style="cursor: pointer;"
+                icon-class="icon-maybe"
+                class="field-icon-location"
+                @click="showErrorMassage(scope.row.msg)"
+              />
             </span>
             <span v-else>-</span>
           </template>
@@ -120,7 +136,7 @@
           key="__operation"
           :label="$t('commons.operating')"
           fixed="right"
-          min-width="100"
+          min-width="180"
         >
           <template slot-scope="scope">
             <el-button
@@ -131,6 +147,15 @@
             >{{
               $t(disableEdit(scope.row) ? 'auth.view' : 'commons.edit')
             }}</el-button>
+
+            <el-button
+              class="de-text-btn mar3 mar6"
+              :disabled="disableExec(scope.row)"
+              type="text"
+              @click="execTask(scope.row)"
+            >{{ $t("emailtask.execute_now") }}
+            </el-button>
+
             <el-dropdown
               size="medium"
               trigger="click"
@@ -141,19 +166,16 @@
                 class="el-icon-more de-text-btn"
                 type="text"
               />
-              <el-dropdown-menu slot="dropdown" class="de-card-dropdown">
+              <el-dropdown-menu
+                slot="dropdown"
+                class="de-card-dropdown"
+              >
                 <template
-                  v-if="!['Stopped', 'Exec'].includes(scope.row.status)"
+                  v-if="!['Exec'].includes(scope.row.status)"
                 >
                   <el-dropdown-item
-                    :disabled="disableExec(scope.row)"
-                    command="exec"
-                  >
-                    {{ $t('components.run_once') }}
-                  </el-dropdown-item>
-                  <el-dropdown-item
                     v-if="scope.row.status === 'Pending'"
-                    command="contine"
+                    command="continue"
                   >
                     {{ $t('components.continue') }}
                   </el-dropdown-item>
@@ -186,8 +208,14 @@
       class="de-dialog-form"
     >
       <span class="err-msg">{{ error_massage }} </span>
-      <span slot="footer" class="dialog-footer">
-        <el-button size="mini" @click="show_error_massage = false">{{
+      <span
+        slot="footer"
+        class="dialog-footer"
+      >
+        <el-button
+          size="mini"
+          @click="show_error_massage = false"
+        >{{
           $t('dataset.close')
         }}</el-button>
       </span>
@@ -197,7 +225,7 @@
       v-closePress
       :title="$t('dataset.task.record')"
       :visible.sync="userDrawer"
-      custom-class="user-drawer-task"
+      custom-class="de-user-drawer"
       size="840px"
       direction="rtl"
     >
@@ -208,19 +236,31 @@
           :height="height"
           style="width: 100%"
         >
-          <el-table-column prop="name" :label="$t('dataset.task_name')" />
-          <el-table-column prop="startTime" :label="$t('dataset.start_time')">
+          <el-table-column
+            prop="name"
+            :label="$t('dataset.task_name')"
+          />
+          <el-table-column
+            prop="startTime"
+            :label="$t('dataset.start_time')"
+          >
             <template slot-scope="scope">
               <span>{{ scope.row.startTime | timestampFormatDate }}</span>
             </template>
           </el-table-column>
-          <el-table-column prop="endTime" :label="$t('dataset.end_time')">
+          <el-table-column
+            prop="endTime"
+            :label="$t('dataset.end_time')"
+          >
             <template slot-scope="scope">
               <span>{{ scope.row.endTime | timestampFormatDate }}</span>
             </template>
           </el-table-column>
 
-          <el-table-column prop="status" :label="$t('dataset.status')">
+          <el-table-column
+            prop="status"
+            :label="$t('dataset.status')"
+          >
             <template slot-scope="scope">
               <span
                 v-if="scope.row.status"
@@ -228,7 +268,13 @@
               >{{
                  $t(`dataset.${scope.row.status.toLocaleLowerCase()}`)
                }}
-                <svg-icon v-if="scope.row.status === 'Error'" style="cursor: pointer;" icon-class="icon-maybe" class="field-icon-location" @click="showErrorMassage(scope.row.info)" />
+                <svg-icon
+                  v-if="scope.row.status === 'Error'"
+                  style="cursor: pointer;"
+                  icon-class="icon-maybe"
+                  class="field-icon-location"
+                  @click="showErrorMassage(scope.row.info)"
+                />
               </span>
               <span v-else>-</span>
             </template>
@@ -251,7 +297,7 @@
       v-closePress
       :title="header"
       :visible.sync="update_task"
-      custom-class="user-drawer update-drawer-task"
+      custom-class="de-user-drawer update-drawer-task"
       size="680px"
       direction="rtl"
     >
@@ -264,21 +310,30 @@
         :disabled="disableForm"
         :rules="taskFormRules"
       >
-        <el-form-item :label="$t('dataset.task_name')" prop="name">
+        <el-form-item
+          :label="$t('dataset.task_name')"
+          prop="name"
+        >
           <el-input
             v-model="taskForm.name"
             size="small"
             :placeholder="$t('fu.search_bar.please_input') + $t('dataset.task_name')"
           />
         </el-form-item>
-        <el-form-item :label="$t('dataset.update_type')" prop="type">
+        <el-form-item
+          :label="$t('dataset.update_type')"
+          prop="type"
+        >
           <el-radio-group v-model="taskForm.type">
             <el-radio label="all_scope">{{ $t('dataset.all_scope') }}</el-radio>
             <el-radio label="add_scope">
               {{ $t('dataset.add_scope') }}</el-radio>
           </el-radio-group>
         </el-form-item>
-        <div v-if="taskForm.type === 'add_scope' && table.type !== 'api'" class="add-scope-cont">
+        <div
+          v-if="taskForm.type === 'add_scope' && table.type !== 'api'"
+          class="add-scope-cont"
+        >
           <el-form-item
             prop="type"
             :label="$t('dataset.incremental_update_type')"
@@ -324,8 +379,14 @@
           </el-form-item>
         </div>
 
-        <el-form-item :label="$t('dataset.execute_rate')" prop="rate">
-          <el-radio-group v-model="taskForm.rate" @change="onRateChange">
+        <el-form-item
+          :label="$t('dataset.execute_rate')"
+          prop="rate"
+        >
+          <el-radio-group
+            v-model="taskForm.rate"
+            @change="onRateChange"
+          >
             <el-radio label="SIMPLE">{{ $t('dataset.execute_once') }}</el-radio>
             <el-radio label="CRON">{{ $t('dataset.cron_config') }}</el-radio>
             <el-radio label="SIMPLE_CRON">{{
@@ -333,7 +394,10 @@
             }}</el-radio>
           </el-radio-group>
         </el-form-item>
-        <div v-if="taskForm.rate !== 'SIMPLE'" class="execute-rate-cont">
+        <div
+          v-if="taskForm.rate !== 'SIMPLE'"
+          class="execute-rate-cont"
+        >
           <el-form-item
             v-if="taskForm.rate === 'SIMPLE_CRON'"
             :label="$t('dataset.execute_rate')"
@@ -354,9 +418,18 @@
                 size="small"
                 @change="onSimpleCronChange()"
               >
-                <el-option :label="$t('components.minute')" value="minute" />
-                <el-option :label="$t('components.hour')" value="hour" />
-                <el-option :label="$t('components.day')" value="day" />
+                <el-option
+                  :label="$t('components.minute')"
+                  value="minute"
+                />
+                <el-option
+                  :label="$t('components.hour')"
+                  value="hour"
+                />
+                <el-option
+                  :label="$t('components.day')"
+                  value="day"
+                />
               </el-select>
               {{ $t('cron.every_exec') }}
             </div>
@@ -424,8 +497,15 @@
         </div>
       </el-form>
       <div class="de-foot">
-        <deBtn secondary @click="closeTask">{{ $t('dataset.cancel') }}</deBtn>
-        <deBtn v-if="!disableForm" type="primary" @click="saveTask(taskForm)">{{
+        <deBtn
+          secondary
+          @click="closeTask"
+        >{{ $t('dataset.cancel') }}</deBtn>
+        <deBtn
+          v-if="!disableForm"
+          type="primary"
+          @click="saveTask(taskForm)"
+        >{{
           $t('dataset.confirm')
         }}</deBtn>
       </div>
@@ -459,7 +539,7 @@ import 'codemirror/addon/hint/show-hint.css'
 import 'codemirror/addon/hint/sql-hint'
 import 'codemirror/addon/hint/show-hint'
 // vue-cron
-import cron from '@/components/cron/cron'
+import cron from '@/components/cron/Cron'
 import { hasDataPermission } from '@/utils/permission'
 import { engineMode } from '@/api/system/engine'
 import GridTable from '@/components/gridTable/index.vue'
@@ -747,16 +827,14 @@ export default {
       switch (key) {
         case 'exec':
           this.execTask(row)
-          return
           break
         case 'delete':
           this.deleteTask(row)
-          return
           break
         default:
+          this.changeTaskStatus(row)
           break
       }
-      this.changeTaskStatus(row)
     },
     execTask(task) {
       this.$confirm(
@@ -783,10 +861,7 @@ export default {
     },
     disableExec(task) {
       return (
-        task.status === 'Stopped' ||
-        task.status === 'Pending' ||
-        task.rate === 'SIMPLE' ||
-        !hasDataPermission('manage', task.privileges)
+        (task.status === 'Stopped' && task.rate !== 'SIMPLE') || task.status === 'Pending' || task.status === 'Exec' || !hasDataPermission('manage', task.privileges)
       )
     },
     disableDelete(task) {
@@ -860,7 +935,7 @@ export default {
     getIncrementalConfig() {
       post('/dataset/table/incrementalConfig', { tableId: this.table.id }).then(response => {
         this.incrementalConfig = response.data
-        if (this.incrementalConfig.incrementalAdd.length === 0 && this.incrementalConfig.incrementalDelete.length === 0) {
+        if (this.incrementalConfig?.incrementalAdd?.length === 0 && this.incrementalConfig?.incrementalDelete?.length === 0) {
           this.incrementalUpdateType = 'incrementalAdd'
           this.sql = ''
           return
@@ -1073,7 +1148,7 @@ export default {
 }
 </style>
 <style lang="scss">
-.user-drawer-task {
+.de-user-drawer {
   .el-table::before {
     content: '';
     position: absolute;

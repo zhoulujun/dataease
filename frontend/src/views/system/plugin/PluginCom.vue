@@ -8,7 +8,7 @@
     v-bind="$attrs"
     v-on="$listeners"
     @execute-axios="executeAxios"
-    @on-add-languanges="addLanguages"
+    @on-add-languages="addLanguages"
     @plugin-call-back="pluginCallBack"
   />
   <div v-else>
@@ -18,11 +18,12 @@
 </template>
 
 <script>
-import AsyncComponent from '@/components/AsyncComponent'
+import AsyncComponent from '@/components/asyncComponent'
 import i18n from '@/lang'
 import bus from '@/utils/bus'
 import { execute } from '@/api/system/dynamic'
 import { uuid } from 'vue-uuid'
+
 export default {
   name: 'PluginCom',
   components: {
@@ -36,7 +37,8 @@ export default {
     },
     obj: {
       type: Object,
-      default: () => {}
+      default: () => {
+      }
     }
   },
   data() {
@@ -47,17 +49,8 @@ export default {
       refId: null
     }
   },
-  created() {
-    this.refId = uuid.v1
-    if (this.componentName) {
-      this.showAsync = true
-      this.url = this.baseUrl + this.componentName
-    } else {
-      this.showAsync = false
-    }
-  },
   watch: {
-    'componentName': function () {
+    'componentName': function() {
       this.refId = uuid.v1
       if (this.componentName) {
         this.showAsync = true
@@ -65,6 +58,15 @@ export default {
       } else {
         this.showAsync = false
       }
+    }
+  },
+  created() {
+    this.refId = uuid.v1
+    if (this.componentName) {
+      this.showAsync = true
+      this.url = this.baseUrl + this.componentName
+    } else {
+      this.showAsync = false
     }
   },
   methods: {

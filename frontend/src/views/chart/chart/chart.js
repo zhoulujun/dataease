@@ -1,15 +1,17 @@
 export const DEFAULT_TAB_COLOR_CASE_DARK = {
   headFontColor: '#FFFFFF',
   headFontActiveColor: '#FFFFFF',
-  headBorderColor: '',
-  headBorderActiveColor: ''
+  headBorderColor: '#131E42',
+  headBorderActiveColor: '#131E42',
+  headPosition: 'left'
 }
 
 export const DEFAULT_TAB_COLOR_CASE_LIGHT = {
   headFontColor: '#OOOOOO',
   headFontActiveColor: '#OOOOOO',
-  headBorderColor: '',
-  headBorderActiveColor: ''
+  headBorderColor: '#OOOOOO',
+  headBorderActiveColor: '#OOOOOO',
+  headPosition: 'left'
 }
 
 export const DEFAULT_COLOR_CASE = {
@@ -22,25 +24,32 @@ export const DEFAULT_COLOR_CASE = {
   tableFontColor: '#000000',
   tableStripe: true,
   dimensionColor: '#000000',
-  quotaColor: '#4E81BB',
+  quotaColor: '#5470c6',
   tableBorderColor: '#E6E7E4',
   seriesColors: [], // 格式：{"name":"s1","color":"","isCustom":false}
-  areaBorderColor: '#303133'
+  areaBorderColor: '#303133',
+  gradient: false,
+  areaBaseColor: '#FFFFFF',
+  tableScrollBarColor: 'rgba(0, 0, 0, 0.15)',
+  tableScrollBarHoverColor: 'rgba(0, 0, 0, 0.4)'
 }
 
 export const DEFAULT_COLOR_CASE_DARK = {
   value: 'default',
   colors: ['#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de', '#3ba272', '#fc8452', '#9a60b4', '#ea7ccc'],
   alpha: 100,
-  tableHeaderBgColor: '#4E81BB',
+  tableHeaderBgColor: '#5470c6',
   tableItemBgColor: '#131E42',
   tableFontColor: '#ffffff',
   tableStripe: true,
   dimensionColor: '#ffffff',
-  quotaColor: '#4E81BB',
+  quotaColor: '#5470c6',
   tableBorderColor: '#CCCCCC',
   seriesColors: [], // 格式：{"name":"s1","color":"","isCustom":false}
-  areaBorderColor: '#EBEEF5'
+  areaBorderColor: '#EBEEF5',
+  areaBaseColor: '5470C6',
+  tableScrollBarColor: 'rgba(255, 255, 255, 0.5)',
+  tableScrollBarHoverColor: 'rgba(255, 255, 255, 0.8)'
 }
 export const DEFAULT_SIZE = {
   barDefault: true,
@@ -103,6 +112,11 @@ export const DEFAULT_SIZE = {
   treemapWidth: 80,
   treemapHeight: 80,
   liquidMax: 100,
+  liquidMaxType: 'fix', // fix or dynamic
+  liquidMaxField: {
+    id: '',
+    summary: ''
+  },
   liquidSize: 80,
   liquidOutlineBorder: 4,
   liquidOutlineDistance: 8,
@@ -111,7 +125,12 @@ export const DEFAULT_SIZE = {
   liquidShape: 'circle',
   tablePageMode: 'page',
   symbolOpacity: 0.7,
-  symbolStrokeWidth: 2
+  symbolStrokeWidth: 2,
+  showIndex: false,
+  indexLabel: '序号'
+}
+export const DEFAULT_SUSPENSION = {
+  show: true
 }
 export const DEFAULT_LABEL = {
   show: false,
@@ -130,7 +149,8 @@ export const DEFAULT_LABEL = {
     decimalCount: 2, // 小数位数
     thousandSeparator: true// 千分符
   },
-  reserveDecimalCount: 2 // 百分比堆叠柱状图保留小数位数
+  reserveDecimalCount: 2,
+  labelContent: ['dimension', 'proportion']
 }
 export const DEFAULT_TOOLTIP = {
   show: true,
@@ -157,7 +177,9 @@ export const DEFAULT_TOTAL = {
     },
     calcSubTotals: {
       aggregation: 'SUM'
-    }
+    },
+    totalSort: 'none', // asc,desc
+    totalSortField: ''
   },
   col: {
     showGrandTotals: true,
@@ -172,7 +194,9 @@ export const DEFAULT_TOTAL = {
     },
     calcSubTotals: {
       aggregation: 'SUM'
-    }
+    },
+    totalSort: 'none', // asc,desc
+    totalSortField: ''
   }
 }
 export const DEFAULT_TITLE_STYLE = {
@@ -201,7 +225,7 @@ export const DEFAULT_TITLE_STYLE_DARK = {
   isBolder: true,
   remarkShow: false,
   remark: '',
-  remarkBackgroundColor: '#ffffffff',
+  remarkBackgroundColor: '#5A5C62',
   fontFamily: 'Microsoft YaHei',
   letterSpace: '0',
   fontShadow: false
@@ -242,6 +266,14 @@ export const DEFAULT_XAXIS_STYLE = {
     rotate: 0,
     formatter: '{value}'
   },
+  axisLine: {
+    show: true,
+    lineStyle: {
+      color: '#cccccc',
+      width: 1,
+      style: 'solid'
+    }
+  },
   splitLine: {
     show: false,
     lineStyle: {
@@ -280,6 +312,14 @@ export const DEFAULT_YAXIS_STYLE = {
     rotate: 0,
     formatter: '{value}'
   },
+  axisLine: {
+    show: false,
+    lineStyle: {
+      color: '#cccccc',
+      width: 1,
+      style: 'solid'
+    }
+  },
   splitLine: {
     show: true,
     lineStyle: {
@@ -317,6 +357,14 @@ export const DEFAULT_YAXIS_EXT_STYLE = {
     fontSize: '12',
     rotate: 0,
     formatter: '{value}'
+  },
+  axisLine: {
+    show: false,
+    lineStyle: {
+      color: '#cccccc',
+      width: 1,
+      style: 'solid'
+    }
   },
   splitLine: {
     show: true,
@@ -395,7 +443,8 @@ export const DEFAULT_FUNCTION_CFG = {
   sliderRange: [0, 10],
   sliderBg: '#FFFFFF',
   sliderFillBg: '#BCD6F1',
-  sliderTextClolor: '#999999'
+  sliderTextClolor: '#999999',
+  emptyDataStrategy: 'breakLine'
 }
 export const DEFAULT_THRESHOLD = {
   gaugeThreshold: '',
@@ -857,7 +906,9 @@ export const BASE_MAP = {
 
         },
         emphasis: {
-
+          label: {
+            show: false
+          }
         }
       }
     }
@@ -1056,3 +1107,5 @@ export const CHART_FONT_LETTER_SPACE = [
   { name: '9px', value: '9' },
   { name: '10px', value: '10' }
 ]
+
+export const NOT_SUPPORT_PAGE_DATASET = ['kylin', 'sqlServer', 'es', 'presto', 'ds_doris', 'StarRocks']

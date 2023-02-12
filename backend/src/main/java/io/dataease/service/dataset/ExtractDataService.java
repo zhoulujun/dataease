@@ -2,11 +2,16 @@ package io.dataease.service.dataset;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import io.dataease.ext.ExtChartViewMapper;
 import io.dataease.commons.constants.*;
 import io.dataease.commons.model.AuthURD;
 import io.dataease.commons.utils.*;
 import io.dataease.controller.request.datasource.ApiDefinition;
+import io.dataease.dto.dataset.DataTableInfoDTO;
+import io.dataease.dto.dataset.ExcelSheetData;
+import io.dataease.dto.datasource.*;
+import io.dataease.exception.DataEaseException;
+import io.dataease.ext.ExtChartViewMapper;
+import io.dataease.listener.util.CacheUtils;
 import io.dataease.plugins.common.base.domain.*;
 import io.dataease.plugins.common.constants.DatasetType;
 import io.dataease.plugins.common.constants.DatasourceTypes;
@@ -17,14 +22,9 @@ import io.dataease.plugins.datasource.entity.JdbcConfiguration;
 import io.dataease.plugins.datasource.provider.Provider;
 import io.dataease.plugins.datasource.query.QueryProvider;
 import io.dataease.provider.DDLProvider;
-import io.dataease.provider.datasource.JdbcProvider;
 import io.dataease.provider.ProviderFactory;
-import io.dataease.dto.datasource.*;
+import io.dataease.provider.datasource.JdbcProvider;
 import io.dataease.service.datasource.DatasourceService;
-import io.dataease.dto.dataset.DataTableInfoDTO;
-import io.dataease.dto.dataset.ExcelSheetData;
-import io.dataease.exception.DataEaseException;
-import io.dataease.listener.util.CacheUtils;
 import io.dataease.service.engine.EngineService;
 import io.dataease.service.kettle.KettleService;
 import io.dataease.service.message.DeMsgutil;
@@ -99,7 +99,7 @@ public class ExtractDataService {
     private static final String lastUpdateTime = "${__last_update_time__}";
     private static final String currentUpdateTime = "${__current_update_time__}";
     private static final String separator = "|DE|";
-    private static final String extention = "txt";
+    private static final String extension = "txt";
     private static final String root_path = "/opt/dataease/data/kettle/";
 
     @Value("${kettle.files.keep:false}")
@@ -413,7 +413,7 @@ public class ExtractDataService {
 
     }
 
-    private List<DatasetTableField> getDatasetTableFields(String datasetTableId) {
+    public List<DatasetTableField> getDatasetTableFields(String datasetTableId) {
         List<DatasetTableField> datasetTableFields = dataSetTableFieldsService.list(DatasetTableField.builder().tableId(datasetTableId).build());
         datasetTableFields = datasetTableFields.stream().filter(datasetTableField -> datasetTableField.getExtField() == 0).collect(Collectors.toList());
         datasetTableFields.sort((o1, o2) -> {
@@ -471,11 +471,11 @@ public class ExtractDataService {
         }
         switch (extractType) {
             case "all_scope":
-                dataFile = root_path + TableUtils.tmpName(TableUtils.tableName(datasetTable.getId())) + "." + extention;
+                dataFile = root_path + TableUtils.tmpName(TableUtils.tableName(datasetTable.getId())) + "." + extension;
                 script = String.format(streamLoadScript, dorisConfiguration.getUsername(), dorisConfiguration.getPassword(), System.currentTimeMillis(), separator, columns, "APPEND", dataFile, dorisConfiguration.getHost(), dorisConfiguration.getHttpPort(), dorisConfiguration.getDataBase(), TableUtils.tmpName(TableUtils.tableName(datasetTable.getId())), dataFile);
                 break;
             default:
-                dataFile = root_path + TableUtils.addName(TableUtils.tableName(datasetTable.getId())) + "." + extention;
+                dataFile = root_path + TableUtils.addName(TableUtils.tableName(datasetTable.getId())) + "." + extension;
                 script = String.format(streamLoadScript, dorisConfiguration.getUsername(), dorisConfiguration.getPassword(), System.currentTimeMillis(), separator, columns, "APPEND", dataFile, dorisConfiguration.getHost(), dorisConfiguration.getHttpPort(), dorisConfiguration.getDataBase(), TableUtils.tableName(datasetTable.getId()), dataFile);
                 break;
         }
@@ -617,7 +617,7 @@ public class ExtractDataService {
         dataSetTableTaskLogService.save(datasetTableTaskLog, hasTask);
     }
 
-    private void createEngineTable(String tableName, List<DatasetTableField> datasetTableFields) throws Exception {
+    public void createEngineTable(String tableName, List<DatasetTableField> datasetTableFields) throws Exception {
         Datasource engine = engineService.getDeEngine();
         JdbcProvider jdbcProvider = CommonBeanFactory.getBean(JdbcProvider.class);
         DatasourceRequest datasourceRequest = new DatasourceRequest();
@@ -722,7 +722,7 @@ public class ExtractDataService {
             }
 
             for (ExcelSheetData sheet : totalSheets) {
-                if (sheet.getExcelLable().equalsIgnoreCase(excelSheetData.getExcelLable())) {
+                if (sheet.getExcelLabel().equalsIgnoreCase(excelSheetData.getExcelLabel())) {
                     for (List<String> dataItem : sheet.getData()) {
                         if (dataItem.size() > 0) {
                             data.add(dataItem.toArray(new String[dataItem.size()]));
@@ -793,7 +793,7 @@ public class ExtractDataService {
             Thread.sleep(1000);
         }
         if (jobStatus.getStatusDescription().equals("Finished")) {
-            LogUtil.info(datasetTable.getId()+ ": " + jobStatus.getLoggingString());
+            LogUtil.info(datasetTable.getId() + ": " + jobStatus.getLoggingString());
             return;
         } else {
             DataEaseException.throwException(jobStatus.getLoggingString());
@@ -820,16 +820,16 @@ public class ExtractDataService {
             case "all_scope":
                 outFile = TableUtils.tmpName(TableUtils.tableName(datasetTable.getId()));
                 jobName = "job_" + TableUtils.tableName(datasetTable.getId());
-                script = String.format(streamLoadScript, dorisConfiguration.getUsername(), dorisConfiguration.getPassword(), datasetTable.getId() + System.currentTimeMillis(), separator, columns, "APPEND", root_path + outFile + "." + extention, dorisConfiguration.getHost(), dorisConfiguration.getHttpPort(), dorisConfiguration.getDataBase(), TableUtils.tmpName(TableUtils.tableName(datasetTable.getId())), root_path + outFile + "." + extention);
+                script = String.format(streamLoadScript, dorisConfiguration.getUsername(), dorisConfiguration.getPassword(), datasetTable.getId() + System.currentTimeMillis(), separator, columns, "APPEND", root_path + outFile + "." + extension, dorisConfiguration.getHost(), dorisConfiguration.getHttpPort(), dorisConfiguration.getDataBase(), TableUtils.tmpName(TableUtils.tableName(datasetTable.getId())), root_path + outFile + "." + extension);
                 break;
             case "incremental_add":
                 outFile = TableUtils.addName(datasetTable.getId());
                 jobName = "job_add_" + TableUtils.tableName(datasetTable.getId());
-                script = String.format(streamLoadScript, dorisConfiguration.getUsername(), dorisConfiguration.getPassword(), datasetTable.getId() + System.currentTimeMillis(), separator, columns, "APPEND", root_path + outFile + "." + extention, dorisConfiguration.getHost(), dorisConfiguration.getHttpPort(), dorisConfiguration.getDataBase(), TableUtils.tableName(datasetTable.getId()), root_path + outFile + "." + extention);
+                script = String.format(streamLoadScript, dorisConfiguration.getUsername(), dorisConfiguration.getPassword(), datasetTable.getId() + System.currentTimeMillis(), separator, columns, "APPEND", root_path + outFile + "." + extension, dorisConfiguration.getHost(), dorisConfiguration.getHttpPort(), dorisConfiguration.getDataBase(), TableUtils.tableName(datasetTable.getId()), root_path + outFile + "." + extension);
                 break;
             case "incremental_delete":
                 outFile = TableUtils.deleteName(TableUtils.tableName(datasetTable.getId()));
-                script = String.format(streamLoadScript, dorisConfiguration.getUsername(), dorisConfiguration.getPassword(), datasetTable.getId() + System.currentTimeMillis(), separator, columns, "DELETE", root_path + outFile + "." + extention, dorisConfiguration.getHost(), dorisConfiguration.getHttpPort(), dorisConfiguration.getDataBase(), TableUtils.tableName(datasetTable.getId()), root_path + outFile + "." + extention);
+                script = String.format(streamLoadScript, dorisConfiguration.getUsername(), dorisConfiguration.getPassword(), datasetTable.getId() + System.currentTimeMillis(), separator, columns, "DELETE", root_path + outFile + "." + extension, dorisConfiguration.getHost(), dorisConfiguration.getHttpPort(), dorisConfiguration.getDataBase(), TableUtils.tableName(datasetTable.getId()), root_path + outFile + "." + extension);
                 jobName = "job_delete_" + TableUtils.tableName(datasetTable.getId());
                 break;
             default:
@@ -1029,7 +1029,7 @@ public class ExtractDataService {
         if (extractType.equalsIgnoreCase("all_scope") && datasetTable.getType().equalsIgnoreCase(DatasetType.SQL.name())) {
             DataTableInfoDTO dataTableInfoDTO = new Gson().fromJson(datasetTable.getInfo(), DataTableInfoDTO.class);
             selectSQL = dataTableInfoDTO.getSql();
-            if(dataTableInfoDTO.isBase64Encryption()){
+            if (dataTableInfoDTO.isBase64Encryption()) {
                 selectSQL = new String(java.util.Base64.getDecoder().decode(selectSQL));
             }
             QueryProvider qp = ProviderFactory.getQueryProvider(datasource.getType());
@@ -1056,13 +1056,13 @@ public class ExtractDataService {
     }
 
     private List<StepMeta> excelInputStep(String Info, List<DatasetTableField> datasetTableFields) {
-        List<StepMeta>inputSteps = new ArrayList<>();
+        List<StepMeta> inputSteps = new ArrayList<>();
         DataTableInfoDTO dataTableInfoDTO = new Gson().fromJson(Info, DataTableInfoDTO.class);
         List<ExcelSheetData> excelSheetDataList = dataTableInfoDTO.getExcelSheetDataList();
 
         List<String> sheetNames = new ArrayList<>();
 
-        int size =1;
+        int size = 1;
         for (ExcelSheetData excelSheetData : excelSheetDataList) {
             StepMeta fromStep = null;
             String suffix = excelSheetData.getPath().substring(excelSheetDataList.get(0).getPath().lastIndexOf(".") + 1);
@@ -1090,7 +1090,7 @@ public class ExtractDataService {
                 fromStep.setDraw(true);
                 fromStep.setLocation(100, 100 * size);
                 inputSteps.add(fromStep);
-            }else {
+            } else {
                 List<String> files = new ArrayList<>();
                 files.add(excelSheetData.getPath());
 
@@ -1098,7 +1098,7 @@ public class ExtractDataService {
                 filesRequired.add("Y");
 
                 ExcelInputMeta excelInputMeta = new ExcelInputMeta();
-                sheetNames.add(excelSheetData.getExcelLable());
+                sheetNames.add(excelSheetData.getExcelLabel());
                 if (StringUtils.equalsIgnoreCase(suffix, "xlsx")) {
                     excelInputMeta.setSpreadSheetType(SpreadSheetType.SAX_POI);
                     excelInputMeta.setSheetName(sheetNames.toArray(new String[sheetNames.size()]));
@@ -1141,7 +1141,7 @@ public class ExtractDataService {
         textFileOutputMeta.setHeaderEnabled(false);
         textFileOutputMeta.setFilename(root_path + dorisOutputTable);
         textFileOutputMeta.setSeparator(separator);
-        textFileOutputMeta.setExtension(extention);
+        textFileOutputMeta.setExtension(extension);
 
         if (datasource.getType().equalsIgnoreCase(DatasourceTypes.oracle.name())) {
             TextFileField[] outputFields = new TextFileField[datasetTableFields.size() + 1];
@@ -1240,7 +1240,7 @@ public class ExtractDataService {
             if (StringUtils.isNotEmpty(charset)) {
                 String varcharFields = datasetTableFields.stream().filter(datasetTableField -> datasetTableField.getDeExtractType() == 0).map(DatasetTableField::getOriginName).collect(Collectors.joining(","));
                 tmp_code = tmp_code.replace("handleCharset", handleCharset.replace("Datasource_Charset", charset).replace("Target_Charset", targetCharset).replace("varcharFields", varcharFields));
-            }else {
+            } else {
                 tmp_code = tmp_code.replace("handleCharset", "");
             }
         } else {
@@ -1295,7 +1295,7 @@ public class ExtractDataService {
             default:
                 break;
         }
-        deleteFile(root_path + fileName + "." + extention);
+        deleteFile(root_path + fileName + "." + extension);
         deleteFile(root_path + jobName + ".kjb");
         deleteFile(root_path + transName + ".ktr");
     }
@@ -1388,8 +1388,8 @@ public class ExtractDataService {
             "  r = createOutputRow(r, data.outputRowMeta.size());\n" +
             "  String str = \"\";\n" +
             "\n" +
-            "    List<String> fileds = Arrays.asList(\"Column_Fields\".split(\",\"));\n" +
-            "    for (String filed : fileds) {\n" +
+            "    List<String> fields = Arrays.asList(\"Column_Fields\".split(\",\"));\n" +
+            "    for (String filed : fields) {\n" +
             "        String tmp = get(Fields.In, filed).getString(r);\n" +
             "handleCharset \n" +
             "handleWraps \n" +

@@ -1,17 +1,38 @@
 <template>
-  <div class="dataset-api" @mouseup="mouseupDrag" v-loading="loading">
-    <p v-show="!showLeft" class="arrow-right" @click="showLeft = true">
+  <div
+    v-loading="loading"
+    class="dataset-api"
+    @mouseup="mouseupDrag"
+  >
+    <p
+      v-show="!showLeft"
+      class="arrow-right"
+      @click="showLeft = true"
+    >
       <i class="el-icon-d-arrow-right" />
     </p>
-    <div v-show="showLeft" @mousedown="mousedownDrag" :style="{ left: LeftWidth + 'px' }" class="drag-left"></div>
-    <div v-show="showLeft" :style="{ width: LeftWidth + 'px' }" class="table-list">
+    <div
+      v-show="showLeft"
+      :style="{ left: LeftWidth + 'px' }"
+      class="drag-left"
+      @mousedown="mousedownDrag"
+    />
+    <div
+      v-show="showLeft"
+      :style="{ width: LeftWidth + 'px' }"
+      class="table-list"
+    >
       <p class="select-ds">
         {{ $t('deDataset.select_data_source') }}
-        <i class="el-icon-d-arrow-left" @click="showLeft = false" />
+        <i
+          class="el-icon-d-arrow-left"
+          @click="showLeft = false"
+        />
       </p>
       <el-select
         v-model="dataSource"
         class="ds-list"
+        popper-class="db-multiple-select-pop"
         filterable
         :placeholder="$t('dataset.pls_slc_data_source')"
         size="small"
@@ -32,13 +53,26 @@
         prefix-icon="el-icon-search"
         clearable
       />
-      <div v-if="!tableData.length && searchTable !== ''" class="el-empty">
-        <div class="el-empty__description" style="margin-top: 80px;color: #5e6d82;">
+      <div
+        v-if="!tableData.length && searchTable !== ''"
+        class="el-empty"
+      >
+        <div
+          class="el-empty__description"
+          style="margin-top: 80px;color: #5e6d82;"
+        >
           没有找到相关内容
         </div>
       </div>
-      <div v-loading="dsLoading" class="table-checkbox-list" v-else>
-        <el-checkbox-group v-model="checkTableList" size="small">
+      <div
+        v-else
+        v-loading="dsLoading"
+        class="table-checkbox-list"
+      >
+        <el-checkbox-group
+          v-model="checkTableList"
+          size="small"
+        >
           <el-tooltip
             v-for="t in tableData"
             :key="t.name"
@@ -55,11 +89,24 @@
               :title="t.name"
               @click="setActiveName(t)"
             >
-              <svg-icon v-if="!t.enableCheck" icon-class="Checkbox" style="margin-right: 8px"/>
-              <el-checkbox :label="t.name" v-else />
+              <svg-icon
+                v-if="!t.enableCheck"
+                icon-class="Checkbox"
+                style="margin-right: 8px"
+              />
+              <el-checkbox
+                v-else
+                :label="t.name"
+              />
               <span class="label">{{ showTableNameWithComment(t) }}</span>
-              <span v-if="t.nameExsit" class="error-name-exsit">
-                <svg-icon icon-class="exclamationmark" class="ds-icon-scene" />
+              <span
+                v-if="t.nameExist"
+                class="error-name-exist"
+              >
+                <svg-icon
+                  icon-class="exclamationmark"
+                  class="ds-icon-scene"
+                />
               </span>
             </div>
           </el-tooltip>
@@ -86,8 +133,14 @@
           :placeholder="$t('dataset.connect_mode')"
           size="small"
         >
-          <el-option :label="$t('dataset.sync_now')" value="sync_now" />
-          <el-option :label="$t('dataset.sync_latter')" value="sync_latter" />
+          <el-option
+            :label="$t('dataset.sync_now')"
+            value="sync_now"
+          />
+          <el-option
+            :label="$t('dataset.sync_latter')"
+            value="sync_latter"
+          />
         </el-select>
       </div>
       <el-empty
@@ -101,21 +154,23 @@
         <div class="dataset">
           <span class="name">{{ $t('dataset.name') }}</span>
           <el-input
-            v-if="activeIndex !== -1"
-            v-model="tableData[activeIndex].datasetName"
+            v-model="activeTable.datasetName"
             size="small"
             clearable
             @change="validateName"
           />
           <div
-            v-if="tableData[activeIndex].nameExsit"
+            v-if="activeTable.nameExist"
             style="left: 107px; top: 52px"
             class="el-form-item__error"
           >
             {{ $t('deDataset.already_exists') }}
           </div>
         </div>
-        <div v-loading="tableLoading" class="data">
+        <div
+          v-loading="tableLoading"
+          class="data"
+        >
           <span class="result-num">{{
             `${$t('dataset.preview_show')} 1000 ${$t('dataset.preview_item')}`
           }}</span>
@@ -202,15 +257,13 @@ export default {
       avilibelTable: false,
       noAvilibelTableImg: require('@/assets/None.png'),
       noSelectTable: require('@/assets/None_Select_ds.png'),
+      activeTable: {},
       activeName: ''
     }
   },
   computed: {
-    activeIndex() {
-      return this.tableData.findIndex((ele) => ele.name === this.activeName)
-    },
     checkDatasetName() {
-      return this.tableData
+      return this.tables
         .filter((ele, index) => {
           return this.checkTableList.includes(ele.name)
         })
@@ -230,11 +283,11 @@ export default {
         const dsName = this.options.find((ele) => ele.id === val).name
         post('/datasource/getTables/' + val, {}).then((response) => {
           this.tables = response.data
-          this.tableData = JSON.parse(JSON.stringify(this.tables))
-          this.tableData.forEach((ele) => {
+          this.tables.forEach((ele) => {
             this.$set(ele, 'datasetName', dsName + '_' + ele.name)
-            this.$set(ele, 'nameExsit', false)
+            this.$set(ele, 'nameExist', false)
           })
+          this.tableData = [...this.tables]
           this.avilibelTable = !this.tableData.some((ele) => ele.enableCheck)
         }).finally(() => {
           this.dsLoading = false
@@ -247,26 +300,24 @@ export default {
       }
     },
     searchTable(val) {
+      this.activeName = ''
       if (val && val !== '') {
-        this.tableData = JSON.parse(
-          JSON.stringify(
-            this.tables.filter((ele) => {
-              return ele.name
-                .toLocaleLowerCase()
-                .includes(val.toLocaleLowerCase())
-            })
-          )
-        )
+        this.tableData = [...this.tables.filter((ele) => {
+          return ele.name
+            .toLocaleLowerCase()
+            .includes(val.toLocaleLowerCase())
+        })]
       } else {
-        this.tableData = JSON.parse(JSON.stringify(this.tables))
+        this.tableData = [...this.tables]
       }
     }
   },
+  beforeDestroy() {
+    window.removeEventListener('resize', this.calHeight)
+  },
   mounted() {
     this.initDataSource()
-    window.onresize = () => {
-      this.calHeight()
-    }
+    window.addEventListener('resize', this.calHeight)
     this.calHeight()
   },
   activated() {
@@ -282,14 +333,14 @@ export default {
     mousedownDrag() {
       document
         .querySelector('.dataset-api')
-        .addEventListener('mousemove', this.caculateHeight)
+        .addEventListener('mousemove', this.calculateHeight)
     },
     mouseupDrag() {
       document
         .querySelector('.dataset-api')
-        .removeEventListener('mousemove', this.caculateHeight)
+        .removeEventListener('mousemove', this.calculateHeight)
     },
-    caculateHeight(e) {
+    calculateHeight(e) {
       if (e.pageX < 240) {
         this.LeftWidth = 240
         return
@@ -300,25 +351,25 @@ export default {
       }
       this.LeftWidth = e.pageX
     },
-    nameExsitValidator(activeIndex) {
-      this.tableData[activeIndex].nameExsit =
+    nameExistValidator(ele) {
+      ele.nameExist =
         this.nameList
           .concat(this.checkDatasetName)
-          .filter((name) => name === this.tableData[activeIndex].datasetName)
+          .filter((name) => name === ele.datasetName)
           .length > 1
     },
     validateName() {
-      this.tableData.forEach((ele, index) => {
-        if (this.checkDatasetName.includes(ele.datasetName)) {
-          this.nameExsitValidator(index)
+      this.tables.forEach((ele, index) => {
+        if (this.checkTableList.includes(ele.name)) {
+          this.nameExistValidator(ele)
         } else {
-          ele.nameExsit = false
+          ele.nameExist = false
         }
       })
     },
     calHeight() {
       const that = this
-      setTimeout(function () {
+      setTimeout(function() {
         const currentHeight = document.documentElement.clientHeight
         that.height = currentHeight - 56 - 64 - 75 - 32 - 24 - 16 - 10
       }, 10)
@@ -326,6 +377,7 @@ export default {
     setActiveName({ name, datasourceId, enableCheck }) {
       if (!enableCheck) return
       this.activeName = name
+      this.activeTable = this.tableData.find((ele) => ele.name === this.activeName) || {}
       this.dbPreview({
         dataSourceId: datasourceId,
         info: JSON.stringify({ table: name })
@@ -362,7 +414,7 @@ export default {
       }
     },
     save() {
-      if (this.tableData.some((ele) => ele.nameExsit)) {
+      if (this.tableData.some((ele) => ele.nameExist)) {
         this.openMessageSuccess('deDataset.cannot_be_duplicate', 'error')
         return
       }
@@ -373,7 +425,7 @@ export default {
       const mode = this.mode
       const syncType = this.syncType
       this.checkTableList.forEach((name) => {
-        const datasetName = this.tableData.find(
+        const datasetName = this.tables.find(
           (ele) => ele.name === name
         ).datasetName
         tables.push({
@@ -394,13 +446,6 @@ export default {
         .finally(() => {
           this.loading = false
         })
-    },
-    dataReset() {
-      this.searchTable = ''
-      this.options = []
-      this.dataSource = ''
-      this.tables = []
-      this.checkTableList = []
     }
   }
 }
@@ -510,7 +555,7 @@ export default {
           text-overflow: ellipsis;
           white-space: nowrap;
         }
-        .error-name-exsit {
+        .error-name-exist {
           position: absolute;
           top: 10px;
           right: 10px;
@@ -577,23 +622,6 @@ export default {
         width: 100%;
       }
     }
-  }
-}
-</style>
-<style lang="scss">
-.db-select-pop {
-  .selected::after {
-    content: '';
-    width: 6px;
-    height: 12px;
-    position: absolute;
-    right: 12px;
-    top: 9px;
-    border: 2px solid #3370ff;
-    border-top-color: rgba(0, 0, 0, 0);
-    border-left-color: rgba(0, 0, 0, 0);
-    -webkit-transform: rotate(45deg);
-    transform: rotate(45deg);
   }
 }
 </style>

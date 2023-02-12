@@ -16,3 +16,24 @@ export function randomRange(min, max) {
   }
   return returnStr
 }
+
+export function equalsAny(target, ...sources) {
+  for (let i = 0; i < sources.length; i++) {
+    if (target === sources[i]) {
+      return true
+    }
+  }
+  return false
+}
+
+export function includesAny(target, ...sources) {
+  if (!target || !sources) {
+    return false
+  }
+  for (let i = 0; i < sources.length; i++) {
+    if (target.includes(sources[i])) {
+      return true
+    }
+  }
+  return false
+}

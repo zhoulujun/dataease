@@ -1,8 +1,17 @@
 <template>
-  <div v-loading="formLoading" class="de-ds-form">
-    <div class="de-ds-top">
+  <div
+    v-loading="positionCheck('datasource')?formLoading:false"
+    :class="positionCheck('datasource')?'de-ds-form':'de-ds-form-app'"
+  >
+    <div
+      v-if="positionCheck('datasource')"
+      class="de-ds-top"
+    >
       <span class="name">
-        <i class="el-icon-arrow-left" @click="logOutTips" />
+        <i
+          class="el-icon-arrow-left"
+          @click="logOutTips"
+        />
         {{
           params &&
             params.id &&
@@ -11,7 +20,7 @@
             !canEdit
             ? $t('datasource.show_info')
             : formType == 'add'
-              ? `${$t('commons.create') + typeMap }${ $t('commons.datasource')}`
+              ? `${$t('commons.create') + typeMap}${$t('commons.datasource')}`
               : $t('datasource.modify')
         }}
       </span>
@@ -58,34 +67,122 @@
       <div class="de-ds-inner">
         <div class="w600">
           <el-form
+            v-if="positionCheck('appMarket')"
+            ref="attachParamsForm"
+            :model="attachForm"
+            :rules="attachRule"
+            class="de-form-item"
+            label-width="180px"
+            label-position="right"
+          >
+            <div
+              class="de-row-rules"
+              style="margin: 0 0 16px 0;"
+            >
+              <span>{{ $t('datasource.basic_info') }}</span>
+            </div>
+            <el-form-item
+              :label="$t('app_template.panel_position')"
+              prop="panelGroupPid"
+            >
+              <treeselect
+                v-model="attachForm.panelGroupPid"
+                :disabled="baseInfoDisabledCheck(outerParams.panelPrivileges)"
+                :clearable="false"
+                :options="panelGroupList"
+                :normalizer="normalizer"
+                :placeholder="$t('chart.select_group')"
+                :no-children-text="$t('commons.treeselect.no_children_text')"
+                :no-options-text="$t('commons.treeselect.no_options_text')"
+                :no-results-text="$t('commons.treeselect.no_results_text')"
+              />
+            </el-form-item>
+            <el-form-item
+              :label="$t('app_template.panel_name')"
+              prop="panelName"
+            >
+              <el-input
+                v-model="attachForm.panelName"
+                :disabled="baseInfoDisabledCheck(outerParams.panelPrivileges)"
+              />
+            </el-form-item>
+            <el-form-item
+              :label="$t('app_template.dataset_group_position')"
+              prop="datasetGroupPid"
+            >
+              <treeselect
+                v-model="attachForm.datasetGroupPid"
+                :disabled="baseInfoDisabledCheck(outerParams.datasetPrivileges)"
+                :clearable="false"
+                :options="datasetGroupList"
+                :normalizer="normalizer"
+                :placeholder="$t('chart.select_group')"
+                :no-children-text="$t('commons.treeselect.no_children_text')"
+                :no-options-text="$t('commons.treeselect.no_options_text')"
+                :no-results-text="$t('commons.treeselect.no_results_text')"
+              />
+            </el-form-item>
+            <el-form-item
+              :label="$t('app_template.dataset_group_name')"
+              prop="datasetGroupName"
+            >
+              <el-input
+                v-model="attachForm.datasetGroupName"
+                :disabled="baseInfoDisabledCheck(outerParams.datasetPrivileges)"
+              />
+            </el-form-item>
+          </el-form>
+
+          <el-form
             ref="dsForm"
             :model="form"
             :rules="rule"
             size="small"
-            :disabled="
-              params &&
-                params.id &&
-                params.showModel &&
-                params.showModel === 'show' &&
-                !canEdit
-            "
+            :disabled="disabled"
             class="de-form-item"
             label-width="180px"
             label-position="right"
           >
             <div class="de-row-rules">
-              <span>{{ $t('datasource.basic_info') }}</span>
+              <span>{{
+                positionCheck('appMarket') ? $t('app_template.datasource_info') : $t('datasource.basic_info')
+              }}</span>
             </div>
-            <el-form-item :label="$t('datasource.display_name')" prop="name">
+            <el-form-item
+              :label="$t('datasource.display_name')"
+              prop="name"
+            >
               <el-input
                 v-model="form.name"
                 autocomplete="off"
-                :placeholder="$t('commons.input_name')"
+                :placeholder="$t('datasource.input_name')"
               />
             </el-form-item>
-            <el-form-item :label="$t('commons.description')" prop="desc">
+            <el-form-item
+              :label="$t('datasource.type')"
+              prop="type"
+            >
+              <el-select
+                v-model="form.type"
+                :placeholder="$t('datasource.please_choose_type')"
+                style="width: 100%"
+                disabled
+              >
+                <el-option
+                  v-for="item in dsTypes"
+                  :key="item.type"
+                  :label="item.name"
+                  :value="item.type"
+                />
+              </el-select>
+            </el-form-item>
+            <el-form-item
+              :label="$t('commons.description')"
+              prop="desc"
+            >
               <deTextarea
                 v-model="form.desc"
+                :maxlength="50"
                 class="w100-textarea"
               />
             </el-form-item>
@@ -116,13 +213,7 @@
               ref="dsConfig"
               :datasource-type="datasourceType"
               :form="form"
-              :disabled="
-                params &&
-                  params.id &&
-                  params.showModel &&
-                  params.showModel === 'show' &&
-                  !canEdit
-              "
+              :disabled="disabled"
             />
             <plugin-com
               v-if="datasourceType.isPlugin"
@@ -134,11 +225,56 @@
         </div>
       </div>
     </div>
+    <div
+      v-if="positionCheck('appMarket')"
+      class="de-ds-bottom"
+    >
+      <div
+        class="apply"
+        style="width: 100%"
+      >
+        <template v-if="canEdit">
+          <deBtn
+            secondary
+            @click="closeDraw"
+          >{{ $t('commons.cancel') }}
+          </deBtn>
+          <deBtn
+            v-if="
+              formType === 'add' ||
+                hasDataPermission('manage', params.privileges)
+            "
+            secondary
+            @click="validaDatasource"
+          >{{ $t('commons.validate') }}
+          </deBtn>
+          <deBtn
+            v-if="
+              formType === 'add' ||
+                hasDataPermission('manage', params.privileges)
+            "
+            type="primary"
+            @click="save"
+          >{{ $t('commons.save') }}
+          </deBtn>
+        </template>
+        <template v-else>
+          <deBtn
+            v-if="
+              formType === 'add'
+                ? true
+                : hasDataPermission('manage', params.privileges)
+            "
+            @click="validaDatasource"
+          >{{ $t('commons.validate') }}
+          </deBtn>
+        </template>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
-import LayoutContent from '@/components/business/LayoutContent'
 import {
   addDs,
   editDs,
@@ -151,24 +287,69 @@ import {
 } from '@/api/system/datasource'
 import { $confirm } from '@/utils/message'
 import i18n from '@/lang/index'
-import ApiHttpRequestForm from '@/views/system/datasource/ApiHttpRequestForm'
 import DsConfiguration from '@/views/system/datasource/DsConfiguration'
 import PluginCom from '@/views/system/plugin/PluginCom'
 import { listDatasourceType, listDatasource } from '@/api/system/datasource'
-import deTextarea from '@/components/deCustomCm/deTextarea.vue'
+import deTextarea from '@/components/deCustomCm/DeTextarea.vue'
 import msgCfm from '@/components/msgCfm'
+import { dsGroupTree } from '@/api/dataset/dataset'
+import { appApply, appEdit, groupTree } from '@/api/panel/panel'
+import { deepCopy } from '@/components/canvas/utils/utils'
+import { hasDataPermission } from '@/utils/permission'
+
 export default {
   name: 'DsForm',
   components: {
     DsConfiguration,
-    LayoutContent,
-    ApiHttpRequestForm,
     PluginCom,
     deTextarea
   },
   mixins: [msgCfm],
+  props: {
+    referencePosition: {
+      type: String,
+      default: 'datasource'
+    },
+    outerParams: {
+      type: Object,
+      request: false
+    }
+  },
   data() {
     return {
+      appMarketEdit: true,
+      attachRule: {
+        panelName: [
+          {
+            required: true,
+            min: 2,
+            max: 25,
+            message: i18n.t('datasource.input_limit_2_25', [2, 25]),
+            trigger: 'blur'
+          }
+        ],
+        datasetGroupName: [
+          {
+            required: true,
+            min: 2,
+            max: 25,
+            message: i18n.t('datasource.input_limit_2_25', [2, 25]),
+            trigger: 'blur'
+          }
+        ],
+        datasetGroupPid: [{ required: true, message: i18n.t('chart.select_group'), trigger: 'blur' }],
+        panelGroupPid: [{ required: true, message: i18n.t('chart.select_group'), trigger: 'blur' }]
+      },
+      panelGroupList: [],
+      datasetGroupList: [],
+      attachForm: {
+        appTemplateId: '',
+        panelGroupPid: null,
+        panelName: '',
+        datasetGroupPid: null,
+        datasetGroupId: null,
+        datasetGroupName: ''
+      },
       disabled: false,
       form: {
         configuration: {
@@ -204,9 +385,9 @@ export default {
         ],
         desc: [
           {
-            min: 2,
+            min: 0,
             max: 50,
-            message: i18n.t('datasource.input_limit_2_50'),
+            message: i18n.t('datasource.input_limit', { num: '0~50' }),
             trigger: 'blur'
           }
         ],
@@ -393,36 +574,95 @@ export default {
   },
   async created() {
     await this.datasourceTypes()
-    this.queryTreeDatas()
-    const { id, showModel, msgNodeId, type, name } = this.$route.query
+    this.queryTreeData()
+    let { id, showModel, type, name } = this.$route.query
     this.params = this.$route.query
+    const appMarketCheck = this.positionCheck('appMarket')
+    if (appMarketCheck) {
+      this.appMarketEdit = this.outerParams.appMarketEdit === undefined ? true : this.outerParams.appMarketEdit
+      id = this.outerParams.datasourceId
+      showModel = this.outerParams.showModel
+      type = this.outerParams.datasourceType
+      name = this.outerParams.name
+      this.attachForm.appTemplateId = this.outerParams.appTemplateId
+      this.attachForm.panelGroupPid = this.outerParams.panelGroupPid
+      this.attachForm.panelId = this.outerParams.panelId
+      this.attachForm.panelName = this.outerParams.panelName
+      this.attachForm.datasetGroupPid = this.outerParams.datasetGroupPid ? this.outerParams.datasetGroupPid : '0'
+      this.attachForm.datasetGroupId = this.outerParams.datasetGroupId
+      this.attachForm.datasetGroupName = this.outerParams.datasetGroupName
+      this.params = {
+        id: this.outerParams.datasourceId,
+        showModel: this.outerParams.showModel,
+        type: this.outerParams.datasourceType,
+        name: this.outerParams.name,
+        privileges: this.outerParams.datasourcePrivileges
+      }
+      this.getPanelGroupTree()
+      this.getDatasetGroupTree()
+    }
     if (id) {
       await this.getDatasourceDetail(id, showModel)
       this.edit(this.params)
       this.changeType(true)
     } else {
       this.canEdit = true
-      this.disabled = false
       if (type) {
         this.typeMap = name
         this.setType()
         this.changeType()
       }
     }
-    this.disabled = Boolean(id) && showModel === 'show' && !this.canEdit
+    this.disabled = appMarketCheck ? !this.appMarketEdit : (Boolean(id) && showModel === 'show' && !this.canEdit)
   },
   methods: {
+    baseInfoDisabledCheck(privileges) {
+      return !(this.formType === 'add' ? true : hasDataPermission('manage', privileges))
+    },
+    normalizer(node) {
+      // 去掉children=null的属性
+      if (node.children === null || node.children === 'null') {
+        delete node.children
+      }
+    },
+    getDatasetGroupTree() {
+      dsGroupTree({ nodeType: 'group', excludedId: this.attachForm.datasetGroupId }).then(res => {
+        this.datasetGroupList = [{
+          id: '0',
+          name: this.$t('dataset.dataset_group'),
+          label: this.$t('dataset.dataset_group'),
+          pid: '0',
+          privileges: 'grant,manage,use',
+          type: 'group',
+          children: res.data
+        }]
+      })
+    },
+    getPanelGroupTree() {
+      groupTree({ nodeType: 'folder' }).then(res => {
+        this.panelGroupList = res.data
+        if (!this.attachForm.panelGroupPid && this.panelGroupList && this.panelGroupList.length > 0) {
+          this.attachForm.panelGroupPid = this.panelGroupList[0].id
+        }
+      })
+    },
+    positionCheck(referencePosition) {
+      return this.referencePosition === referencePosition
+    },
     datasourceTypes() {
       return listDatasourceType().then((res) => {
         this.dsTypes = res.data || []
       })
     },
     getDatasourceDetail(id, showModel) {
+      this.formLoading = true
       return getDatasourceDetail(id).then((res) => {
         this.params = { ...res.data, showModel }
+      }).finally(() => {
+        this.formLoading = false
       })
     },
-    queryTreeDatas() {
+    queryTreeData() {
       listDatasource().then((res) => {
         this.tData = this.buildTree(res.data)
       })
@@ -453,7 +693,7 @@ export default {
       return newArr
     },
     setType() {
-      this.form.type = this.params.type
+      this.$set(this.form, 'type', this.params.type)
       this.form.configuration = {
         initialPoolSize: 5,
         extraParams: '',
@@ -466,20 +706,15 @@ export default {
         customDriver: 'default',
         queryTimeout: 30
       }
-      if (this.form.type == 'oracle') {
+      if (this.form.type === 'oracle') {
         this.$set(this.form.configuration, 'charset', 'Default')
         this.$set(this.form.configuration, 'targetCharset', 'Default')
+        this.$set(this.form.configuration, 'connectionType', 'sid')
       }
     },
     changeEdit() {
       this.canEdit = true
       this.formType = 'modify'
-      this.disabled =
-        this.params &&
-        this.params.id &&
-        this.params.showModel &&
-        this.params.showModel === 'show' &&
-        !this.canEdit
     },
     edit(row) {
       this.formType = 'modify'
@@ -496,12 +731,6 @@ export default {
         this.form.configuration = JSON.parse(this.form.configuration)
         this.originConfiguration = JSON.stringify(this.form.configuration)
       }
-      this.disabled =
-        this.params &&
-        this.params.id &&
-        this.params.showModel &&
-        this.params.showModel === 'show' &&
-        !this.canEdit
       this.changeEdit()
     },
     reset() {
@@ -557,13 +786,12 @@ export default {
                 case 'ds_doris':
                 case 'ck':
                 case 'mongo':
-                case 'mariadb':
                 case 'impala':
                   if (
-                    configuration.host == this.form.configuration.host &&
-                    configuration.dataBase ==
-                      this.form.configuration.dataBase &&
-                    configuration.port == this.form.configuration.port
+                    configuration.host === this.form.configuration.host &&
+                    configuration.dataBase ===
+                    this.form.configuration.dataBase &&
+                    configuration.port === this.form.configuration.port
                   ) {
                     repeat = true
                     repeatDsName.push(child.name)
@@ -575,18 +803,18 @@ export default {
                 case 'oracle':
                 case 'db2':
                   if (
-                    configuration.host == this.form.configuration.host &&
-                    configuration.dataBase ==
-                      this.form.configuration.dataBase &&
-                    configuration.port == this.form.configuration.port &&
-                    configuration.schema == this.form.configuration.schema
+                    configuration.host === this.form.configuration.host &&
+                    configuration.dataBase ===
+                    this.form.configuration.dataBase &&
+                    configuration.port === this.form.configuration.port &&
+                    configuration.schema === this.form.configuration.schema
                   ) {
                     repeatDsName.push(child.name)
                     repeat = true
                   }
                   break
                 case 'es':
-                  if (configuration.url == this.form.configuration.url) {
+                  if (configuration.url === this.form.configuration.url) {
                     repeatDsName.push(child.name)
                     repeat = true
                   }
@@ -609,23 +837,23 @@ export default {
                 if (!configuration) {
                   return
                 }
-                if (configuration.schema != null) {
+                if (configuration.schema !== null) {
                   if (
-                    configuration.schema == this.form.configuration.schema &&
-                    configuration.host == this.form.configuration.host &&
-                    configuration.dataBase ==
-                      this.form.configuration.dataBase &&
-                    configuration.port == this.form.configuration.port
+                    configuration.schema === this.form.configuration.schema &&
+                    configuration.host === this.form.configuration.host &&
+                    configuration.dataBase ===
+                    this.form.configuration.dataBase &&
+                    configuration.port === this.form.configuration.port
                   ) {
                     repeat = true
                     repeatDsName.push(child.name)
                   }
                 } else {
                   if (
-                    configuration.host == this.form.configuration.host &&
-                    configuration.dataBase ==
-                      this.form.configuration.dataBase &&
-                    configuration.port == this.form.configuration.port
+                    configuration.host === this.form.configuration.host &&
+                    configuration.dataBase ===
+                    this.form.configuration.dataBase &&
+                    configuration.port === this.form.configuration.port
                   ) {
                     repeat = true
                     repeatDsName.push(child.name)
@@ -649,11 +877,20 @@ export default {
       if (!status) {
         return
       }
+      if (this.positionCheck('appMarket')) {
+        this.$refs.attachParamsForm.validate(valid => {
+          if (!valid) {
+            return false
+          }
+        }
+        )
+      }
       this.$refs.dsForm.validate((valid) => {
         if (!valid) {
           return false
         }
-        const method = this.formType === 'add' ? addDs : editDs
+        let method = this.formType === 'add' ? addDs : editDs
+
         const form = JSON.parse(JSON.stringify(this.form))
         if (form.type === 'api') {
           if (this.form.apiConfiguration.length < 1) {
@@ -667,17 +904,29 @@ export default {
         } else {
           form.configuration = JSON.stringify(form.configuration)
         }
+        const isAppMarket = this.positionCheck('appMarket')
+        let appApplyForm
+        if (isAppMarket) {
+          if (typeof form.desc === 'object') {
+            form.desc = ''
+          }
+          appApplyForm = {
+            ...this.attachForm,
+            datasourceList: [deepCopy(form)]
+          }
+          method = this.formType === 'add' ? appApply : appEdit
+        }
         if (
           this.formType === 'modify' &&
           this.originConfiguration !== form.configuration
         ) {
-          if (repeat) {
+          if (repeat && !isAppMarket) {
             $confirm(
               i18n.t('datasource.repeat_datasource_msg') +
-                '[' +
-                repeatDsName.join(',') +
-                '], ' +
-                i18n.t('datasource.confirm_save'),
+              '[' +
+              repeatDsName.join(',') +
+              '], ' +
+              i18n.t('datasource.confirm_save'),
               () => {
                 $confirm(i18n.t('datasource.edit_datasource_msg'), () => {
                   this.method(method, form)
@@ -686,25 +935,38 @@ export default {
             )
           } else {
             $confirm(i18n.t('datasource.edit_datasource_msg'), () => {
-              this.method(method, form)
+              isAppMarket ? this.appApplyMethod(method, appApplyForm) : this.method(method, form)
             })
           }
           return
         }
-        if (repeat) {
+        if (repeat && !isAppMarket) {
           $confirm(
             i18n.t('datasource.repeat_datasource_msg') +
-              '[' +
-              repeatDsName.join(',') +
-              '], ' +
-              i18n.t('datasource.confirm_save'),
+            '[' +
+            repeatDsName.join(',') +
+            '], ' +
+            i18n.t('datasource.confirm_save'),
             () => {
               this.method(method, form)
             }
           )
         } else {
-          this.method(method, form)
+          isAppMarket ? this.appApplyMethod(method, appApplyForm) : this.method(method, form)
         }
+      })
+    },
+    appApplyMethod(method, form) {
+      this.formLoading = true
+      method(form).then((res) => {
+        this.$success(i18n.t('commons.save_success'))
+        if (this.formType === 'add') {
+          this.$router.push({ name: 'panel', params: res.data })
+        } else {
+          this.closeDraw()
+        }
+      }).finally(() => {
+        this.formLoading = false
       })
     },
     method(method, form) {
@@ -760,6 +1022,14 @@ export default {
       if (!status) {
         return
       }
+      if (this.positionCheck('appMarket')) {
+        this.$refs.attachParamsForm.validate(valid => {
+          if (!valid) {
+            return false
+          }
+        }
+        )
+      }
       this.$refs.dsForm.validate((valid) => {
         if (valid) {
           const data = JSON.parse(JSON.stringify(this.form))
@@ -778,7 +1048,7 @@ export default {
                 } else {
                   this.openMessageSuccess(
                     res.message.substring(0, 2500) + '......',
-                    'danger'
+                    'error'
                   )
                 }
               }
@@ -798,7 +1068,7 @@ export default {
                   } else {
                     this.openMessageSuccess(
                       res.message.substring(0, 2500) + '......',
-                      'danger'
+                      'error'
                     )
                   }
                 }
@@ -836,6 +1106,10 @@ export default {
     },
     backToList() {
       this.$router.push('/datasource/index')
+    },
+
+    closeDraw() {
+      this.$emit('closeDraw')
     },
     logOutTips() {
       const options = {
@@ -890,7 +1164,7 @@ export default {
                 this.$success(i18n.t('commons.success'))
                 this.active++
                 this.apiItem.fields = res.data.fields
-                this.$refs.plxTable.reloadData(res.data.datas)
+                this.$refs.plxTable.reloadData(res.data.data)
               })
               .catch((res) => {
                 this.loading = false
@@ -940,44 +1214,67 @@ export default {
       )
     },
     validateApi(item) {
-      if (undefined) {
-      } else {
-        this.$refs.apiItem.validate((valid) => {
-          if (valid) {
-            const data = JSON.parse(JSON.stringify(this.apiItem))
-            data.request = JSON.stringify(data.request)
-            this.loading = true
-            checkApiDatasource(data)
-              .then((res) => {
-                this.loading = false
-                this.$success(i18n.t('commons.success'))
-                this.apiItem.fields = res.data.fields
-                this.$refs.plxTable.reloadData(res.data.datas)
-              })
-              .catch((res) => {
-                this.loading = false
-              })
-          } else {
-            return false
-          }
-        })
-      }
+      this.$refs.apiItem.validate((valid) => {
+        if (valid) {
+          const data = JSON.parse(JSON.stringify(this.apiItem))
+          data.request = JSON.stringify(data.request)
+          this.loading = true
+          checkApiDatasource(data)
+            .then((res) => {
+              this.loading = false
+              this.$success(i18n.t('commons.success'))
+              this.apiItem.fields = res.data.fields
+              this.$refs.plxTable.reloadData(res.data.data)
+            })
+            .catch((res) => {
+              this.loading = false
+            })
+        } else {
+          return false
+        }
+      })
     },
-    handleClick(tab, event) {}
+    handleClick(tab, event) {
+    }
   }
 }
 </script>
 <style lang="scss" scoped>
-.de-ds-form {
-  width: 100vw;
-  height: 100vh;
-  .de-ds-top {
+.de-ds-form-app {
+  width: 100%;
+  height: 100%;
+
+  .de-ds-cont {
     display: flex;
+    width: 100%;
+    height: calc(100% - 56px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 12px 24px 24px 24px;
+
+    .de-ds-inner {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .w600 {
+      width: 600px;
+      height: 100%;
+    }
+  }
+
+  .de-ds-bottom {
+    display: flex;
+    text-align: right;
     align-items: center;
     justify-content: space-between;
     height: 56px;
     padding: 12px 24px;
-    box-shadow: 0px 2px 4px rgba(31, 35, 41, 0.08);
+    box-shadow: 2px 2px 4px rgba(31, 35, 41, 0.08);
+
     .name {
       font-family: 'PingFang SC';
       font-style: normal;
@@ -986,16 +1283,46 @@ export default {
       line-height: 24px;
       color: var(--deTextPrimary, #1f2329);
     }
+
     i {
       cursor: pointer;
     }
   }
+}
+
+.de-ds-form {
+  width: 100vw;
+  height: 100vh;
+
+  .de-ds-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+    padding: 12px 24px;
+    box-shadow: 0px 2px 4px rgba(31, 35, 41, 0.08);
+
+    .name {
+      font-family: 'PingFang SC';
+      font-style: normal;
+      font-weight: 500;
+      font-size: 16px;
+      line-height: 24px;
+      color: var(--deTextPrimary, #1f2329);
+    }
+
+    i {
+      cursor: pointer;
+    }
+  }
+
   .de-ds-cont {
     display: flex;
     width: 100%;
     height: calc(100% - 56px);
     padding: 12px 24px 24px 24px;
     background: #f5f6f7;
+
     .de-ds-inner {
       width: 100%;
       height: 100;
@@ -1005,6 +1332,7 @@ export default {
       justify-content: center;
       overflow-y: auto;
     }
+
     .w600 {
       width: 600px;
       height: 100%;

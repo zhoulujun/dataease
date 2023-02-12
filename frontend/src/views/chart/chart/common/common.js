@@ -1,12 +1,35 @@
 import { hexColorToRGBA } from '@/views/chart/chart/util'
-import { DEFAULT_YAXIS_EXT_STYLE } from '@/views/chart/chart/chart'
+import { DEFAULT_XAXIS_STYLE, DEFAULT_YAXIS_EXT_STYLE, DEFAULT_YAXIS_STYLE } from '@/views/chart/chart/chart'
 import { formatterItem, valueFormatter } from '@/views/chart/chart/formatter'
 
-let xAxisLabelFormatter = null
-let yAxisLabelFormatter = null
-let yExtAxisLabelFormatter = null
-
 export function componentStyle(chart_option, chart) {
+  let xAxisLabelFormatter = null
+  let yAxisLabelFormatter = null
+  let yExtAxisLabelFormatter = null
+  const xFormatter = function(value) {
+    if (!xAxisLabelFormatter) {
+      return valueFormatter(value, formatterItem)
+    } else {
+      return valueFormatter(value, xAxisLabelFormatter)
+    }
+  }
+
+  const yFormatter = function(value) {
+    if (!yAxisLabelFormatter) {
+      return valueFormatter(value, formatterItem)
+    } else {
+      return valueFormatter(value, yAxisLabelFormatter)
+    }
+  }
+
+  const yExtFormatter = function(value) {
+    if (!yExtAxisLabelFormatter) {
+      return valueFormatter(value, formatterItem)
+    } else {
+      return valueFormatter(value, yExtAxisLabelFormatter)
+    }
+  }
+
   const padding = '8px'
   if (chart.customStyle) {
     const customStyle = JSON.parse(chart.customStyle)
@@ -67,6 +90,9 @@ export function componentStyle(chart_option, chart) {
       chart_option.xAxis.axisLabel = customStyle.xAxis.axisLabel
       chart_option.xAxis.splitLine = customStyle.xAxis.splitLine
       chart_option.xAxis.nameTextStyle = customStyle.xAxis.nameTextStyle
+      const axisLine = customStyle.xAxis.axisLine ? customStyle.xAxis.axisLine : DEFAULT_XAXIS_STYLE.axisLine
+      chart_option.xAxis.axisLine = axisLine
+      chart_option.xAxis.axisTick = axisLine
 
       chart_option.xAxis.axisLabel.showMaxLabel = true
       chart_option.xAxis.axisLabel.showMinLabel = true
@@ -96,6 +122,9 @@ export function componentStyle(chart_option, chart) {
       chart_option.yAxis.axisLabel = customStyle.yAxis.axisLabel
       chart_option.yAxis.splitLine = customStyle.yAxis.splitLine
       chart_option.yAxis.nameTextStyle = customStyle.yAxis.nameTextStyle
+      const axisLine = customStyle.yAxis.axisLine ? customStyle.yAxis.axisLine : DEFAULT_YAXIS_STYLE.axisLine
+      chart_option.yAxis.axisLine = axisLine
+      chart_option.yAxis.axisTick = axisLine
 
       chart_option.yAxis.axisLabel.showMaxLabel = true
       chart_option.yAxis.axisLabel.showMinLabel = true
@@ -125,6 +154,9 @@ export function componentStyle(chart_option, chart) {
       chart_option.yAxis[0].axisLabel = customStyle.yAxis.axisLabel
       chart_option.yAxis[0].splitLine = customStyle.yAxis.splitLine
       chart_option.yAxis[0].nameTextStyle = customStyle.yAxis.nameTextStyle
+      const axisLine0 = customStyle.yAxis.axisLine ? customStyle.yAxis.axisLine : DEFAULT_YAXIS_STYLE.axisLine
+      chart_option.yAxis[0].axisLine = axisLine0
+      chart_option.yAxis[0].axisTick = axisLine0
 
       chart_option.yAxis[0].axisLabel.showMaxLabel = true
       chart_option.yAxis[0].axisLabel.showMinLabel = true
@@ -155,6 +187,9 @@ export function componentStyle(chart_option, chart) {
       chart_option.yAxis[1].axisLabel = customStyle.yAxisExt.axisLabel
       chart_option.yAxis[1].splitLine = customStyle.yAxisExt.splitLine
       chart_option.yAxis[1].nameTextStyle = customStyle.yAxisExt.nameTextStyle
+      const axisLine1 = customStyle.yAxisExt.axisLine ? customStyle.yAxisExt.axisLine : DEFAULT_YAXIS_EXT_STYLE.axisLine
+      chart_option.yAxis[1].axisLine = axisLine1
+      chart_option.yAxis[1].axisTick = axisLine1
 
       chart_option.yAxis[1].axisLabel.showMaxLabel = true
       chart_option.yAxis[1].axisLabel.showMinLabel = true
@@ -212,6 +247,7 @@ export function componentStyle(chart_option, chart) {
     }
   }
 }
+
 export const getMarginUnit = marginForm => {
   if (!marginForm.marginModel || marginForm.marginModel === 'auto') return null
   if (marginForm.marginModel === 'absolute') return 'px'
@@ -229,6 +265,7 @@ const hexToRgba = (hex, opacity) => {
   }
   return rgbaColor
 }
+
 export function seniorCfg(chart_option, chart) {
   if (chart.senior && chart.type && (chart.type.includes('bar') || chart.type.includes('line') || chart.type.includes('mix'))) {
     const senior = JSON.parse(chart.senior)
@@ -260,7 +297,6 @@ export function seniorCfg(chart_option, chart) {
           }
           const rgba = hexToRgba(senior.functionCfg.sliderFillBg, 0.2)
           chart_option.dataZoom[1].fillerColor = rgba
-          
         }
         if (senior.functionCfg.sliderTextClolor) {
           chart_option.dataZoom[1].textStyle = { color: senior.functionCfg.sliderTextClolor }
@@ -285,12 +321,18 @@ export function seniorCfg(chart_option, chart) {
     if (senior.assistLine && senior.assistLine.length > 0) {
       if (chart_option.series && chart_option.series.length > 0) {
         const customStyle = JSON.parse(chart.customStyle)
-        let xAxis, yAxis
+        let xAxis, yAxis, axisFormatterCfg
         if (customStyle.xAxis) {
           xAxis = JSON.parse(JSON.stringify(customStyle.xAxis))
+          if (chart.type.includes('horizontal')) {
+            axisFormatterCfg = xAxis.axisLabelFormatter ? xAxis.axisLabelFormatter : DEFAULT_XAXIS_STYLE.axisLabelFormatter
+          }
         }
         if (customStyle.yAxis) {
           yAxis = JSON.parse(JSON.stringify(customStyle.yAxis))
+          if (!chart.type.includes('horizontal')) {
+            axisFormatterCfg = yAxis.axisLabelFormatter ? yAxis.axisLabelFormatter : DEFAULT_YAXIS_STYLE.axisLabelFormatter
+          }
         }
 
         const fixedLines = senior.assistLine.filter(ele => ele.field === '0')
@@ -313,7 +355,7 @@ export function seniorCfg(chart_option, chart) {
                 fontSize: 10,
                 position: xAxis.position === 'bottom' ? 'insideStartTop' : 'insideEndTop',
                 formatter: function(param) {
-                  return ele.name + ' : ' + param.value
+                  return ele.name + ' : ' + valueFormatter(param.value, axisFormatterCfg)
                 }
               },
               tooltip: {
@@ -335,7 +377,7 @@ export function seniorCfg(chart_option, chart) {
                 fontSize: 10,
                 position: yAxis.position === 'left' ? 'insideStartTop' : 'insideEndTop',
                 formatter: function(param) {
-                  return ele.name + ' : ' + param.value
+                  return ele.name + ' : ' + valueFormatter(param.value, axisFormatterCfg)
                 }
               },
               tooltip: {
@@ -346,30 +388,6 @@ export function seniorCfg(chart_option, chart) {
         })
       }
     }
-  }
-}
-
-const xFormatter = function(value) {
-  if (!xAxisLabelFormatter) {
-    return valueFormatter(value, formatterItem)
-  } else {
-    return valueFormatter(value, xAxisLabelFormatter)
-  }
-}
-
-const yFormatter = function(value) {
-  if (!yAxisLabelFormatter) {
-    return valueFormatter(value, formatterItem)
-  } else {
-    return valueFormatter(value, yAxisLabelFormatter)
-  }
-}
-
-const yExtFormatter = function(value) {
-  if (!yExtAxisLabelFormatter) {
-    return valueFormatter(value, formatterItem)
-  } else {
-    return valueFormatter(value, yExtAxisLabelFormatter)
   }
 }
 

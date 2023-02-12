@@ -31,7 +31,10 @@ const dialogPanel = {
         eDynamicSuffix: 'after'
       },
       showTime: false,
-      accuracy: 'HH:mm'
+      accuracy: 'HH:mm',
+      parameters: [],
+      startParameters: [],
+      endParameters: []
     },
     value: '',
     manualModify: false
@@ -222,6 +225,10 @@ class TimeDateRangeServiceImpl extends WidgetService {
     }
   }
   dynamicDateFormNow(element) {
+    const values = this.dynamicDateFormNowProxy(element)
+    return this.formatDynamicTimes(values, element)
+  }
+  dynamicDateFormNowProxy(element) {
     if (element.options.attrs.default === null || typeof element.options.attrs.default === 'undefined' || !element.options.attrs.default.isDynamic) return null
 
     if (element.options.attrs.default.dkey === 0) {
@@ -265,6 +272,34 @@ class TimeDateRangeServiceImpl extends WidgetService {
       return [startTime, endTime]
     }
   }
+
+  formatDynamicTimes(values, element) {
+    if (!values?.length || !element.options.attrs.default.isDynamic) {
+      return values
+    }
+    const baseTime = +new Date('2022-11-09 00:00:00.000')
+    let labelFormat = 'yyyy-MM-dd'
+    if (element.options.attrs.showTime && element.options.attrs.accuracy) {
+      labelFormat = labelFormat + ' ' + element.options.attrs.accuracy
+    }
+    let [start, end] = values
+
+    const attrs = element.options.attrs
+
+    if (attrs.default.sDynamicSuffixTime && attrs.default.isDynamic && attrs.default.dkey === 4 && attrs.showTime) {
+      start = attrs.default.sDynamicSuffixTime - baseTime + timeSection(start, 'date')[0]
+    } else {
+      start = timeSection(start, 'date', labelFormat)[0]
+    }
+    if (attrs.default.eDynamicSuffixTime && attrs.default.isDynamic && attrs.default.dkey === 4 && attrs.showTime) {
+      end = attrs.default.eDynamicSuffixTime - baseTime + timeSection(end, 'date')[0]
+    } else {
+      end = timeSection(end, 'date', labelFormat)[1]
+    }
+
+    const results = [start, end]
+    return results
+  }
   validDynamicValue(element) {
     if (!element.options.attrs.default.isDynamic) return true
     if (element.options.attrs.default.dkey !== 4) return true
@@ -297,13 +332,13 @@ class TimeDateRangeServiceImpl extends WidgetService {
     const defaultV = element.options.value === null ? '' : element.options.value.toString()
     if (element.options.attrs.type === 'daterange') {
       if (defaultV === null || typeof defaultV === 'undefined' || defaultV === '' || defaultV ===
-          '[object Object]') {
+        '[object Object]') {
         return []
       }
       return defaultV.split(',').map(item => parseFloat(item))
     } else {
       if (defaultV === null || typeof defaultV === 'undefined' || defaultV === '' || defaultV ===
-          '[object Object]') {
+        '[object Object]') {
         return null
       }
       return parseFloat(defaultV.split(',')[0])
@@ -367,6 +402,12 @@ class TimeDateRangeServiceImpl extends WidgetService {
       { 'text': 'dynamic_time.lquarter', 'callBack': () => this.formatShortValues([this.getStartQuarter(-1).getTime(), this.getEndQuarter(-1).getTime()]) },
       { 'text': 'dynamic_year.last', 'callBack': () => this.formatShortValues([this.getStartYear(-1).getTime(), this.getEndYear(-1).getTime()]) }
     ]
+  }
+  isParamWidget() {
+    return true
+  }
+  isRangeParamWidget() {
+    return true
   }
 }
 const timeDateRangeServiceImpl = new TimeDateRangeServiceImpl()

@@ -1,11 +1,19 @@
 <template>
-  <div ref="tableContainer" :style="bg_class" style="padding: 8px;width: 100%;height: 100%;overflow: hidden;">
+  <div
+    ref="tableContainer"
+    :style="bg_class"
+    style="padding: 8px;width: 100%;height: 100%;overflow: hidden;"
+  >
     <el-row style="height: 100%;">
-      <p v-show="title_show" ref="title" :style="title_class">{{ chart.title }}</p>
+      <p
+        v-show="title_show"
+        ref="title"
+        :style="title_class"
+      >{{ chart.title }}</p>
       <ux-grid
         ref="plxTable"
         size="mini"
-        style="width: 100%;"
+        :style="tableStyle"
         :height="height"
         :checkbox-config="{highlight: true}"
         :width-resize="true"
@@ -15,10 +23,15 @@
         :class="chart.id"
         :show-summary="showSummary"
         :summary-method="summaryMethod"
+        :index-config="{seqMethod}"
       >
         <ux-table-column
+          type="index"
+          :title="indexLabel"
+        />
+        <ux-table-column
           v-for="field in fields"
-          :key="Math.random()"
+          :key="field.name"
           :field="field.dataeaseName"
           :resizable="true"
           sortable
@@ -27,24 +40,42 @@
         />
       </ux-grid>
 
-      <el-row v-show="showPage" class="table-page">
-        <span class="total-style">
-          {{ $t('chart.total') }}
-          <span>{{ (chart.data && chart.data.tableRow)?chart.data.tableRow.length:0 }}</span>
-          {{ $t('chart.items') }}
-        </span>
-        <el-pagination
-          small
-          :current-page="currentPage.page"
-          :page-sizes="[10,20,50,100]"
-          :page-size="currentPage.pageSize"
-          :pager-count="5"
-          layout="prev, pager, next"
-          :total="currentPage.show"
-          class="page-style"
-          @current-change="pageClick"
-          @size-change="pageChange"
-        />
+      <el-row
+        v-show="showPage"
+        class="table-page"
+      >
+        <el-row style="position: relative;width:100% ">
+          <el-row
+            class="table-page-inner"
+            :style="autoStyle"
+          >
+            <span
+              class="total-style"
+              :style="totalStyle"
+            >
+              {{ $t('chart.total') }}
+              <span>{{
+                chart.datasetMode === 0 ? chart.totalItems : ((chart.data && chart.data.tableRow) ? chart.data.tableRow.length : 0)
+              }}</span>
+              {{ $t('chart.items') }}
+            </span>
+            <de-pagination
+              small
+              :current-page="currentPage.page"
+              :page-size="currentPage.pageSize"
+              :pager-count="5"
+              :custom-style="{
+                color: title_class.color
+              }"
+              layout="prev, pager, next"
+              :total="currentPage.show"
+              class="page-style"
+              @current-change="pageClick"
+              @size-change="pageChange"
+            />
+          </el-row>
+        </el-row>
+
       </el-row>
     </el-row>
   </div>
@@ -53,10 +84,13 @@
 <script>
 import { hexColorToRGBA } from '../../chart/util'
 import eventBus from '@/components/canvas/utils/eventBus'
-import { DEFAULT_SIZE } from '@/views/chart/chart/chart'
+import { DEFAULT_COLOR_CASE, DEFAULT_SIZE, NOT_SUPPORT_PAGE_DATASET } from '@/views/chart/chart/chart'
+import { mapState } from 'vuex'
+import DePagination from '@/components/deCustomCm/pagination.js'
 
 export default {
   name: 'TableNormal',
+  components: { DePagination },
   props: {
     chart: {
       type: Object,
@@ -125,20 +159,47 @@ export default {
       showPage: false,
       columnWidth: DEFAULT_SIZE.tableColumnWidth,
       scrollTimer: null,
-      scrollTop: 0
+      scrollTop: 0,
+      showIndex: false,
+      indexLabel: '序号',
+      scrollBarColor: DEFAULT_COLOR_CASE.tableScrollBarColor,
+      scrollBarHoverColor: DEFAULT_COLOR_CASE.tableScrollBarHoverColor,
+      totalStyle: {
+        color: '#606266'
+      }
     }
   },
   computed: {
+    scale() {
+      return this.previewCanvasScale.scalePointWidth
+    },
+    autoStyle() {
+      return {
+        height: (100 / this.scale) + '%!important',
+        width: (100 / this.scale) + '%!important',
+        left: 50 * (1 - 1 / this.scale) + '%', // 放大余量 除以 2
+        top: 50 * (1 - 1 / this.scale) + '%', // 放大余量 除以 2
+        transform: 'scale(' + this.scale + ')'
+      }
+    },
     bg_class() {
       return {
         background: hexColorToRGBA('#ffffff', 0),
         borderRadius: this.borderRadius
       }
-    }
+    },
+    tableStyle() {
+      return {
+        width: '100%',
+        '--scroll-bar-color': this.scrollBarColor
+      }
+    },
+    ...mapState([
+      'previewCanvasScale'
+    ])
   },
   watch: {
     chart: function() {
-      this.resetPage()
       this.init()
     }
   },
@@ -150,6 +211,7 @@ export default {
   beforeDestroy() {
     eventBus.$off('resizing', this.chartResize)
     clearInterval(this.scrollTimer)
+    window.removeEventListener('resize', this.calcHeightDelay)
   },
   methods: {
     init() {
@@ -169,8 +231,7 @@ export default {
       }
     },
     initData() {
-      const that = this
-      let datas = []
+      let data = []
       this.showPage = false
       if (this.chart.data) {
         this.fields = JSON.parse(JSON.stringify(this.chart.data.fields))
@@ -186,34 +247,39 @@ export default {
           this.columnWidth = columnWidth
         }
 
-        datas = JSON.parse(JSON.stringify(this.chart.data.tableRow))
-        if (this.chart.type === 'table-info' && (attr.size.tablePageMode === 'page' || !attr.size.tablePageMode) && datas.length > this.currentPage.pageSize) {
-          // 计算分页
-          this.currentPage.show = datas.length
-          const pageStart = (this.currentPage.page - 1) * this.currentPage.pageSize
-          const pageEnd = pageStart + this.currentPage.pageSize
-          datas = datas.slice(pageStart, pageEnd)
-          this.showPage = true
+        data = JSON.parse(JSON.stringify(this.chart.data.tableRow))
+        if (this.chart.datasetMode === 0 && !NOT_SUPPORT_PAGE_DATASET.includes(this.chart.datasourceType)) {
+          if (this.chart.type === 'table-info' && (attr.size.tablePageMode === 'page' || !attr.size.tablePageMode) && this.chart.totalItems > this.currentPage.pageSize) {
+            this.currentPage.show = this.chart.totalItems
+            this.showPage = true
+          }
+        } else {
+          if (this.chart.type === 'table-info' && (attr.size.tablePageMode === 'page' || !attr.size.tablePageMode) && data.length > this.currentPage.pageSize) {
+            // 计算分页
+            this.currentPage.show = data.length
+            const pageStart = (this.currentPage.page - 1) * this.currentPage.pageSize
+            const pageEnd = pageStart + this.currentPage.pageSize
+            data = data.slice(pageStart, pageEnd)
+            this.showPage = true
+          }
         }
       } else {
         this.fields = []
-        datas = []
+        data = []
         this.resetPage()
       }
-      datas.forEach(item => {
+      data.forEach(item => {
         Object.keys(item).forEach(key => {
           if (typeof item[key] === 'object') {
             item[key] = ''
           }
         })
       })
-      this.$refs.plxTable.reloadData(datas)
+      this.$refs.plxTable.reloadData(data)
       this.$nextTick(() => {
         this.initStyle()
       })
-      window.onresize = function() {
-        that.calcHeightDelay()
-      }
+      window.addEventListener('resize', this.calcHeightDelay)
     },
     calcHeightRightNow() {
       this.$nextTick(() => {
@@ -261,12 +327,28 @@ export default {
           this.table_header_class.background = hexColorToRGBA(customAttr.color.tableHeaderBgColor, customAttr.color.alpha)
           this.table_item_class.color = customAttr.color.tableFontColor
           this.table_item_class.background = hexColorToRGBA(customAttr.color.tableItemBgColor, customAttr.color.alpha)
+          this.scrollBarColor = customAttr.color.tableScrollBarColor ? customAttr.color.tableScrollBarColor : DEFAULT_COLOR_CASE.tableScrollBarColor
         }
         if (customAttr.size) {
           this.table_header_class.fontSize = customAttr.size.tableTitleFontSize + 'px'
           this.table_item_class.fontSize = customAttr.size.tableItemFontSize + 'px'
           this.table_header_class.height = customAttr.size.tableTitleHeight + 'px'
           this.table_item_class.height = customAttr.size.tableItemHeight + 'px'
+
+          const visibleColumn = this.$refs.plxTable.getTableColumn().fullColumn
+          for (let i = 0, column = visibleColumn[i]; i < visibleColumn.length; i++) {
+            // 有变更才刷新
+            if (column.type === 'index' && column.visible !== customAttr.size.showIndex) {
+              column.visible = customAttr.size.showIndex
+              this.$refs.plxTable.refreshColumn()
+              break
+            }
+          }
+          if (!customAttr.size.indexLabel) {
+            this.indexLabel = ' '
+          } else {
+            this.indexLabel = customAttr.size.indexLabel
+          }
         }
         this.table_item_class_stripe = JSON.parse(JSON.stringify(this.table_item_class))
         // 暂不支持斑马纹
@@ -289,6 +371,8 @@ export default {
           this.title_class.textAlign = customStyle.text.hPosition
           this.title_class.fontStyle = customStyle.text.isItalic ? 'italic' : 'normal'
           this.title_class.fontWeight = customStyle.text.isBolder ? 'bold' : 'normal'
+          // 表格总计与分页颜色，取标题颜色
+          this.totalStyle.color = customStyle.text.color
         }
         if (customStyle.background) {
           this.bg_class.background = hexColorToRGBA(customStyle.background.color, customStyle.background.alpha)
@@ -317,12 +401,18 @@ export default {
     summaryMethod({ columns, data }) {
       const that = this
       const means = [] // 合计
+      const x = JSON.parse(that.chart.xaxis)
+      const customAttr = JSON.parse(that.chart.customAttr)
       columns.forEach((column, columnIndex) => {
-        const x = JSON.parse(that.chart.xaxis)
         if (columnIndex === 0 && x.length > 0) {
           means.push('合计')
         } else {
-          if (columnIndex >= x.length) {
+          // 显示序号就往后推一列
+          let requireSumIndex = x.length
+          if (customAttr.size.showIndex) {
+            requireSumIndex++
+          }
+          if (columnIndex >= requireSumIndex) {
             const values = data.map(item => Number(item[column.property]))
             // 合计
             if (!values.every(value => isNaN(value))) {
@@ -346,7 +436,11 @@ export default {
       // 返回一个二维数组的表尾合计(不要平均值，就不要在数组中添加)
       return [means]
     },
-
+    seqMethod({ rowIndex, column }) {
+      if (column?.type === 'index') {
+        return (this.currentPage.pageSize * (this.currentPage.page - 1)) + rowIndex + 1
+      }
+    },
     chartResize() {
       // 指定图表的配置项和数据
       this.calcHeightDelay()
@@ -362,12 +456,20 @@ export default {
 
     pageChange(val) {
       this.currentPage.pageSize = val
-      this.init()
+      if (this.chart.datasetMode === 0 && !NOT_SUPPORT_PAGE_DATASET.includes(this.chart.datasourceType)) {
+        this.$emit('onPageChange', this.currentPage)
+      } else {
+        this.init()
+      }
     },
 
     pageClick(val) {
       this.currentPage.page = val
-      this.init()
+      if (this.chart.datasetMode === 0 && !NOT_SUPPORT_PAGE_DATASET.includes(this.chart.datasourceType)) {
+        this.$emit('onPageChange', this.currentPage)
+      } else {
+        this.init()
+      }
     },
 
     resetPage() {
@@ -417,39 +519,62 @@ export default {
 }
 </script>
 
-<style scoped>
-  .table-class ::v-deep .body--wrapper{
-    background: rgba(1,1,1,0);
+<style scoped lang="scss">
+.table-class ::v-deep .body--wrapper {
+  background: rgba(1, 1, 1, 0);
+}
+
+.table-class ::v-deep .elx-cell {
+  max-height: none !important;
+  line-height: normal !important;
+}
+
+.table-page-inner {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  width: 100%;
+  overflow: hidden;
+}
+
+.table-page {
+  position: absolute;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  width: 100%;
+  overflow: hidden;
+}
+
+.page-style {
+  margin-right: auto;
+}
+
+.total-style {
+  flex: 1;
+  font-size: 12px;
+  color: #606266;
+  white-space: nowrap;
+}
+
+.page-style ::v-deep .el-input__inner {
+  height: 24px;
+}
+
+.page-style ::v-deep button {
+  background: transparent !important;
+}
+
+.page-style ::v-deep li {
+  background: transparent !important;
+}
+.table-class{
+  ::-webkit-scrollbar-thumb {
+    background: var(--scroll-bar-color);
   }
-  .table-class ::v-deep .elx-cell{
-    max-height: none!important;
-    line-height: normal!important;
-  }
-  .table-page{
-    position: absolute;
-    bottom: 0;
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    width: 100%;
-    overflow: hidden;
-  }
-  .page-style{
-    margin-right: auto;
-  }
-  .total-style{
-    flex: 1;
-    font-size: 12px;
-    color: #606266;
-    white-space:nowrap;
-  }
-  .page-style ::v-deep .el-input__inner{
-    height: 24px;
-  }
-  .page-style ::v-deep button{
-    background: transparent!important;
-  }
-  .page-style ::v-deep li{
-    background: transparent!important;
-  }
+}
+.table-class{
+  scrollbar-color: var(--scroll-bar-color) transparent;
+}
 </style>

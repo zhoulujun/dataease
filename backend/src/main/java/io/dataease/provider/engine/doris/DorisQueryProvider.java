@@ -1,5 +1,6 @@
 package io.dataease.provider.engine.doris;
 
+import com.alibaba.fastjson.JSONArray;
 import io.dataease.plugins.common.base.domain.ChartViewWithBLOBs;
 import io.dataease.plugins.common.base.domain.DatasetTableField;
 import io.dataease.plugins.common.base.domain.DatasetTableFieldExample;
@@ -16,6 +17,8 @@ import io.dataease.plugins.common.dto.sqlObj.SQLObj;
 import io.dataease.plugins.common.request.chart.ChartExtFilterRequest;
 import io.dataease.plugins.common.request.permission.DataSetRowPermissionsTreeDTO;
 import io.dataease.plugins.common.request.permission.DatasetRowPermissionsTreeItem;
+import io.dataease.plugins.datasource.entity.Dateformat;
+import io.dataease.plugins.datasource.entity.PageInfo;
 import io.dataease.plugins.datasource.query.QueryProvider;
 import io.dataease.plugins.datasource.query.Utils;
 import org.apache.commons.collections4.CollectionUtils;
@@ -125,7 +128,8 @@ public class DorisQueryProvider extends QueryProvider {
                     } else if (f.getDeType() == 3) {
                         fieldName = String.format(DorisConstants.CAST, originField, DorisConstants.DEFAULT_FLOAT_FORMAT);
                     } else if (f.getDeType() == 1) {
-                        fieldName = String.format(DorisConstants.STR_TO_DATE, originField, DorisConstants.DEFAULT_DATE_FORMAT);
+                        fieldName = StringUtils.isEmpty(f.getDateFormat()) ? String.format(DorisConstants.STR_TO_DATE, originField, DorisConstants.DEFAULT_DATE_FORMAT) :
+                                String.format(DorisConstants.DATE_FORMAT, String.format(DorisConstants.STR_TO_DATE, originField, f.getDateFormat()), DorisConstants.DEFAULT_DATE_FORMAT);
                     } else {
                         fieldName = originField;
                     }
@@ -201,7 +205,8 @@ public class DorisQueryProvider extends QueryProvider {
             } else if (f.getDeType() == 3) {
                 fieldName = String.format(DorisConstants.CAST, originField, DorisConstants.DEFAULT_FLOAT_FORMAT);
             } else if (f.getDeType() == 1) {
-                fieldName = String.format(DorisConstants.STR_TO_DATE, originField, DorisConstants.DEFAULT_DATE_FORMAT);
+                fieldName = StringUtils.isEmpty(f.getDateFormat()) ? String.format(DorisConstants.STR_TO_DATE, originField, DorisConstants.DEFAULT_DATE_FORMAT) :
+                        String.format(DorisConstants.DATE_FORMAT, String.format(DorisConstants.STR_TO_DATE, originField, f.getDateFormat()), DorisConstants.DEFAULT_DATE_FORMAT);
             } else {
                 fieldName = originField;
             }
@@ -358,7 +363,16 @@ public class DorisQueryProvider extends QueryProvider {
     }
 
     @Override
-    public String getSQLTableInfo(String table, List<ChartViewFieldDTO> xAxis, List<ChartFieldCustomFilterDTO> fieldCustomFilter, List<DataSetRowPermissionsTreeDTO> rowPermissionsTree, List<ChartExtFilterRequest> extFilterRequestList, Datasource ds, ChartViewWithBLOBs view) {
+    public String getSQLWithPage(boolean isTable, String table, List<ChartViewFieldDTO> xAxis, List<ChartFieldCustomFilterDTO> fieldCustomFilter, List<DataSetRowPermissionsTreeDTO> rowPermissionsTree, List<ChartExtFilterRequest> extFilterRequestList, Datasource ds, ChartViewWithBLOBs view, PageInfo pageInfo) {
+        String limit = ((pageInfo.getGoPage() != null && pageInfo.getPageSize() != null) ? " LIMIT " + (pageInfo.getGoPage() - 1) * pageInfo.getPageSize() + "," + pageInfo.getPageSize() : "");
+        if (isTable) {
+            return originalTableInfo(table, xAxis, fieldCustomFilter, rowPermissionsTree, extFilterRequestList, ds, view) + limit;
+        } else {
+            return originalTableInfo("(" + sqlFix(table) + ")", xAxis, fieldCustomFilter, rowPermissionsTree, extFilterRequestList, ds, view) + limit;
+        }
+    }
+
+    private String originalTableInfo(String table, List<ChartViewFieldDTO> xAxis, List<ChartFieldCustomFilterDTO> fieldCustomFilter, List<DataSetRowPermissionsTreeDTO> rowPermissionsTree, List<ChartExtFilterRequest> extFilterRequestList, Datasource ds, ChartViewWithBLOBs view) {
         SQLObj tableObj = SQLObj.builder()
                 .tableName((table.startsWith("(") && table.endsWith(")")) ? table : String.format(DorisConstants.KEYWORD_TABLE, table))
                 .tableAlias(String.format(TABLE_ALIAS_PREFIX, 0))
@@ -376,7 +390,11 @@ public class DorisQueryProvider extends QueryProvider {
                     originField = String.format(DorisConstants.KEYWORD_FIX, tableObj.getTableAlias(), x.getDataeaseName());
                 } else {
                     if (x.getDeType() == 2 || x.getDeType() == 3) {
-                        originField = String.format(DorisConstants.CAST, String.format(DorisConstants.KEYWORD_FIX, tableObj.getTableAlias(), x.getDataeaseName()), DorisConstants.DEFAULT_FLOAT_FORMAT);
+                        if (x.getDeExtractType() == 1) {
+                            originField = String.format(DorisConstants.KEYWORD_FIX, tableObj.getTableAlias(), x.getDataeaseName());
+                        } else {
+                            originField = String.format(DorisConstants.CAST, String.format(DorisConstants.KEYWORD_FIX, tableObj.getTableAlias(), x.getDataeaseName()), DorisConstants.DEFAULT_FLOAT_FORMAT);
+                        }
                     } else {
                         originField = String.format(DorisConstants.KEYWORD_FIX, tableObj.getTableAlias(), x.getDataeaseName());
                     }
@@ -430,7 +448,12 @@ public class DorisQueryProvider extends QueryProvider {
                 .build();
         if (CollectionUtils.isNotEmpty(orders)) st.add("orders", orders);
         if (ObjectUtils.isNotEmpty(tableSQL)) st.add("table", tableSQL);
-        return sqlLimit(st.render(), view);
+        return st.render();
+    }
+
+    @Override
+    public String getSQLTableInfo(String table, List<ChartViewFieldDTO> xAxis, List<ChartFieldCustomFilterDTO> fieldCustomFilter, List<DataSetRowPermissionsTreeDTO> rowPermissionsTree, List<ChartExtFilterRequest> extFilterRequestList, Datasource ds, ChartViewWithBLOBs view) {
+        return sqlLimit(originalTableInfo(table, xAxis, fieldCustomFilter, rowPermissionsTree, extFilterRequestList, ds, view), view);
     }
 
     @Override
@@ -801,7 +824,7 @@ public class DorisQueryProvider extends QueryProvider {
 
         if (field.getDeType() == 1) {
             if (field.getDeExtractType() == 0 || field.getDeExtractType() == 5 || field.getDeExtractType() == 1) {
-                whereName = String.format(DorisConstants.STR_TO_DATE, originName, DorisConstants.DEFAULT_DATE_FORMAT);
+                whereName = String.format(DorisConstants.STR_TO_DATE, originName, StringUtils.isNotEmpty(field.getDateFormat()) ? field.getDateFormat() : DorisConstants.DEFAULT_DATE_FORMAT);
             }
             if (field.getDeExtractType() == 2 || field.getDeExtractType() == 3 || field.getDeExtractType() == 4) {
                 String cast = String.format(DorisConstants.CAST, originName, DorisConstants.DEFAULT_INT_FORMAT) + "/1000";
@@ -931,7 +954,7 @@ public class DorisQueryProvider extends QueryProvider {
 
             if (field.getDeType() == 1) {
                 if (field.getDeExtractType() == 0 || field.getDeExtractType() == 5 || field.getDeExtractType() == 1) {
-                    whereName = String.format(DorisConstants.STR_TO_DATE, originName, DorisConstants.DEFAULT_DATE_FORMAT);
+                    whereName = String.format(DorisConstants.STR_TO_DATE, originName, StringUtils.isNotEmpty(field.getDateFormat()) ? field.getDateFormat() : DorisConstants.DEFAULT_DATE_FORMAT);
                 }
                 if (field.getDeExtractType() == 2 || field.getDeExtractType() == 3 || field.getDeExtractType() == 4) {
                     String cast = String.format(DorisConstants.CAST, originName, DorisConstants.DEFAULT_INT_FORMAT) + "/1000";
@@ -1035,7 +1058,7 @@ public class DorisQueryProvider extends QueryProvider {
 
                 if (field.getDeType() == 1) {
                     if (field.getDeExtractType() == 0 || field.getDeExtractType() == 5 || field.getDeExtractType() == 1) {
-                        whereName = String.format(DorisConstants.STR_TO_DATE, originName, DorisConstants.DEFAULT_DATE_FORMAT);
+                        whereName = String.format(DorisConstants.STR_TO_DATE, originName, StringUtils.isNotEmpty(field.getDateFormat()) ? field.getDateFormat() : DorisConstants.DEFAULT_DATE_FORMAT);
                     }
                     if (field.getDeExtractType() == 2 || field.getDeExtractType() == 3 || field.getDeExtractType() == 4) {
                         String cast = String.format(DorisConstants.CAST, originName, DorisConstants.DEFAULT_INT_FORMAT) + "/1000";
@@ -1147,7 +1170,7 @@ public class DorisQueryProvider extends QueryProvider {
             if (x.getDeType() == 1) {
                 String format = transDateFormat(x.getDateStyle(), x.getDatePattern());
                 if (x.getDeExtractType() == 0) {
-                    fieldName = String.format(DorisConstants.DATE_FORMAT, String.format(DorisConstants.STR_TO_DATE, originField, DorisConstants.DEFAULT_DATE_FORMAT), format);
+                    fieldName = String.format(DorisConstants.DATE_FORMAT, String.format(DorisConstants.STR_TO_DATE, originField, StringUtils.isNotEmpty(x.getDateFormat()) ? x.getDateFormat() : DorisConstants.DEFAULT_DATE_FORMAT), format);
                 } else {
                     String cast = String.format(DorisConstants.CAST, originField, DorisConstants.DEFAULT_INT_FORMAT) + "/1000";
                     String from_unixtime = String.format(DorisConstants.FROM_UNIXTIME, cast, DorisConstants.DEFAULT_DATE_FORMAT);
@@ -1308,5 +1331,16 @@ public class DorisQueryProvider extends QueryProvider {
         } else {
             return sql;
         }
+    }
+
+    public List<Dateformat> dateformat() {
+        return JSONArray.parseArray("[\n" +
+                "{\"dateformat\": \"%Y-%m-%d\"},\n" +
+                "{\"dateformat\": \"%Y/%m/%d\"},\n" +
+                "{\"dateformat\": \"%Y%m%d\"},\n" +
+                "{\"dateformat\": \"%Y-%m-%d %H:%i:%S\"},\n" +
+                "{\"dateformat\": \"%Y/%m/%d %H:%i:%S\"},\n" +
+                "{\"dateformat\": \"%Y%m%d %H:%i:%S\"}\n" +
+                "]", Dateformat.class);
     }
 }

@@ -1,14 +1,30 @@
 <template>
-  <div v-loading="loading" class="dataset-union" @mouseup="mouseupDrag">
-    <div :style="{ height: unionHeight + 'px' }" class="unio-editer-container">
+  <div
+    v-loading="loading"
+    class="dataset-union"
+    @mouseup="mouseupDrag"
+  >
+    <div
+      :style="{ height: unionHeight + 'px' }"
+      class="union-editer-container"
+    >
       <!--添加第一个数据集按钮-->
-      <div v-if="dataset.length === 0" style="padding: 24px">
-        <deBtn type="primary" @click="selectDs">
+      <div
+        v-if="dataset.length === 0"
+        style="padding: 24px"
+      >
+        <deBtn
+          type="primary"
+          @click="selectDs"
+        >
           {{ $t('chart.select_dataset') }}
         </deBtn>
       </div>
       <!--数据集关联树型结构-->
-      <div v-else class="union-container">
+      <div
+        v-else
+        class="union-container"
+      >
         <node-item
           :current-node="dataset[0]"
           :node-index="0"
@@ -39,7 +55,10 @@
         <span class="result-num">{{
           `(${$t('dataset.preview_show')} 1000 ${$t('dataset.preview_item')})`
         }}</span>
-        <span class="drag" @mousedown="mousedownDrag" />
+        <span
+          class="drag"
+          @mousedown="mousedownDrag"
+        />
         <el-button
           class="de-text-btn posi-right"
           type="text"
@@ -61,7 +80,7 @@
       v-closePress
       :title="$t('chart.select_dataset')"
       :visible.sync="selectDsDialog"
-      custom-class="user-drawer sql-dataset-drawer"
+      custom-class="de-user-drawer sql-dataset-drawer"
       size="600px"
       direction="rtl"
     >
@@ -73,7 +92,10 @@
         @getTable="firstDs"
       />
       <div class="de-foot">
-        <deBtn secondary @click="closeSelectDs()">{{
+        <deBtn
+          secondary
+          @click="closeSelectDs()"
+        >{{
           $t('dataset.cancel')
         }}</deBtn>
         <deBtn
@@ -94,16 +116,22 @@
           : $t('dataset.edit_union_relation')
       "
       :visible.sync="editUnion"
-      custom-class="user-drawer union-dataset-drawer"
+      custom-class="de-user-drawer union-dataset-drawer"
       size="840px"
       direction="rtl"
     >
       <union-edit :union-param="unionParam" />
       <div class="de-foot">
-        <deBtn secondary @click="closeEditUnion()">{{
+        <deBtn
+          secondary
+          @click="closeEditUnion()"
+        >{{
           $t('dataset.cancel')
         }}</deBtn>
-        <deBtn type="primary" @click="confirmEditUnion()">{{
+        <deBtn
+          type="primary"
+          @click="confirmEditUnion()"
+        >{{
           $t('dataset.confirm')
         }}</deBtn>
       </div>
@@ -114,7 +142,7 @@
 <script>
 import UnionNode from '@/views/dataset/add/union/UnionNode'
 import NodeItem from '@/views/dataset/add/union/NodeItem'
-import datasetTree from '@/views/dataset/common/datasetTree'
+import datasetTree from '@/views/dataset/common/DatasetTree'
 import UnionEdit from '@/views/dataset/add/union/UnionEdit'
 import { post } from '@/api/dataset/dataset'
 import UnionPreview from '@/views/dataset/add/union/UnionPreview'
@@ -190,7 +218,6 @@ export default {
   },
   watch: {
     'param.tableId': function() {
-      this.resetComponent()
       this.initTableData()
     }
   },
@@ -201,14 +228,14 @@ export default {
     mousedownDrag() {
       document
         .querySelector('.dataset-union')
-        .addEventListener('mousemove', this.caculateHeight)
+        .addEventListener('mousemove', this.calculateHeight)
     },
     mouseupDrag() {
       document
         .querySelector('.dataset-union')
-        .removeEventListener('mousemove', this.caculateHeight)
+        .removeEventListener('mousemove', this.calculateHeight)
     },
-    caculateHeight(e) {
+    calculateHeight(e) {
       if (e.pageY - 56 < 298) {
         this.unionHeight = 298
         return
@@ -361,11 +388,6 @@ export default {
         mode: this.dataset[0].currentDs.mode,
         info: '{"union":' + JSON.stringify(this.dataset) + '}'
       }
-    },
-
-    resetComponent() {
-      this.dataset = []
-      this.param.name = '关联数据集'
     }
   }
 }
@@ -378,7 +400,7 @@ export default {
   flex-direction: column;
   width: 100%;
 
-  .unio-editer-container {
+  .union-editer-container {
     min-height: 298px;
     width: 100%;
     background: #f5f6f7;

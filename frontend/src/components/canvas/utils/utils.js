@@ -1,18 +1,17 @@
 import {
-  BASE_MOBILE_STYLE, COMMON_BACKGROUND_NONE,
+  BASE_MOBILE_STYLE,
+  COMMON_BACKGROUND_NONE,
   HYPERLINKS
-} from '@/components/canvas/custom-component/component-list'
+} from '@/components/canvas/customComponent/component-list'
 
-import {
-  ApplicationContext
-} from '@/utils/ApplicationContext'
+import { ApplicationContext } from '@/utils/ApplicationContext'
 import { uuid } from 'vue-uuid'
 import store from '@/store'
-import { AIDED_DESIGN, PANEL_CHART_INFO, TAB_COMMON_STYLE } from '@/views/panel/panel'
+import { AIDED_DESIGN, MOBILE_SETTING, PANEL_CHART_INFO, TAB_COMMON_STYLE } from '@/views/panel/panel'
 import html2canvas from 'html2canvasde'
 
 export function deepCopy(target) {
-  if (typeof target === 'object') {
+  if (typeof target === 'object' && target !== null) {
     const result = Array.isArray(target) ? [] : {}
     for (const key in target) {
       if (typeof target[key] === 'object') {
@@ -49,6 +48,7 @@ export function toTop(arr, i, j) {
 export function toBottom(arr, i) {
   arr.unshift(arr.splice(i, 1)[0])
 }
+
 export function $(selector) {
   return document.querySelector(selector)
 }
@@ -80,11 +80,13 @@ export function panelDataPrepare(componentData, componentStyle, callback) {
   componentStyle.refreshTime = (componentStyle.refreshTime || 5)
   componentStyle.refreshViewLoading = (componentStyle.refreshViewLoading || false)
   componentStyle.refreshUnit = (componentStyle.refreshUnit || 'minute')
+  componentStyle.refreshViewEnable = (componentStyle.refreshViewEnable === undefined ? true : componentStyle.refreshViewEnable)
   componentStyle.aidedDesign = (componentStyle.aidedDesign || deepCopy(AIDED_DESIGN))
   componentStyle.chartInfo = (componentStyle.chartInfo || deepCopy(PANEL_CHART_INFO))
   componentStyle.chartInfo.tabStyle = (componentStyle.chartInfo.tabStyle || deepCopy(TAB_COMMON_STYLE))
   componentStyle.themeId = (componentStyle.themeId || 'NO_THEME')
   componentStyle.panel.themeColor = (componentStyle.panel.themeColor || 'light')
+  componentStyle.panel.mobileSetting = (componentStyle.panel.mobileSetting || MOBILE_SETTING)
   componentData.forEach((item, index) => {
     if (item.component && item.component === 'de-date') {
       const widget = ApplicationContext.getService(item.serviceName)
@@ -94,10 +96,16 @@ export function panelDataPrepare(componentData, componentStyle, callback) {
           item.options.attrs.default = widget.defaultSetting()
         }
       }
-      if (item.options.attrs && widget.isTimeWidget && widget.isTimeWidget() && !item.options.attrs.hasOwnProperty('showTime')) {
+      if (item.options.attrs && widget.isTimeWidget && widget.isTimeWidget() && !Object.prototype.hasOwnProperty.call(item.options.attrs, 'showTime')) {
         item.options.attrs.showTime = false
         item.options.attrs.accuracy = 'HH:mm'
       }
+    }
+    if (item.type === 'de-tabs') {
+      item.style.fontSize = item.style.fontSize || 16
+      item.style.activeFontSize = item.style.activeFontSize || 18
+      item.style.carouselEnable = item.style.carouselEnable || false
+      item.style.switchTime = item.style.switchTime || 5
     }
     if (item.type === 'custom') {
       item.options.manualModify = false
@@ -133,6 +141,9 @@ export function panelDataPrepare(componentData, componentStyle, callback) {
     if (item.component && item.component === 'Picture') {
       item.style.adaptation = item.style.adaptation || 'adaptation'
     }
+    // 增加所属画布ID（canvasId）当前所在画布的父ID（canvasPid） 主画布ID为main-canvas, PID = 0 表示当前所属canvas为最顶层
+    item.canvasId = (item.canvasId || 'canvas-main')
+    item.canvasPid = (item.canvasPid || '0')
   })
   // 初始化密度为最高密度
   componentStyle.aidedDesign.matrixBase = 4
@@ -145,7 +156,7 @@ export function panelDataPrepare(componentData, componentStyle, callback) {
 export function resetID(data) {
   if (data) {
     data.forEach(item => {
-      item.type !== 'custom' && (item.id = uuid.v1())
+      item.type !== 'custom' && item.type !== 'de-tabs' && (item.id = uuid.v1())
     })
   }
   return data
@@ -203,8 +214,11 @@ export function exportImg(imgName) {
 }
 
 export function dataURLToBlob(dataurl) { // ie 图片转格式
-  const arr = dataurl.split(','); const mime = arr[0].match(/:(.*?);/)[1]
-  const bstr = atob(arr[1]); let n = bstr.length; const u8arr = new Uint8Array(n)
+  const arr = dataurl.split(',')
+  const mime = arr[0].match(/:(.*?);/)[1]
+  const bstr = atob(arr[1])
+  let n = bstr.length
+  const u8arr = new Uint8Array(n)
   while (n--) {
     u8arr[n] = bstr.charCodeAt(n)
   }
@@ -218,10 +232,29 @@ export function colorReverse(OldColorValue) {
 }
 
 export function imgUrlTrans(url) {
-  if(url && typeof url === 'string' && url.indexOf('static-resource') > -1){
-    return process.env.VUE_APP_BASE_API + url.replace('/static-resource','static-resource')
-  }else {
+  if (url && typeof url === 'string' && url.indexOf('static-resource') > -1) {
+    return process.env.VUE_APP_BASE_API + url.replace('/static-resource', 'static-resource')
+  } else {
     return url
   }
+}
 
+export function getNowCanvasComponentData(canvasId, showPosition) {
+  if (showPosition && (showPosition.includes('email-task') || showPosition.includes('multiplexing'))) {
+    return store.state.previewComponentData.filter(item => item.canvasId === canvasId)
+  } else {
+    return store.state.componentData.filter(item => item.canvasId === canvasId)
+  }
+}
+
+export function findCurComponentIndex(componentData, curComponent) {
+  let curIndex = 0
+  for (let index = 0; index < componentData.length; index++) {
+    const element = componentData[index]
+    if (element.id && element.id === curComponent.id) {
+      curIndex = index
+      break
+    }
+  }
+  return curIndex
 }

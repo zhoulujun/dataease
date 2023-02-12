@@ -1,4 +1,4 @@
-import { getPadding, getTheme } from '@/views/chart/chart/common/common_antv'
+import { getPadding, getTheme, setGradientColor } from '@/views/chart/chart/common/common_antv'
 import { Gauge } from '@antv/g2plot'
 import { DEFAULT_LABEL, DEFAULT_SIZE, DEFAULT_THRESHOLD } from '@/views/chart/chart/chart'
 import { getScaleValue } from '@/components/canvas/utils/style'
@@ -124,6 +124,7 @@ export function baseGaugeOptionAntV(plot, container, chart, action, scale = 1) {
       }
     }
   }
+
   if (hasThreshold) {
     options.range = {
       color: theme.styleSheet.paletteQualitative10,
@@ -149,6 +150,19 @@ export function baseGaugeOptionAntV(plot, container, chart, action, scale = 1) {
           r: getScaleValue(10, scale)
         }
       }
+    }
+  }
+
+  if (customAttr.color.gradient) {
+    const colorList = (theme.styleSheet?.paletteQualitative10 || []).map((ele) => {
+      return setGradientColor(ele, customAttr.color.gradient)
+    })
+    if (!options.range) {
+      options.range = {
+        color: colorList
+      }
+    } else {
+      options.range.color = colorList
     }
   }
 

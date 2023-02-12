@@ -1,5 +1,6 @@
 package io.dataease.service.message;
 
+import io.dataease.commons.utils.LogUtil;
 import io.dataease.ext.ExtSysMsgMapper;
 import io.dataease.commons.constants.SysMsgConstants;
 import io.dataease.commons.utils.AuthUtils;
@@ -25,6 +26,7 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
@@ -53,6 +55,13 @@ public class SysMsgService {
     @Autowired
     private SystemParameterService systemParameterService;
 
+    public void cleanDisusedMsg() {
+        Long overTime = overTime();
+        SysMsgExample example = new SysMsgExample();
+        example.createCriteria().andCreateTimeLessThan(overTime);
+        sysMsgMapper.deleteByExample(example);
+    }
+
     public List<MsgGridDto> queryGrid(Long userId, MsgRequest msgRequest, List<Long> typeIds, Long startTime) {
         String orderClause = " create_time desc";
         SysMsgExample example = new SysMsgExample();
@@ -65,7 +74,7 @@ public class SysMsgService {
             orderClause = String.join(", ", orders);
         }
 
-        if (CollectionUtils.isNotEmpty(typeIds)){
+        if (CollectionUtils.isNotEmpty(typeIds)) {
             criteria.andTypeIdIn(typeIds);
         }
 
@@ -87,7 +96,7 @@ public class SysMsgService {
         return sysMsgMapper.countByExample(example);
     }
 
-    public void setReaded(Long msgId) {
+    public void setRead(Long msgId) {
         SysMsg sysMsg = new SysMsg();
         sysMsg.setMsgId(msgId);
         sysMsg.setStatus(true);
@@ -95,7 +104,7 @@ public class SysMsgService {
         sysMsgMapper.updateByPrimaryKeySelective(sysMsg);
     }
 
-    public void setBatchReaded(List<Long> msgIds) {
+    public void setBatchRead(List<Long> msgIds) {
         extSysMsgMapper.batchStatus(msgIds, System.currentTimeMillis());
     }
 
@@ -120,7 +129,7 @@ public class SysMsgService {
         return sysMsgTypeMapper.selectByExample(example);
     }
 
-    private List<SettingTreeNode> buildTree(List<SysMsgType> lists){
+    private List<SettingTreeNode> buildTree(List<SysMsgType> lists) {
         List<SettingTreeNode> rootNodes = new ArrayList<>();
         lists.forEach(node -> {
             SettingTreeNode settingTreeNode = convert(node);
@@ -183,6 +192,7 @@ public class SysMsgService {
 
     /**
      * 修改了订阅信息 需要清除缓存
+     *
      * @param request
      * @param userId
      */
@@ -241,22 +251,29 @@ public class SysMsgService {
         List<SubscribeNode> subscribes = subscribes(userId);
 
         if (CollectionUtils.isNotEmpty(subscribes)) {
-            subscribes.stream().filter(item -> item.getTypeId().equals(typeId)).forEach(sub -> {
-                SendService sendService = serviceByChannel(sub.getChannelId());
-                sendService.sendMsg(userId, typeId, content, param);
-            });
-
+            for (int i = 0; i < subscribes.size(); i++) {
+                SubscribeNode item = subscribes.get(i);
+                if (item.getTypeId().equals(typeId)) {
+                    try {
+                        SendService sendService = serviceByChannel(item.getChannelId());
+                        sendService.sendMsg(userId, typeId, content, param);
+                    } catch (Exception e) {
+                        LogUtil.error(e.getMessage(), e);
+                    }
+                }
+            }
         }
 
     }
 
-    private SendService serviceByChannel(Long channelId){
+    private SendService serviceByChannel(Long channelId) {
         String beanName = sysMsgChannelMapper.selectByPrimaryKey(channelId).getServiceName();
-        return (SendService)CommonBeanFactory.getBean(beanName);
+        return (SendService) CommonBeanFactory.getBean(beanName);
     }
 
     /**
      * 查询用户订阅的消息 并缓存
+     *
      * @param userId
      * @return
      */
@@ -280,7 +297,7 @@ public class SysMsgService {
         List<SysMsgSetting> defaultSettings = defaultSettings();
 
         defaultSettings.forEach(setting -> {
-            if (!sourceLists.stream().anyMatch(item -> item.match(setting))){
+            if (!sourceLists.stream().anyMatch(item -> item.match(setting))) {
                 sourceLists.add(setting);
             }
         });
@@ -297,7 +314,7 @@ public class SysMsgService {
 
     public Long overTime() {
         String msgTimeOut = systemParameterService.basicInfo().getMsgTimeOut();
-        if(StringUtils.isNotBlank(msgTimeOut)) {
+        if (StringUtils.isNotBlank(msgTimeOut)) {
             overDays = Integer.parseInt(msgTimeOut);
         }
         Long currentTime = System.currentTimeMillis();
@@ -307,9 +324,8 @@ public class SysMsgService {
         long temp = overDays * oneDayTime;
 
         return currentTime - (currentTime + 8 * 60 * 60 * 1000) % oneDayTime - temp;
-                 
+
     }
 
-    
 
 }

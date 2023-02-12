@@ -4,12 +4,14 @@ import com.github.xiaoymin.knife4j.annotations.ApiSupport;
 import io.dataease.auth.annotation.DePermission;
 import io.dataease.commons.constants.DePermissionType;
 import io.dataease.controller.request.chart.ChartExtRequest;
+import io.dataease.controller.request.panel.PanelViewLogRequest;
 import io.dataease.controller.request.panel.link.*;
 import io.dataease.dto.panel.link.GenerateDto;
 import io.dataease.dto.panel.link.ValidateDto;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.web.bind.annotation.*;
+import springfox.documentation.annotations.ApiIgnore;
 
 import java.util.Map;
 
@@ -51,16 +53,22 @@ public interface LinkApi {
     @PostMapping("/validatePwd")
     boolean validatePwd(PasswordRequest request) throws Exception;
 
-    @ApiOperation("资源详息")
+    @ApiOperation("资源详细信息")
     @GetMapping("/resourceDetail/{resourceId}")
     Object resourceDetail(@PathVariable String resourceId);
 
-    @ApiOperation("视图详息")
+    @ApiOperation("视图详细信息")
     @PostMapping("/viewDetail/{viewId}/{panelId}")
     Object viewDetail(@PathVariable("viewId") String viewId, @PathVariable("panelId") String panelId,
-            @RequestBody ChartExtRequest requestList) throws Exception;
+                      @RequestBody ChartExtRequest requestList) throws Exception;
 
     @ApiOperation("压缩链接")
     @PostMapping("/shortUrl")
     String shortUrl(@RequestBody Map<String, String> param);
+
+    @ApiIgnore
+    @PostMapping("/viewLog")
+    void viewLinkLog(@RequestBody LinkViewLogRequest request);
+
+
 }

@@ -1,8 +1,19 @@
 <template>
   <div class="component-item">
-    <mobile-check-bar v-if="mobileCheckBarShow" :element="config" />
-    <div :style="commonStyle" class="inner-item">
-      <svg-icon v-if="svgInnerEnable" :style="{'color':this.config.commonBackground.innerImageColor}" class="svg-background" :icon-class="mainSlotSvgInner" />
+    <mobile-check-bar
+      v-if="mobileCheckBarShow"
+      :element="config"
+    />
+    <div
+      :style="commonStyle"
+      class="inner-item"
+    >
+      <svg-icon
+        v-if="svgInnerEnable"
+        :style="{'color':config.commonBackground.innerImageColor}"
+        class="svg-background"
+        :icon-class="mainSlotSvgInner"
+      />
       <de-out-widget
         v-if="config.type==='custom'"
         :id="'component' + config.id"
@@ -32,11 +43,11 @@
 
 <script>
 import { mapState } from 'vuex'
-import MobileCheckBar from '@/components/canvas/components/Editor/MobileCheckBar'
+import MobileCheckBar from '@/components/canvas/components/editor/MobileCheckBar'
 import { getStyle } from '@/components/canvas/utils/style'
 import DeOutWidget from '@/components/dataease/DeOutWidget'
 import { hexColorToRGBA } from '@/views/chart/chart/util'
-import {imgUrlTrans} from "@/components/canvas/utils/utils";
+import { imgUrlTrans } from '@/components/canvas/utils/utils'
 
 export default {
   name: 'ComponentWaitItem',
@@ -131,26 +142,28 @@ export default {
 </script>
 
 <style scoped>
-  .component-custom {
-    position: relative!important;
-    outline: none;
-    width: 100% !important;
-    height: 100%;
-  }
-  .component-item {
-    padding: 5px;
-    height: 200px!important;
-    position: relative;
-  }
+.component-custom {
+  position: relative !important;
+  outline: none;
+  width: 100% !important;
+  height: 100%;
+}
 
-  .inner-item {
-    position: relative;
-  }
-  .svg-background {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-  }
+.component-item {
+  padding: 5px;
+  height: 200px !important;
+  position: relative;
+}
+
+.inner-item {
+  position: relative;
+}
+
+.svg-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100% !important;
+  height: 100% !important;
+}
 </style>

@@ -1,6 +1,14 @@
 <template>
-  <div class="filter-container" @dragstart="handleDragStart" @dragend="handleDragEnd()">
-    <div v-for="(item, key) in widgetSubjects" :key="key" class="widget-subject">
+  <div
+    class="filter-container"
+    @dragstart="handleDragStart"
+    @dragend="handleDragEnd()"
+  >
+    <div
+      v-for="(item, key) in widgetSubjects"
+      :key="key"
+      class="widget-subject"
+    >
       <div class="filter-header">
         <div class="filter-header-text"> {{ key }} </div>
       </div>
@@ -32,6 +40,12 @@ import eventBus from '@/components/canvas/utils/eventBus'
 import { mapState } from 'vuex'
 export default {
   name: 'FilterGroup',
+  props: {
+    canvasId: {
+      type: String,
+      require: true
+    }
+  },
   data() {
     return {
       panelInfo: this.$store.state.panel.panelInfo,
@@ -65,9 +79,12 @@ export default {
   computed: {
     ...mapState([
       'canvasStyleData',
-      'curCanvasScale',
+      'curCanvasScaleMap',
       'componentData'
     ]),
+    curCanvasScaleSelf() {
+      return this.curCanvasScaleMap[this.canvasId]
+    },
     searchButtonExist() {
       return this.componentData && this.componentData.some(component => component.type === 'custom-button' && component.serviceName === 'buttonSureWidget')
     },
@@ -111,10 +128,12 @@ export default {
       // 设置矩阵标记点
       dragComponentInfo.x = 1
       dragComponentInfo.y = 1
-      dragComponentInfo.sizex = Math.round(dragComponentInfo.style.width / this.curCanvasScale.matrixStyleOriginWidth)
-      dragComponentInfo.sizey = Math.round(dragComponentInfo.style.height / this.curCanvasScale.matrixStyleOriginHeight)
+      dragComponentInfo.sizex = Math.round(dragComponentInfo.style.width / this.curCanvasScaleSelf.matrixStyleOriginWidth)
+      dragComponentInfo.sizey = Math.round(dragComponentInfo.style.height / this.curCanvasScaleSelf.matrixStyleOriginHeight)
       dragComponentInfo.auxiliaryMatrix = this.canvasStyleData.auxiliaryMatrix
       dragComponentInfo.moveStatus = 'start'
+      dragComponentInfo['canvasId'] = 'canvas-main'
+      dragComponentInfo['canvasPid'] = '0'
       this.$store.commit('setDragComponentInfo', dragComponentInfo)
       ev.dataTransfer.effectAllowed = 'copy'
       const dataTrans = {

@@ -4,9 +4,15 @@
     class="de-ds-container"
     :class="[{ 'is-driver-mgm': currentMgm === 'driverMgm' }]"
   >
-    <div v-if="currentMgm === 'driverMgm'" class="dsr-route-title">
+    <div
+      v-if="currentMgm === 'driverMgm'"
+      class="dsr-route-title"
+    >
       <div>
-        <i class="el-icon-arrow-left back-button" @click="jump" />
+        <i
+          class="el-icon-arrow-left back-button"
+          @click="jump"
+        />
         <span>{{ $t('driver.mgm') }}</span>
       </div>
       <deBtn
@@ -32,13 +38,18 @@
         :is="component"
         v-if="!!component"
         :params="param"
-        @DataUpdate="dataUpdate"
         :t-data="tData"
         :ds-types="dsTypes"
+        @DataUpdate="dataUpdate"
         @refresh-type="refreshType"
         @switch-component="switchMain"
       />
-      <el-empty v-else :image-size="125" :description="$t(`datasource.${swTips}`)" :image="image" />
+      <el-empty
+        v-else
+        :image-size="125"
+        :description="$t(`datasource.${swTips}`)"
+        :image="image"
+      />
     </de-main-container>
   </div>
 </template>
@@ -48,7 +59,7 @@ import DeMainContainer from '@/components/dataease/DeMainContainer'
 import DeAsideContainer from '@/components/dataease/DeAsideContainer'
 import DsTree from './DsTree'
 import DsForm from './DsForm'
-import dsTable from './dsTable'
+import dsTable from './DsTable'
 import DriverForm from './DriverFormDetail'
 export default {
   name: 'DsMain',
@@ -133,7 +144,7 @@ export default {
   flex-wrap: nowrap;
   box-sizing: border-box;
   .el-empty {
-    height: 100%;
+    padding-top: 202px;
   }
 }
 .ms-aside-container {

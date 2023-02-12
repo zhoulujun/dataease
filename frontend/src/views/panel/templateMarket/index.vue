@@ -1,23 +1,51 @@
 <template>
   <el-row class="outer-body">
     <!--预览模式-->
-    <MarketPreview v-show="previewModel" :preview-id="templatePreviewId" @closePreview="previewModel=false" @templateApply="templateApply" />
+    <MarketPreview
+      v-show="previewModel"
+      :preview-id="templatePreviewId"
+      @closePreview="previewModel=false"
+      @templateApply="templateApply"
+    />
     <!--列表模式-->
-    <el-row v-show="!previewModel" class="market-main">
+    <el-row
+      v-show="!previewModel"
+      class="market-main"
+    >
       <el-row>
-        <el-col span="12">
+        <el-col :span="12">
           <span class="title-left">{{ $t('panel.template_market') }}</span>
         </el-col>
         <el-col span="12">
-          <el-input v-model="searchText" prefix-icon="el-icon-search" size="small" class="title-right" :placeholder="$t('panel.enter_template_name_tips')" clearable="true" />
+          <el-input
+            v-model="searchText"
+            prefix-icon="el-icon-search"
+            size="small"
+            class="title-right"
+            :placeholder="$t('panel.enter_template_name_tips')"
+            :clearable="true"
+          />
         </el-col>
       </el-row>
       <el-row>
-        <el-tabs v-model="marketActiveTab" @tab-click="handleClick">
-          <el-tab-pane v-for="tabItem in marketTabs" :key="tabItem" :label="tabItem" :name="tabItem" />
+        <el-tabs
+          v-model="marketActiveTab"
+          @tab-click="handleClick"
+        >
+          <el-tab-pane
+            v-for="tabItem in marketTabs"
+            :key="tabItem"
+            :label="tabItem"
+            :name="tabItem"
+          />
         </el-tabs>
       </el-row>
-      <el-row v-show="networkStatus && hasResult" id="template-main" v-loading="$store.getters.loadingMap[$store.getters.currentPath]" class="template-main">
+      <el-row
+        v-show="networkStatus && hasResult"
+        id="template-main"
+        v-loading="$store.getters.loadingMap[$store.getters.currentPath]"
+        class="template-main"
+      >
         <el-col
           v-for="(templateItem) in currentMarketTemplateShowList"
           v-show="templateItem.showFlag"
@@ -34,14 +62,23 @@
           />
         </el-col>
       </el-row>
-      <el-row v-show="networkStatus && !hasResult" class="custom-position template-main">
+      <el-row
+        v-show="networkStatus && !hasResult"
+        class="custom-position template-main"
+      >
         <div style="text-align: center">
-          <svg-icon icon-class="no_result" style="font-size: 75px;margin-bottom: 16px" />
+          <svg-icon
+            icon-class="no_result"
+            style="font-size: 75px;margin-bottom: 16px"
+          />
           <br>
           <span>{{ $t('commons.no_result') }}</span>
         </div>
       </el-row>
-      <el-row v-show="!networkStatus" class="custom-position template-main">
+      <el-row
+        v-show="!networkStatus"
+        class="custom-position template-main"
+      >
         {{ $t('panel.market_network_tips') }}
       </el-row>
     </el-row>
@@ -51,14 +88,29 @@
       :visible.sync="folderSelectShow"
       width="600px"
       class="market-dialog-css"
-      append-to-body="true"
+      :append-to-body="true"
       :destroy-on-close="true"
     >
-      <el-form ref="panelForm" :model="panelForm" :rules="rule" label-width="80px">
-        <el-form-item :label="$t('panel.name')" prop="name">
-          <el-input v-model="panelForm.name" :clearable="true" :placeholder="$t('panel.enter_name_tips')" />
+      <el-form
+        ref="panelForm"
+        :model="panelForm"
+        :rules="rule"
+        label-width="80px"
+      >
+        <el-form-item
+          :label="$t('panel.name')"
+          prop="name"
+        >
+          <el-input
+            v-model="panelForm.name"
+            :clearable="true"
+            :placeholder="$t('panel.enter_name_tips')"
+          />
         </el-form-item>
-        <el-form-item :label="$t('commons.folder')" prop="pid">
+        <el-form-item
+          :label="$t('commons.folder')"
+          prop="pid"
+        >
           <treeselect
             v-model="panelForm.pid"
             :clearable="false"
@@ -71,16 +123,29 @@
           />
         </el-form-item>
       </el-form>
-      <div slot="footer" class="dialog-footer dialog-footer-self">
-        <el-button size="mini" @click="folderSelectShow=false">{{ $t('commons.cancel') }}</el-button>
-        <el-button size="mini" type="primary" :disabled="!panelForm.name || !panelForm.pid" @click="apply">{{ $t('commons.confirm') }}</el-button>
+      <div
+        slot="footer"
+        class="dialog-footer dialog-footer-self"
+      >
+        <el-button
+          size="mini"
+          @click="folderSelectShow=false"
+        >{{ $t('commons.cancel') }}
+        </el-button>
+        <el-button
+          size="mini"
+          type="primary"
+          :disabled="!panelForm.name || !panelForm.pid"
+          @click="apply"
+        >{{ $t('commons.confirm') }}
+        </el-button>
       </div>
     </el-dialog>
   </el-row>
 </template>
 
 <script>
-import { searchMarket, getCategories } from '@/api/templateMarket'
+import { getCategories, searchMarket } from '@/api/templateMarket'
 import TemplateMarketItem from '@/views/panel/templateMarket/component/TemplateMarketItem'
 import { groupTree, panelSave } from '@/api/panel/panel'
 import { DEFAULT_COMMON_CANVAS_STYLE_STRING } from '@/views/panel/panel'
@@ -136,9 +201,7 @@ export default {
       }
     }
   },
-  computed: {
-
-  },
+  computed: {},
   watch: {
     marketActiveTab() {
       this.initTemplateShow()
@@ -154,13 +217,15 @@ export default {
     const erd = elementResizeDetectorMaker()
     const templateMainDom = document.getElementById('template-main')
     // 监听div变动事件
-    erd.listenTo(templateMainDom, element => {
-      _this.$nextTick(() => {
-        const curSeparator = Math.trunc(templateMainDom.offsetWidth / _this.templateMiniWidth)
-        _this.templateSpan = (100 / Math.trunc(templateMainDom.offsetWidth / _this.templateMiniWidth)) + '%'
-        _this.templateCurWidth = Math.trunc(templateMainDom.offsetWidth / curSeparator) - 33
+    if (templateMainDom) {
+      erd.listenTo(templateMainDom, element => {
+        _this.$nextTick(() => {
+          const curSeparator = Math.trunc(templateMainDom.offsetWidth / _this.templateMiniWidth)
+          _this.templateSpan = (100 / Math.trunc(templateMainDom.offsetWidth / _this.templateMiniWidth)) + '%'
+          _this.templateCurWidth = Math.trunc(templateMainDom.offsetWidth / curSeparator) - 33
+        })
       })
-    })
+    }
   },
   methods: {
     initMarketTemplate() {
@@ -259,100 +324,107 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-  .template-main{
-    text-align: center;
-    border-radius: 4px;
-    padding: 0 12px 24px 12px;
-    height: calc(100vh - 190px)!important;
-    overflow-x: hidden;
-    overflow-y: auto;
-    background-color: var(--ContentBG,#ffffff);
-  }
-  .market-main{
-    padding:24px
-  }
-  .title-left{
-    float: left;
-    font-size: 20px;
-    font-weight: 500;
-    line-height: 28px;
-    color: var(--TextPrimary, #1F2329);
-  }
-  .title-right{
-    float: right;
-    width: 320px;
-  }
-  .dialog-footer-self{
-    text-align: right;
-  }
-  .search-button-self{
-    text-align: left;
-    padding-left: 10px;
-  }
+.template-main {
+  text-align: center;
+  border-radius: 4px;
+  padding: 0 12px 24px 12px;
+  height: calc(100vh - 190px) !important;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background-color: var(--ContentBG, #ffffff);
+}
 
-  .topbar-icon-active {
-    cursor: pointer;
-    transition: .1s;
-    border-radius: 3px;
-    font-size: 22px;
-    background-color: rgb(245, 245, 245);
+.market-main {
+  padding: 24px
+}
+
+.title-left {
+  float: left;
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 28px;
+  color: var(--TextPrimary, #1F2329);
+}
+
+.title-right {
+  float: right;
+  width: 320px;
+}
+
+.dialog-footer-self {
+  text-align: right;
+}
+
+.search-button-self {
+  text-align: left;
+  padding-left: 10px;
+}
+
+.topbar-icon-active {
+  cursor: pointer;
+  transition: .1s;
+  border-radius: 3px;
+  font-size: 22px;
+  background-color: rgb(245, 245, 245);
 
   &:active {
-     color: #000;
-     border-color: #3a8ee6;
-     background-color: red;
-     outline: 0;
-   }
+    color: #000;
+    border-color: #3a8ee6;
+    background-color: red;
+    outline: 0;
+  }
 
   &:hover {
-     background-color: rgba(31, 35, 41, 0.1);
-     color: #3a8ee6;
-   }
+    background-color: rgba(31, 35, 41, 0.1);
+    color: #3a8ee6;
   }
-  .custom-position {
-    height: 80vh;
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    font-size: 14px;
-    flex-flow: row nowrap;
-    color: #646A73;
-    font-weight: 400;
+}
+
+.custom-position {
+  height: 80vh;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 14px;
+  flex-flow: row nowrap;
+  color: #646A73;
+  font-weight: 400;
+}
+
+.outer-body {
+  width: 100%;
+  height: calc(100vh - 56px);
+  background-color: var(--MainBG, #f5f6f7);
+}
+
+.market-dialog-css {
+  ::v-deep .el-form-item__label {
+    width: 100% !important;
+    text-align: left;
   }
-  .outer-body{
-    width: 100%;
-    height: calc(100vh - 56px);
-    background-color: var(--MainBG,#f5f6f7);
+
+  ::v-deep
+  .el-form-item.is-required:not(.is-no-asterisk)
+  > .el-form-item__label:before {
+    display: none;
   }
 
-  .market-dialog-css{
-    ::v-deep .el-form-item__label {
-      width: 100% !important;
-      text-align: left;
-    }
-
-    ::v-deep
-    .el-form-item.is-required:not(.is-no-asterisk)
-    > .el-form-item__label:before {
-      display: none;
-    }
-
-    ::v-deep
-    .el-form-item.is-required:not(.is-no-asterisk)
-    > .el-form-item__label::after {
-      content: "*";
-      color: #f54a45;
-      margin-left: 2px;
-    }
-
-    ::v-deep .el-form-item__content {
-      margin-left: 0 !important;
-    }
-
-    ::v-deep .vue-treeselect__input{
-      vertical-align:middle;
-    }
+  ::v-deep
+  .el-form-item.is-required:not(.is-no-asterisk)
+  > .el-form-item__label::after {
+    content: "*";
+    color: #f54a45;
+    margin-left: 2px;
   }
+
+  ::v-deep .el-form-item__content {
+    margin-left: 0 !important;
+  }
+
+  ::v-deep .vue-treeselect__input {
+    vertical-align: middle;
+  }
+}
 
 </style>

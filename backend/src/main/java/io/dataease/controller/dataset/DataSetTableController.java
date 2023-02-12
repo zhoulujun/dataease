@@ -1,5 +1,7 @@
 package io.dataease.controller.dataset;
 
+import com.github.pagehelper.Page;
+import com.github.pagehelper.PageHelper;
 import com.github.xiaoymin.knife4j.annotations.ApiSupport;
 import io.dataease.auth.annotation.DeLog;
 import io.dataease.auth.annotation.DePermission;
@@ -7,10 +9,16 @@ import io.dataease.auth.annotation.DePermissions;
 import io.dataease.commons.constants.DePermissionType;
 import io.dataease.commons.constants.ResourceAuthLevel;
 import io.dataease.commons.constants.SysLogConstants;
+import io.dataease.commons.utils.PageUtils;
+import io.dataease.commons.utils.Pager;
+import io.dataease.controller.ResultHolder;
+import io.dataease.controller.handler.annotation.I18n;
+import io.dataease.controller.request.dataset.DataSetExportRequest;
 import io.dataease.controller.request.dataset.DataSetTableRequest;
 import io.dataease.controller.response.DataSetDetail;
 import io.dataease.dto.dataset.DataSetTableDTO;
 import io.dataease.dto.dataset.ExcelFileData;
+import io.dataease.plugins.common.base.domain.DatasetSqlLog;
 import io.dataease.plugins.common.base.domain.DatasetTable;
 import io.dataease.plugins.common.base.domain.DatasetTableField;
 import io.dataease.plugins.common.base.domain.DatasetTableIncrementalConfig;
@@ -23,6 +31,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -103,7 +112,7 @@ public class DataSetTableController {
     }
 
     @DePermission(type = DePermissionType.DATASET, level = ResourceAuthLevel.DATASET_LEVEL_USE)
-    @ApiOperation("详息")
+    @ApiOperation("详细信息")
     @PostMapping("get/{id}")
     public DatasetTable get(@ApiParam(name = "id", value = "数据集ID", required = true) @PathVariable String id) {
         return dataSetTableService.get(id);
@@ -133,7 +142,7 @@ public class DataSetTableController {
     @ApiOperation("查询预览数据")
     @PostMapping("getPreviewData/{page}/{pageSize}")
     public Map<String, Object> getPreviewData(@RequestBody DataSetTableRequest dataSetTableRequest, @PathVariable Integer page, @PathVariable Integer pageSize) throws Exception {
-        return dataSetTableService.getPreviewData(dataSetTableRequest, page, pageSize, null);
+        return dataSetTableService.getPreviewData(dataSetTableRequest, page, pageSize, null, null);
     }
 
     @ApiOperation("db数据库表预览数据")
@@ -152,8 +161,19 @@ public class DataSetTableController {
             @DePermission(type = DePermissionType.DATASET, value = "id", level = ResourceAuthLevel.DATASET_LEVEL_USE),
             @DePermission(type = DePermissionType.DATASOURCE, value = "dataSourceId", level = ResourceAuthLevel.DATASOURCE_LEVEL_USE)
     }, logical = Logical.AND)
-    public Map<String, Object> getSQLPreview(@RequestBody DataSetTableRequest dataSetTableRequest) throws Exception {
+    public ResultHolder getSQLPreview(@RequestBody DataSetTableRequest dataSetTableRequest) throws Exception {
         return dataSetTableService.getSQLPreview(dataSetTableRequest);
+    }
+
+    @ApiOperation("根据sql查询预览数据")
+    @PostMapping("sqlLog/{goPage}/{pageSize}")
+    @DePermissions(value = {
+            @DePermission(type = DePermissionType.DATASET, value = "id", level = ResourceAuthLevel.DATASET_LEVEL_USE),
+            @DePermission(type = DePermissionType.DATASOURCE, value = "dataSourceId", level = ResourceAuthLevel.DATASOURCE_LEVEL_USE)
+    }, logical = Logical.AND)
+    public Pager<List<DatasetSqlLog>> getSQLLog(@RequestBody DataSetTableRequest dataSetTableRequest, @PathVariable int goPage, @PathVariable int pageSize) throws Exception {
+        Page<DatasetSqlLog> page = PageHelper.startPage(goPage, pageSize, true);
+        return PageUtils.setPageInfo(page, dataSetTableService.getSQLLog(dataSetTableRequest));
     }
 
     @ApiOperation("预览自定义数据数据")
@@ -177,7 +197,7 @@ public class DataSetTableController {
     }
 
     @DePermission(type = DePermissionType.DATASET)
-    @ApiOperation("数据集详息")
+    @ApiOperation("数据集详细信息")
     @PostMapping("datasetDetail/{id}")
     public DataSetDetail datasetDetail(@PathVariable String id) {
         return dataSetTableService.getDatasetDetail(id);
@@ -231,5 +251,12 @@ public class DataSetTableController {
     @PostMapping("/getDatasetNameFromGroup/{sceneId}")
     public List<String> getDatasetNameFromGroup(@PathVariable String sceneId) {
         return dataSetTableService.getDatasetNameFromGroup(sceneId);
+    }
+
+    @ApiOperation("数据集导出")
+    @PostMapping("/exportDataset")
+    @I18n
+    public void exportDataset(@RequestBody DataSetExportRequest request, HttpServletResponse response) throws Exception {
+        dataSetTableService.exportDataset(request, response);
     }
 }

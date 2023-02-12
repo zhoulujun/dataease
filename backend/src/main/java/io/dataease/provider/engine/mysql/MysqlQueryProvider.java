@@ -1,5 +1,6 @@
 package io.dataease.provider.engine.mysql;
 
+import com.alibaba.fastjson.JSONArray;
 import io.dataease.plugins.common.base.domain.ChartViewWithBLOBs;
 import io.dataease.plugins.common.base.domain.DatasetTableField;
 import io.dataease.plugins.common.base.domain.DatasetTableFieldExample;
@@ -16,6 +17,8 @@ import io.dataease.plugins.common.dto.sqlObj.SQLObj;
 import io.dataease.plugins.common.request.chart.ChartExtFilterRequest;
 import io.dataease.plugins.common.request.permission.DataSetRowPermissionsTreeDTO;
 import io.dataease.plugins.common.request.permission.DatasetRowPermissionsTreeItem;
+import io.dataease.plugins.datasource.entity.Dateformat;
+import io.dataease.plugins.datasource.entity.PageInfo;
 import io.dataease.plugins.datasource.query.QueryProvider;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
@@ -126,7 +129,8 @@ public class MysqlQueryProvider extends QueryProvider {
                     } else if (f.getDeType() == 3) {
                         fieldName = String.format(MysqlConstants.CAST, originField, MysqlConstants.DEFAULT_FLOAT_FORMAT);
                     } else if (f.getDeType() == 1) {
-                        fieldName = String.format(MysqlConstants.STR_TO_DATE, originField, MysqlConstants.DEFAULT_DATE_FORMAT);
+                        fieldName = StringUtils.isEmpty(f.getDateFormat()) ? String.format(MysqlConstants.STR_TO_DATE, originField, MysqlConstants.DEFAULT_DATE_FORMAT) :
+                                String.format(MysqlConstants.DATE_FORMAT, String.format(MysqlConstants.STR_TO_DATE, originField, f.getDateFormat()), MysqlConstants.DEFAULT_DATE_FORMAT);
                     } else {
                         fieldName = originField;
                     }
@@ -201,7 +205,8 @@ public class MysqlQueryProvider extends QueryProvider {
             } else if (f.getDeType() == 3) {
                 fieldName = String.format(MysqlConstants.CAST, originField, MysqlConstants.DEFAULT_FLOAT_FORMAT);
             } else if (f.getDeType() == 1) {
-                fieldName = String.format(MysqlConstants.STR_TO_DATE, originField, MysqlConstants.DEFAULT_DATE_FORMAT);
+                fieldName = StringUtils.isEmpty(f.getDateFormat()) ? String.format(MysqlConstants.STR_TO_DATE, originField, MysqlConstants.DEFAULT_DATE_FORMAT) :
+                        String.format(MysqlConstants.DATE_FORMAT, String.format(MysqlConstants.STR_TO_DATE, originField, f.getDateFormat()), MysqlConstants.DEFAULT_DATE_FORMAT);
             } else {
                 fieldName = originField;
             }
@@ -358,7 +363,16 @@ public class MysqlQueryProvider extends QueryProvider {
     }
 
     @Override
-    public String getSQLTableInfo(String table, List<ChartViewFieldDTO> xAxis, List<ChartFieldCustomFilterDTO> fieldCustomFilter, List<DataSetRowPermissionsTreeDTO> rowPermissionsTree, List<ChartExtFilterRequest> extFilterRequestList, Datasource ds, ChartViewWithBLOBs view) {
+    public String getSQLWithPage(boolean isTable, String table, List<ChartViewFieldDTO> xAxis, List<ChartFieldCustomFilterDTO> fieldCustomFilter, List<DataSetRowPermissionsTreeDTO> rowPermissionsTree, List<ChartExtFilterRequest> extFilterRequestList, Datasource ds, ChartViewWithBLOBs view, PageInfo pageInfo) {
+        String limit = ((pageInfo.getGoPage() != null && pageInfo.getPageSize() != null) ? " LIMIT " + (pageInfo.getGoPage() - 1) * pageInfo.getPageSize() + "," + pageInfo.getPageSize() : "");
+        if (isTable) {
+            return originalTableInfo(table, xAxis, fieldCustomFilter, rowPermissionsTree, extFilterRequestList, ds, view) + limit;
+        } else {
+            return originalTableInfo("(" + sqlFix(table) + ")", xAxis, fieldCustomFilter, rowPermissionsTree, extFilterRequestList, ds, view) + limit;
+        }
+    }
+
+    private String originalTableInfo(String table, List<ChartViewFieldDTO> xAxis, List<ChartFieldCustomFilterDTO> fieldCustomFilter, List<DataSetRowPermissionsTreeDTO> rowPermissionsTree, List<ChartExtFilterRequest> extFilterRequestList, Datasource ds, ChartViewWithBLOBs view) {
         SQLObj tableObj = SQLObj.builder()
                 .tableName((table.startsWith("(") && table.endsWith(")")) ? table : String.format(MysqlConstants.KEYWORD_TABLE, table))
                 .tableAlias(String.format(TABLE_ALIAS_PREFIX, 0))
@@ -430,7 +444,12 @@ public class MysqlQueryProvider extends QueryProvider {
                 .build();
         if (CollectionUtils.isNotEmpty(orders)) st.add("orders", orders);
         if (ObjectUtils.isNotEmpty(tableSQL)) st.add("table", tableSQL);
-        return sqlLimit(st.render(), view);
+        return st.render();
+    }
+
+    @Override
+    public String getSQLTableInfo(String table, List<ChartViewFieldDTO> xAxis, List<ChartFieldCustomFilterDTO> fieldCustomFilter, List<DataSetRowPermissionsTreeDTO> rowPermissionsTree, List<ChartExtFilterRequest> extFilterRequestList, Datasource ds, ChartViewWithBLOBs view) {
+        return sqlLimit(originalTableInfo(table, xAxis, fieldCustomFilter, rowPermissionsTree, extFilterRequestList, ds, view), view);
     }
 
     @Override
@@ -801,7 +820,7 @@ public class MysqlQueryProvider extends QueryProvider {
 
         if (field.getDeType() == 1) {
             if (field.getDeExtractType() == 0 || field.getDeExtractType() == 5 || field.getDeExtractType() == 1) {
-                whereName = String.format(MysqlConstants.STR_TO_DATE, originName, MysqlConstants.DEFAULT_DATE_FORMAT);
+                whereName = String.format(MysqlConstants.STR_TO_DATE, originName, StringUtils.isNotEmpty(field.getDateFormat()) ? field.getDateFormat() : MysqlConstants.DEFAULT_DATE_FORMAT);
             }
             if (field.getDeExtractType() == 2 || field.getDeExtractType() == 3 || field.getDeExtractType() == 4) {
                 String cast = String.format(MysqlConstants.CAST, originName, MysqlConstants.DEFAULT_INT_FORMAT) + "/1000";
@@ -931,7 +950,7 @@ public class MysqlQueryProvider extends QueryProvider {
 
             if (field.getDeType() == 1) {
                 if (field.getDeExtractType() == 0 || field.getDeExtractType() == 5 || field.getDeExtractType() == 1) {
-                    whereName = String.format(MysqlConstants.STR_TO_DATE, originName, MysqlConstants.DEFAULT_DATE_FORMAT);
+                    whereName = String.format(MysqlConstants.STR_TO_DATE, originName, StringUtils.isNotEmpty(field.getDateFormat()) ? field.getDateFormat() : MysqlConstants.DEFAULT_DATE_FORMAT);
                 }
                 if (field.getDeExtractType() == 2 || field.getDeExtractType() == 3 || field.getDeExtractType() == 4) {
                     String cast = String.format(MysqlConstants.CAST, originName, MysqlConstants.DEFAULT_INT_FORMAT) + "/1000";
@@ -979,9 +998,9 @@ public class MysqlQueryProvider extends QueryProvider {
                     } else {
                         // Doris field type test
                         /*if (field.getDeExtractType() == 2 || field.getDeExtractType() == 3 || field.getDeExtractType() == 4) {
-                            whereValue = String.format(DorisConstants.WHERE_NUMBER_VALUE, value);
+                            whereValue = String.format(MysqlConstants.WHERE_NUMBER_VALUE, value);
                         } else {
-                            whereValue = String.format(DorisConstants.WHERE_VALUE_VALUE, value);
+                            whereValue = String.format(MysqlConstants.WHERE_VALUE_VALUE, value);
                         }*/
                         whereValue = String.format(MysqlConstants.WHERE_VALUE_VALUE, value);
                     }
@@ -1040,7 +1059,7 @@ public class MysqlQueryProvider extends QueryProvider {
 
                 if (field.getDeType() == 1) {
                     if (field.getDeExtractType() == 0 || field.getDeExtractType() == 5 || field.getDeExtractType() == 1) {
-                        whereName = String.format(MysqlConstants.STR_TO_DATE, originName, MysqlConstants.DEFAULT_DATE_FORMAT);
+                        whereName = String.format(MysqlConstants.STR_TO_DATE, originName, StringUtils.isNotEmpty(field.getDateFormat()) ? field.getDateFormat() : MysqlConstants.DEFAULT_DATE_FORMAT);
                     }
                     if (field.getDeExtractType() == 2 || field.getDeExtractType() == 3 || field.getDeExtractType() == 4) {
                         String cast = String.format(MysqlConstants.CAST, originName, MysqlConstants.DEFAULT_INT_FORMAT) + "/1000";
@@ -1089,9 +1108,9 @@ public class MysqlQueryProvider extends QueryProvider {
             } else {
                 // doris field type test
                 /*if (field.getDeExtractType() == 2 || field.getDeExtractType() == 3 || field.getDeExtractType() == 4) {
-                    whereValue = String.format(DorisConstants.WHERE_NUMBER_VALUE, value.get(0));
+                    whereValue = String.format(MysqlConstants.WHERE_NUMBER_VALUE, value.get(0));
                 } else {
-                    whereValue = String.format(DorisConstants.WHERE_VALUE_VALUE, value.get(0));
+                    whereValue = String.format(MysqlConstants.WHERE_VALUE_VALUE, value.get(0));
                 }*/
                 whereValue = String.format(MysqlConstants.WHERE_VALUE_VALUE, value.get(0));
             }
@@ -1309,5 +1328,16 @@ public class MysqlQueryProvider extends QueryProvider {
         } else {
             return sql;
         }
+    }
+
+    public List<Dateformat> dateformat() {
+        return JSONArray.parseArray("[\n" +
+                "{\"dateformat\": \"%Y-%m-%d\"},\n" +
+                "{\"dateformat\": \"%Y/%m/%d\"},\n" +
+                "{\"dateformat\": \"%Y%m%d\"},\n" +
+                "{\"dateformat\": \"%Y-%m-%d %H:%i:%S\"},\n" +
+                "{\"dateformat\": \"%Y/%m/%d %H:%i:%S\"},\n" +
+                "{\"dateformat\": \"%Y%m%d %H:%i:%S\"}\n" +
+                "]", Dateformat.class);
     }
 }

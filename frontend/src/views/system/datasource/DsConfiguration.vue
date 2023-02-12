@@ -12,8 +12,14 @@
       <template v-if="form.type == 'api'">
         <div class="de-row-rules flex-space">
           <span>{{ $t('datasource.data_table') }}</span>
-           <el-button style="min-width: 80px;
-    font-size: 14px;padding: 8px 15px;" icon="el-icon-plus" size="small" @click="() => addApiItem()" type="primary">{{ $t('commons.add') }}</el-button>
+          <el-button
+            style="min-width: 80px;
+    font-size: 14px;padding: 8px 15px;"
+            icon="el-icon-plus"
+            size="small"
+            type="primary"
+            @click="() => addApiItem()"
+          >{{ $t('commons.add') }}</el-button>
         </div>
         <el-empty
           v-if="!form.apiConfiguration.length"
@@ -29,7 +35,10 @@
             @click="addApiItem(api)"
           >
             <el-row>
-              <el-col style="display: flex" :span="19">
+              <el-col
+                style="display: flex"
+                :span="19"
+              >
                 <span class="name">{{ api.name }}</span>
                 <span
                   v-if="api.status === 'Error'"
@@ -42,7 +51,10 @@
                   style="color: green; background: rgba(52, 199, 36, 0.2)"
                 >{{ $t('datasource.valid') }}</span>
               </el-col>
-              <el-col style="text-align: right" :span="5">
+              <el-col
+                style="text-align: right"
+                :span="5"
+              >
                 <svg-icon
                   icon-class="de-copy"
                   class="de-copy-icon"
@@ -62,7 +74,11 @@
                       {{ $t('datasource.delete_this_item') }}
                     </div>
                     <div class="foot">
-                      <deBtn class="small" secondary @click="cancelItem(api)">{{
+                      <deBtn
+                        class="small"
+                        secondary
+                        @click="cancelItem(api)"
+                      >{{
                         $t('fu.search_bar.cancel')
                       }}</deBtn>
                       <deBtn
@@ -86,12 +102,14 @@
             </div>
             <div class="req-value">
               <span>{{ api.method }}</span>
-              <span>{{ api.url }}</span>
+              <span :title="api.url">{{ api.url }}</span>
             </div>
           </div>
         </template>
       </template>
-      <el-form-item v-if="form.type !== 'es' && form.type !== 'api'"
+
+      <el-form-item
+        v-if="form.type !== 'es' && form.type !== 'api'"
         :label="$t('datasource.host')"
         prop="configuration.host"
       >
@@ -101,7 +119,9 @@
           autocomplete="off"
         />
       </el-form-item>
-      <el-form-item v-if="form.type == 'es'"
+
+      <el-form-item
+        v-if="form.type == 'es'"
         :label="$t('datasource.datasource_url')"
         prop="configuration.url"
       >
@@ -111,7 +131,9 @@
           autocomplete="off"
         />
       </el-form-item>
-      <el-form-item v-if="form.type !== 'es' && form.type !== 'api'"
+
+      <el-form-item
+        v-if="form.type !== 'es' && form.type !== 'api'"
         :label="$t('datasource.data_base')"
         prop="configuration.dataBase"
       >
@@ -121,7 +143,9 @@
           autocomplete="off"
         />
       </el-form-item>
-      <el-form-item v-if="form.type == 'oracle' && form.type !== 'api'"
+
+      <el-form-item
+        v-if="form.type == 'oracle' && form.type !== 'api'"
         :label="$t('datasource.connection_mode')"
         prop="configuration.connectionType"
       >
@@ -137,10 +161,15 @@
           {{ $t('datasource.oracle_service_name') }}
         </el-radio>
       </el-form-item>
-      <el-form-item v-if="form.type == 'hive'"
+
+      <el-form-item
+        v-if="form.type == 'hive'"
         :label="$t('datasource.auth_method')"
       >
-        <el-select v-model="form.configuration.authMethod" class="de-select">
+        <el-select
+          v-model="form.configuration.authMethod"
+          class="de-select"
+        >
           <el-option
             v-for="item in authMethodList"
             :key="item.id"
@@ -149,12 +178,23 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item v-if="form.type === 'hive' && form.configuration.authMethod === 'kerberos'"
+
+      <el-form-item
+        v-if="
+          form.type === 'hive' && form.configuration.authMethod === 'kerberos'
+        "
         :label="$t('datasource.client_principal')"
       >
-        <el-input v-model="form.configuration.username" autocomplete="off" />
+        <el-input
+          v-model="form.configuration.username"
+          autocomplete="off"
+        />
       </el-form-item>
-      <el-form-item v-if="form.type === 'hive' && form.configuration.authMethod === 'kerberos'"
+
+      <el-form-item
+        v-if="
+          form.type === 'hive' && form.configuration.authMethod === 'kerberos'
+        "
         :label="$t('datasource.keytab_Key_path')"
       >
         <dePwd v-model="form.configuration.password" />
@@ -162,8 +202,19 @@
           {{ $t('datasource.kerbers_info') }}
         </p>
       </el-form-item>
-      <span v-if="form.type === 'hive' && form.configuration.authMethod === 'kerberos'" />
-      <el-form-item v-if="form.type !== 'es' &&form.type !== 'api' &&form.configuration.authMethod !== 'kerberos'"
+
+      <span
+        v-if="
+          form.type === 'hive' && form.configuration.authMethod === 'kerberos'
+        "
+      />
+
+      <el-form-item
+        v-if="
+          form.type !== 'es' &&
+            form.type !== 'api' &&
+            form.configuration.authMethod !== 'kerberos'
+        "
         :label="$t('datasource.user_name')"
       >
         <el-input
@@ -172,7 +223,13 @@
           autocomplete="off"
         />
       </el-form-item>
-      <el-form-item v-if="form.type !== 'es' &&form.type !== 'api' &&form.configuration.authMethod !== 'kerberos'"
+
+      <el-form-item
+        v-if="
+          form.type !== 'es' &&
+            form.type !== 'api' &&
+            form.configuration.authMethod !== 'kerberos'
+        "
         :label="$t('datasource.password')"
       >
         <dePwd
@@ -180,7 +237,9 @@
           :placeholder="$t('components.input_a_password')"
         />
       </el-form-item>
-      <el-form-item v-if="form.type === 'es'"
+
+      <el-form-item
+        v-if="form.type === 'es'"
         :label="$t('datasource.user_name')"
       >
         <el-input
@@ -189,18 +248,33 @@
           autocomplete="off"
         />
       </el-form-item>
-      <el-form-item v-if="form.type === 'es'" :label="$t('datasource.password')">
+
+      <el-form-item
+        v-if="form.type === 'es'"
+        :label="$t('datasource.password')"
+      >
         <dePwd
           v-model="form.configuration.esPassword"
           :placeholder="$t('components.input_a_password')"
         />
       </el-form-item>
-      <el-form-item v-if="form.type !== 'es' && form.type !== 'oracle' && form.type !== 'api'"
+
+      <el-form-item
+        v-if="
+          form.type !== 'es' && form.type !== 'oracle' && form.type !== 'api'
+        "
         :label="$t('datasource.extra_params')"
       >
-        <el-input v-model="form.configuration.extraParams" :placeholder="$t('fu.search_bar.please_input') + $t('datasource.extra_params')" autocomplete="off" />
+        <el-input
+          v-model="form.configuration.extraParams"
+          :placeholder="$t('fu.search_bar.please_input') + $t('datasource.extra_params')"
+          autocomplete="off"
+        />
       </el-form-item>
-      <el-form-item v-if="form.type !== 'es' && form.type !== 'api'" :label="$t('datasource.port')"
+
+      <el-form-item
+        v-if="form.type !== 'es' && form.type !== 'api'"
+        :label="$t('datasource.port')"
         prop="configuration.port"
       >
         <el-input
@@ -211,11 +285,15 @@
           min="0"
         />
       </el-form-item>
-      <el-form-item v-if="['oracle', 'sqlServer', 'pg', 'redshift', 'db2'].includes(form.type)"
+
+      <el-form-item
+        v-if="
+          ['oracle', 'sqlServer', 'pg', 'redshift', 'db2'].includes(form.type)
+        "
         class="schema-label"
       >
         <template slot="label">
-          {{ $t('datasource.schema') }}
+          <span class="name">{{ $t('datasource.schema') }}<i class="required" /></span>
           <el-button
             type="text"
             icon="el-icon-plus"
@@ -229,6 +307,8 @@
           filterable
           :placeholder="$t('fu.search_bar.please_select')"
           class="de-select"
+          @change="validatorSchema"
+          @blur="validatorSchema"
         >
           <el-option
             v-for="item in schemas"
@@ -237,8 +317,16 @@
             :value="item"
           />
         </el-select>
+        <div
+          v-if="configurationSchema"
+          class="el-form-item__error"
+        >
+          {{ $t('datasource.please_choose_schema') }}
+        </div>
       </el-form-item>
-      <el-form-item v-if="form.type == 'oracle'"
+
+      <el-form-item
+        v-if="form.type == 'oracle'"
         :label="$t('datasource.charset')"
       >
         <el-select
@@ -255,7 +343,9 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item v-if="form.type == 'oracle'"
+
+      <el-form-item
+        v-if="form.type == 'oracle'"
         :label="$t('datasource.targetCharset')"
       >
         <el-select
@@ -272,12 +362,21 @@
           />
         </el-select>
       </el-form-item>
-      <span v-if="!['es', 'api', 'mongo'].includes(form.type)"
+
+      <span
+        v-if="!['es', 'api', 'mongo'].includes(form.type)"
         class="de-expand de-mar0"
         @click="showPriority = !showPriority"
       >{{ $t('datasource.priority')
-       }}<i v-if="showPriority" class="el-icon-arrow-up" />
-        <i v-else class="el-icon-arrow-down" /></span>
+       }}<i
+         v-if="showPriority"
+         class="el-icon-arrow-up"
+       />
+        <i
+          v-else
+          class="el-icon-arrow-down"
+        /></span>
+
       <template v-if="showPriority">
         <el-row :gutter="24">
           <el-col :span="12">
@@ -353,7 +452,11 @@
       :before-close="closeEditItem"
       direction="rtl"
     >
-      <el-steps :active="active" align-center :space="144">
+      <el-steps
+        :active="active"
+        align-center
+        :space="144"
+      >
         <el-step
           v-if="active === 1"
           :title="$t('datasource.api_step_1')"
@@ -378,11 +481,21 @@
           <div class="row-rules">
             <span>{{ $t('datasource.base_info') }}</span>
           </div>
-          <el-form-item :label="$t('commons.name')" prop="name">
-            <el-input v-model="apiItem.name" :placeholder="$t('commons.input_name')" autocomplete="off" />
+          <el-form-item
+            :label="$t('commons.name')"
+            prop="name"
+          >
+            <el-input
+              v-model="apiItem.name"
+              :placeholder="$t('commons.input_name')"
+              autocomplete="off"
+            />
           </el-form-item>
 
-          <el-form-item :label="$t('datasource.request')" prop="url">
+          <el-form-item
+            :label="$t('datasource.request')"
+            prop="url"
+          >
             <el-input
               v-model="apiItem.url"
               :placeholder="$t('datasource.path_all_info')"
@@ -458,7 +571,10 @@
                   </el-checkbox>
                 </template>
               </el-table-column>
-              <el-table-column prop="name" :label="$t('dataset.field_rename')">
+              <el-table-column
+                prop="name"
+                :label="$t('dataset.field_rename')"
+              >
                 <template slot-scope="scope">
                   <el-input
                     v-model="scope.row.name"
@@ -579,7 +695,10 @@
         </el-form>
       </el-row>
       <div class="foot">
-        <el-button class="btn normal" @click="closeEditItem">{{
+        <el-button
+          class="btn normal"
+          @click="closeEditItem"
+        >{{
           $t('commons.cancel')
         }}</el-button>
         <el-button
@@ -613,7 +732,7 @@
 import i18n from '@/lang'
 import { checkApiDatasource, getSchema } from '@/api/system/datasource'
 import ApiHttpRequestForm from '@/views/system/datasource/ApiHttpRequestForm'
-import dePwd from '@/components/deCustomCm/dePwd.vue'
+import dePwd from '@/components/deCustomCm/DePwd.vue'
 import msgCfm from '@/components/msgCfm'
 export default {
   name: 'DsConfiguration',
@@ -630,9 +749,10 @@ export default {
       }
     },
     method: String,
-    request: {},
-    response: {},
-    datasourceType: {},
+    datasourceType: {
+      type: Object,
+      default: () => {}
+    },
     showScript: {
       type: Boolean,
       default: true
@@ -799,6 +919,7 @@ export default {
         ]
       },
       api_table_title: '',
+      configurationSchema: false,
       schemas: [],
       showEmpty: false,
       canEdit: false,
@@ -893,9 +1014,10 @@ export default {
       certinKey: false
     }
   },
-  watch: {},
-  created() {},
   methods: {
+    validatorSchema() {
+      this.configurationSchema = !this.form.configuration.schema
+    },
     getSchema() {
       this.$refs.DsConfig.validate((valid) => {
         if (valid) {
@@ -986,8 +1108,8 @@ export default {
         this.$message.warning(i18n.t('datasource.api_field_not_empty'))
         return
       }
-      for (var i = 0; i < this.apiItem.fields.length - 1; i++) {
-        for (var j = i + 1; j < this.apiItem.fields.length; j++) {
+      for (let i = 0; i < this.apiItem.fields.length - 1; i++) {
+        for (let j = i + 1; j < this.apiItem.fields.length; j++) {
           if (this.apiItem.fields[i].name === this.apiItem.fields[j].name) {
             this.$message.error(
               this.apiItem.fields[i].name +
@@ -1001,7 +1123,7 @@ export default {
       this.active = 0
       this.edit_api_item = false
       if (!this.add_api_item) {
-        for (var i = 0; i < this.form.apiConfiguration.length; i++) {
+        for (let i = 0; i < this.form.apiConfiguration.length; i++) {
           if (
             this.form.apiConfiguration[i].serialNumber ===
             this.apiItem.serialNumber
@@ -1030,7 +1152,7 @@ export default {
             this.form.apiConfiguration[i].name.length + 5,
             match[0].length - 1
           )
-          if (parseInt(num) != NaN && parseInt(num) > number) {
+          if (!isNaN(parseInt(num)) && parseInt(num) > number) {
             number = parseInt(num)
           }
         }
@@ -1079,10 +1201,10 @@ export default {
       this.previewData()
       if (this.errMsg.length) {
         this.$message.error(
-                 [...new Set(this.errMsg)].join(',') +
+          [...new Set(this.errMsg)].join(',') +
                    ', ' +
                    i18n.t('datasource.has_repeat_field_name')
-               )
+        )
       }
     },
     handleFiledChange() {
@@ -1119,7 +1241,7 @@ export default {
     },
     previewData() {
       this.showEmpty = false
-      const datas = []
+      const data = []
       let maxPreviewNum = 0
       for (let j = 0; j < this.apiItem.fields.length; j++) {
         if (
@@ -1130,18 +1252,18 @@ export default {
         }
       }
       for (let i = 0; i < maxPreviewNum; i++) {
-        datas.push({})
+        data.push({})
       }
       for (let i = 0; i < this.apiItem.fields.length; i++) {
         for (let j = 0; j < this.apiItem.fields[i].value.length; j++) {
           this.$set(
-            datas[j],
+            data[j],
             this.apiItem.fields[i].name,
             this.apiItem.fields[i].value[j]
           )
         }
         this.$nextTick(() => {
-          this.$refs.plxTable?.reloadData(datas)
+          this.$refs.plxTable?.reloadData(data)
         })
       }
       this.showEmpty = this.apiItem.fields.length === 0
@@ -1432,6 +1554,10 @@ export default {
     }
     :nth-child(2) {
       margin-left: 84px;
+      max-width: 415px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
   }
   .req-title {
@@ -1498,6 +1624,22 @@ export default {
   ::v-deep.el-table__expand-icon {
     .el-icon-arrow-right::before {
       content: "\E791" !important;
+    }
+  }
+}
+.schema-label {
+  ::v-deep.el-form-item__label {
+    display: flex;
+    justify-content: space-between;
+    &::after {
+      display: none;
+    }
+    .name {
+      .required::after {
+        content: "*";
+        color: #f54a45;
+        margin-left: 2px;
+      }
     }
   }
 }

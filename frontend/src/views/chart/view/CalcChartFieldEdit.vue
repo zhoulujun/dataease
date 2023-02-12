@@ -1,25 +1,45 @@
 <template>
-  <el-row>
-    <el-form ref="form" :model="fieldForm" size="mini" class="row-style">
-      <el-form-item>
-        <span style="width: 80px;font-size: 12px">{{ $t('dataset.field_edit_name') }}</span>
-        <el-input v-model="fieldForm.name" style="width: 80%;" size="mini" :placeholder="$t('dataset.input_edit_name')" />
+  <div class="calcu-field">
+    <el-form
+      ref="form"
+      :model="fieldForm"
+      class="de-form-item"
+    >
+      <el-form-item :label="$t('dataset.field_edit_name')">
+        <el-input
+          v-model="fieldForm.name"
+          size="small"
+          :placeholder="$t('dataset.input_edit_name')"
+        />
       </el-form-item>
     </el-form>
 
-    <el-row :style="mode === 'normal' ? {height: '420px'} : {height: '100px'}">
-      <el-col :span="14" style="height: 100%">
+    <div
+      class="calcu-cont"
+      :style="mode === 'normal' ? {height: '544px'} : {height: '100px'}"
+    >
+      <div style="flex: 1">
         <el-row>
-          <el-row v-show="mode === 'normal'">
+          <el-row
+            v-show="mode === 'normal'"
+            style="max-width: 480px;"
+          >
             <span>
               {{ $t('dataset.field_exp') }}
-              <el-tooltip class="item" effect="dark" placement="bottom">
+              <el-tooltip
+                class="item"
+                effect="dark"
+                placement="bottom"
+              >
                 <div slot="content">
-                  表达式语法请遵循该数据源对应的数据库语法。
+                  {{ $t('dataset.calc_tips.tip1') }}
                   <br>
-                  字段类型将使用原始类型，如有需要，请在表达式中自行转换。
+                  {{ $t('dataset.calc_tips.tip2') }}
                 </div>
-                <i class="el-icon-info" style="cursor: pointer;" />
+                <i
+                  class="el-icon-info"
+                  style="cursor: pointer;"
+                />
               </el-tooltip>
             </span>
             <codemirror
@@ -32,194 +52,252 @@
               @input="onCmCodeChange"
             />
           </el-row>
-          <el-row style="margin-top: 10px;">
-            <el-form ref="form" :model="fieldForm" size="mini" class="row-style">
+          <el-row style="margin-top: 28px;">
+            <el-form
+              ref="form"
+              :model="fieldForm"
+              class="de-form-item"
+            >
               <el-form-item>
-                <span style="width: 80px;font-size: 12px">
+                <template slot="label">
                   {{ $t('dataset.data_type') }}
-                  <el-tooltip class="item" effect="dark" placement="bottom">
+                  <el-tooltip
+                    class="item"
+                    effect="dark"
+                    placement="bottom"
+                  >
                     <div slot="content">
                       若字段表达式中使用聚合函数，则字段不能设置为维度使用。
                     </div>
-                    <i class="el-icon-info" style="cursor: pointer;" />
+                    <i
+                      class="el-icon-info"
+                      style="cursor: pointer;z-index: 5;position: relative"
+                    />
                   </el-tooltip>
-                </span>
-                <el-radio-group v-model="fieldForm.groupType" size="mini">
-                  <el-radio-button label="d">{{ $t('chart.dimension') }}</el-radio-button>
-                  <el-radio-button label="q">{{ $t('chart.quota') }}</el-radio-button>
-                </el-radio-group>
+                </template>
+                <el-radio
+                  v-model="fieldForm.groupType"
+                  label="d"
+                >{{
+                  $t('chart.dimension')
+                }}</el-radio>
+                <el-radio
+                  v-model="fieldForm.groupType"
+                  label="q"
+                >{{
+                  $t('chart.quota')
+                }}</el-radio>
               </el-form-item>
-              <el-form-item>
-                <span style="width: 80px;font-size: 12px">{{ $t('dataset.field_type') }}</span>
-                <el-select v-model="fieldForm.deType" size="mini">
-                  <el-option
-                    v-for="item in fields"
-                    :key="item.value"
-                    :label="item.label"
-                    :value="item.value"
-                  >
-                    <span style="float: left">
-                      <svg-icon v-if="item.value === 0" icon-class="field_text" class="field-icon-text" />
-                      <svg-icon v-if="item.value === 1" icon-class="field_time" class="field-icon-time" />
-                      <svg-icon
-                        v-if="item.value === 2 || item.value === 3"
-                        icon-class="field_value"
-                        class="field-icon-value"
-                      />
-                      <svg-icon v-if="item.value === 5" icon-class="field_location" class="field-icon-location" />
-                    </span>
-                    <span style="float: left; color: #8492a6; font-size: 12px">{{ item.label }}</span>
-                  </el-option>
-                </el-select>
+              <el-form-item :label="$t('dataset.field_type')">
+                <el-radio
+                  v-for="item in fields"
+                  :key="item.value"
+                  v-model="fieldForm.deType"
+                  :label="item.value"
+                >{{ item.label }}</el-radio>
               </el-form-item>
             </el-form>
           </el-row>
         </el-row>
-      </el-col>
-      <el-col v-show="mode === 'normal'" :span="10" style="height: 100%;border-left: 1px solid #E6E6E6;">
-        <el-col :span="12" style="height: 100%" class="padding-lr">
-          <span>
-            {{ $t('dataset.click_ref_field') }}
-            <el-tooltip class="item" effect="dark" placement="bottom">
-              <div slot="content">
-                引用字段以 "[" 开始， "]" 结束
-                <br>
-                请勿修改引用内容，否则将引用失败
-                <br>
-                若输入与引用字段相同格式的内容，将被当作引用字段处理
-              </div>
-              <i class="el-icon-info" style="cursor: pointer;" />
-            </el-tooltip>
-          </span>
-          <el-input
-            v-model="searchField"
-            size="mini"
-            :placeholder="$t('dataset.edit_search')"
-            prefix-icon="el-icon-search"
-            clearable
-          />
-          <div class="field-height">
-            <span>{{ $t('chart.dimension') }}</span>
-            <draggable
-              v-if="dimensionData && dimensionData.length > 0"
-              v-model="dimensionData"
-              :options="{group:{name: 'drag',pull:'clone'},sort: true}"
-              animation="300"
-              class="drag-list"
-              :disabled="true"
-            >
-              <transition-group>
-                <span
-                  v-for="item in dimensionData"
-                  :key="item.id"
-                  class="item-dimension"
-                  :title="item.name"
-                  @click="insertFieldToCodeMirror('['+item.name+']')"
-                >
-                  <svg-icon v-if="item.deExtractType === 0" icon-class="field_text" class="field-icon-text" />
-                  <svg-icon v-if="item.deExtractType === 1" icon-class="field_time" class="field-icon-time" />
-                  <svg-icon
-                    v-if="item.deExtractType === 2 || item.deExtractType === 3"
-                    icon-class="field_value"
-                    class="field-icon-value"
-                  />
-                  <svg-icon v-if="item.deExtractType === 5" icon-class="field_location" class="field-icon-location" />
-                  {{ item.name }}
-                </span>
-              </transition-group>
-            </draggable>
-            <div v-else class="class-na">{{ $t('dataset.na') }}</div>
-          </div>
-          <div class="field-height">
-            <span>{{ $t('chart.quota') }}</span>
-            <draggable
-              v-if="quotaData && quotaData.length > 0"
-              v-model="quotaData"
-              :options="{group:{name: 'drag',pull:'clone'},sort: true}"
-              animation="300"
-              class="drag-list"
-              :disabled="true"
-            >
-              <transition-group>
-                <span
-                  v-for="item in quotaData"
-                  :key="item.id"
-                  class="item-quota"
-                  :title="item.name"
-                  @click="insertFieldToCodeMirror('['+item.name+']')"
-                >
-                  <svg-icon v-if="item.deExtractType === 0" icon-class="field_text" class="field-icon-text" />
-                  <svg-icon v-if="item.deExtractType === 1" icon-class="field_time" class="field-icon-time" />
-                  <svg-icon
-                    v-if="item.deExtractType === 2 || item.deExtractType === 3"
-                    icon-class="field_value"
-                    class="field-icon-value"
-                  />
-                  <svg-icon v-if="item.deExtractType === 5" icon-class="field_location" class="field-icon-location" />
-                  <span>{{ item.name }}</span>
-                </span>
-              </transition-group>
-            </draggable>
-            <div v-else class="class-na">{{ $t('dataset.na') }}</div>
-          </div>
-        </el-col>
-        <el-col :span="12" style="height: 100%" class="padding-lr">
-          <span>
-            {{ $t('dataset.click_ref_function') }}
-            <el-tooltip class="item" effect="dark" placement="bottom">
-              <div slot="content">
-                使用数据集对应数据库类型所支持的函数，语法同对应数据库
-                <br>
-                如日期格式化：MySQL使用DATE_FORMAT(date,format)；Oracle使用TO_DATE(X,[,fmt])
-                <br>
-                非直连模式数据集，使用Doris数据库函数，可参考Doris官网 https://doris.apache.org/zh-CN/
-              </div>
-              <i class="el-icon-info" style="cursor: pointer;" />
-            </el-tooltip>
-          </span>
-          <el-input
-            v-model="searchFunction"
-            size="mini"
-            :placeholder="$t('dataset.edit_search')"
-            prefix-icon="el-icon-search"
-            clearable
-          />
-          <el-row class="function-height">
-            <el-popover
-              v-for="(item,index) in functionData"
-              :key="index"
-              class="function-pop"
-              placement="right"
-              width="200"
-              trigger="hover"
-              :open-delay="500"
-            >
-              <p class="pop-title">{{ item.name }}</p>
-              <p class="pop-info">{{ item.func }}</p>
-              <p class="pop-info">{{ item.desc }}</p>
-              <span slot="reference" class="function-style" @click="insertParamToCodeMirror(item.func)">{{
-                item.func
-              }}</span>
-            </el-popover>
-          </el-row>
-        </el-col>
-      </el-col>
-    </el-row>
-
-    <el-row>
-      <div class="dialog-button">
-        <el-button size="mini" @click="closeCalcField">{{ $t('dataset.cancel') }}</el-button>
-        <el-button
-          :disabled="!fieldForm.name || !fieldForm.originName"
-          type="primary"
-          size="mini"
-          :loading="loading"
-          @click="saveCalcField"
-        >{{ $t('dataset.confirm') }}
-        </el-button>
       </div>
-    </el-row>
-  </el-row>
+      <div
+        v-show="mode === 'normal'"
+        class="padding-lr"
+      >
+        <span class="mb8">
+          {{ $t('dataset.click_ref_field') }}
+          <el-tooltip
+            class="item"
+            effect="dark"
+            placement="bottom"
+          >
+            <div slot="content">
+              {{ $t('dataset.calc_tips.tip3') }}
+              <br>
+              {{ $t('dataset.calc_tips.tip4') }}
+              <br>
+              {{ $t('dataset.calc_tips.tip5') }}
+            </div>
+            <i
+              class="el-icon-info"
+              style="cursor: pointer;"
+            />
+          </el-tooltip>
+        </span>
+        <el-input
+          v-model="searchField"
+          size="small"
+          :placeholder="$t('dataset.edit_search')"
+          prefix-icon="el-icon-search"
+          style="margin-bottom: 12px"
+          clearable
+        />
+        <div class="field-height">
+          <span>{{ $t('chart.dimension') }}</span>
+          <draggable
+            v-if="dimensionData && dimensionData.length > 0"
+            v-model="dimensionData"
+            :options="{group:{name: 'drag',pull:'clone'},sort: true}"
+            animation="300"
+            class="drag-list"
+            :disabled="true"
+          >
+            <transition-group>
+              <span
+                v-for="item in dimensionData"
+                :key="item.id"
+                class="item-dimension"
+                :title="item.name"
+                @click="insertFieldToCodeMirror('['+item.name+']')"
+              >
+                <svg-icon
+                  v-if="item.deExtractType === 0"
+                  icon-class="field_text"
+                  class="field-icon-text"
+                />
+                <svg-icon
+                  v-if="item.deExtractType === 1"
+                  icon-class="field_time"
+                  class="field-icon-time"
+                />
+                <svg-icon
+                  v-if="item.deExtractType === 2 || item.deExtractType === 3"
+                  icon-class="field_value"
+                  class="field-icon-value"
+                />
+                <svg-icon
+                  v-if="item.deExtractType === 5"
+                  icon-class="field_location"
+                  class="field-icon-location"
+                />
+                {{ item.name }}
+              </span>
+            </transition-group>
+          </draggable>
+          <div
+            v-else
+            class="class-na"
+          >{{ $t('dataset.na') }}</div>
+        </div>
+        <div class="field-height">
+          <span>{{ $t('chart.quota') }}</span>
+          <draggable
+            v-if="quotaData && quotaData.length > 0"
+            v-model="quotaData"
+            :options="{group:{name: 'drag',pull:'clone'},sort: true}"
+            animation="300"
+            class="drag-list"
+            :disabled="true"
+          >
+            <transition-group>
+              <span
+                v-for="item in quotaData"
+                :key="item.id"
+                class="item-quota"
+                :title="item.name"
+                @click="insertFieldToCodeMirror('['+item.name+']')"
+              >
+                <svg-icon
+                  v-if="item.deExtractType === 0"
+                  icon-class="field_text"
+                  class="field-icon-text"
+                />
+                <svg-icon
+                  v-if="item.deExtractType === 1"
+                  icon-class="field_time"
+                  class="field-icon-time"
+                />
+                <svg-icon
+                  v-if="item.deExtractType === 2 || item.deExtractType === 3"
+                  icon-class="field_value"
+                  class="field-icon-value"
+                />
+                <svg-icon
+                  v-if="item.deExtractType === 5"
+                  icon-class="field_location"
+                  class="field-icon-location"
+                />
+                <span>{{ item.name }}</span>
+              </span>
+            </transition-group>
+          </draggable>
+          <div
+            v-else
+            class="class-na"
+          >{{ $t('dataset.na') }}</div>
+        </div>
+
+      </div>
+      <div
+        class="padding-lr"
+      >
+        <span class="mb8">
+          {{ $t('dataset.click_ref_function') }}
+          <el-tooltip
+            class="item"
+            effect="dark"
+            placement="bottom"
+          >
+            <div slot="content">
+              {{ $t('dataset.calc_tips.tip6') }}
+              <br>
+              {{ $t('dataset.calc_tips.tip7') }}
+              <br>
+              {{ $t('dataset.calc_tips.tip8') }} https://doris.apache.org/zh-CN/
+            </div>
+            <i
+              class="el-icon-info"
+              style="cursor: pointer;"
+            />
+          </el-tooltip>
+        </span>
+        <el-input
+          v-model="searchFunction"
+          size="small"
+          style="margin-bottom: 12px"
+          :placeholder="$t('dataset.edit_search')"
+          prefix-icon="el-icon-search"
+          clearable
+        />
+        <el-row class="function-height">
+          <el-popover
+            v-for="(item,index) in functionData"
+            :key="index"
+            class="function-pop"
+            placement="right"
+            width="200"
+            trigger="hover"
+            :open-delay="500"
+          >
+            <p class="pop-title">{{ item.name }}</p>
+            <p class="pop-info">{{ item.func }}</p>
+            <p class="pop-info">{{ item.desc }}</p>
+            <span
+              slot="reference"
+              class="function-style"
+              @click="insertParamToCodeMirror(item.func)"
+            >{{
+              item.func
+            }}</span>
+          </el-popover>
+        </el-row>
+      </div>
+    </div>
+
+    <div class="de-foot">
+      <deBtn
+        secondary
+        @click="closeCalcField"
+      >{{ $t('dataset.cancel') }}</deBtn>
+      <deBtn
+        :disabled="!fieldForm.name || !fieldForm.originName"
+        type="primary"
+        :loading="loading"
+        @click="saveCalcField"
+      >{{ $t('dataset.confirm') }}
+      </deBtn>
+    </div>
+  </div>
 </template>
 
 <script>
@@ -253,7 +331,7 @@ export default {
   name: 'CalcChartFieldEdit',
   components: { codemirror, draggable },
   props: {
-    param: {// chart
+    param: { // chart
       type: Object,
       required: true
     },
@@ -499,38 +577,18 @@ export default {
 </script>
 
 <style scoped>
-.row-style ::v-deep .el-form-item__label {
-  font-size: 12px;
-}
-
-.row-style ::v-deep .el-form-item--mini.el-form-item {
-  margin-bottom: 10px;
-}
-
-.row-style ::v-deep .el-form-item__content {
-  display: flex;
-  flex-direction: row;
-  width: 100%;
-}
-
-.codemirror {
-  height: 300px;
-  overflow-y: auto;
-  font-size: 12px;
-}
-
-.codemirror ::v-deep .CodeMirror-scroll {
-  height: 300px;
-  overflow-y: auto;
-  font-size: 12px;
-}
-
 .padding-lr {
-  padding: 0 4px;
+  height: calc(100% - 80px);
+  border: 1px solid var(--deCardStrokeColor, #dee0e3);
+  border-radius: 4px;
+  padding: 12px;
+  box-sizing: border-box;
+  margin-left: 12px;
+  width: 214px;
+  overflow-y: hidden;
 }
-
 .field-height {
-  height: calc(50% - 25px);
+  height: calc(50% - 41px);
   margin-top: 4px;
 }
 
@@ -540,7 +598,7 @@ export default {
 }
 
 .item-dimension {
-  padding: 2px 10px;
+  padding: 3px 8px;
   margin: 2px 2px 0 2px;
   border: solid 1px #eee;
   text-align: left;
@@ -566,9 +624,8 @@ export default {
 }
 
 .item-dimension:hover {
-  color: #1890ff;
   background: #e8f4ff;
-  border-color: #a3d3ff;
+  border-color: var(--primary, #3370ff);
   cursor: pointer;
 }
 
@@ -579,7 +636,7 @@ export default {
 }
 
 .item-quota {
-  padding: 2px 10px;
+  padding: 3px 8px;
   margin: 2px 2px 0 2px;
   border: solid 1px #eee;
   text-align: left;
@@ -594,7 +651,6 @@ export default {
 }
 
 .blackTheme .item-quota {
-
   border: solid 1px;
   border-color: #495865;
   color: #F2F6FC;
@@ -607,7 +663,6 @@ export default {
 }
 
 .item-quota:hover {
-  color: #67c23a;
   background: #f0f9eb;
   border-color: #b2d3a3;
   cursor: pointer;
@@ -617,17 +672,14 @@ export default {
   background: var(--ContentBG);
 }
 
-span {
-  font-size: 12px;
-}
-
 .function-style {
-  color: #0a7be0;
+  color: var(--deTextPrimary, #1f2329);
   display: block;
-  padding: 2px 4px;
+  padding: 3px 8px;
   cursor: pointer;
   margin: 4px 0;
   word-break: break-word;
+  border-radius: 2px;
   border: solid 1px #eee;
 }
 
@@ -639,8 +691,7 @@ span {
 }
 
 .function-style:hover {
-  background: #e8f4ff;
-  border-color: #a3d3ff;
+  border-color: var(--primary, #3370ff);
   cursor: pointer;
 }
 
@@ -650,7 +701,7 @@ span {
 }
 
 .function-height {
-  height: calc(100% - 50px);
+  height: calc(100% - 81px);
   overflow: auto;
   margin-top: 4px;
 }
@@ -668,11 +719,6 @@ span {
 .pop-info {
   margin: 6px 0 0 0;
   font-size: 10px;
-}
-
-.dialog-button {
-  float: right;
-  margin-top: 10px;
 }
 
 .class-na {

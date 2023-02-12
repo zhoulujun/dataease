@@ -3,6 +3,8 @@ import { panelInit } from '@/components/canvas/utils/utils'
 import { getPanelAllLinkageInfo } from '@/api/panel/linkage'
 import { queryPanelJumpInfo } from '@/api/panel/linkJump'
 import store from '@/store'
+import { $error } from '@/utils/message'
+import i18n from '@/lang'
 
 export function deleteSubject(id) {
   return request({
@@ -64,6 +66,7 @@ export function viewData(id, panelId, data) {
     data
   })
 }
+
 export function panelSave(data) {
   return request({
     url: 'panel/group/save',
@@ -157,30 +160,40 @@ export function initPanelData(panelId, useCache = false, callback) {
   const queryMethod = useCache ? findUserCacheRequest : findOne
   // 加载视图数据
   queryMethod(panelId).then(response => {
-    // 初始化视图data和style 数据
-    panelInit(JSON.parse(response.data.panelData), JSON.parse(response.data.panelStyle))
-    // 设置当前仪表板全局信息
-    store.dispatch('panel/setPanelInfo', {
-      id: response.data.id,
-      name: response.data.name,
-      privileges: response.data.privileges,
-      sourcePanelName: response.data.sourcePanelName,
-      status: response.data.status,
-      createBy: response.data.createBy,
-      createTime: response.data.createTime,
-      creatorName: response.data.creatorName,
-      updateBy: response.data.updateBy,
-      updateName: response.data.updateName,
-      updateTime: response.data.updateTime
-    })
-    // 刷新联动信息
-    getPanelAllLinkageInfo(panelId).then(rsp => {
-      store.commit('setNowPanelTrackInfo', rsp.data)
-    })
-    // 刷新跳转信息
-    queryPanelJumpInfo(panelId).then(rsp => {
-      store.commit('setNowPanelJumpInfo', rsp.data)
-    })
+    if (response.data) {
+      // 初始化视图data和style 数据
+      panelInit(JSON.parse(response.data.panelData), JSON.parse(response.data.panelStyle))
+      const watermarkInfo = {
+        ...response.data.watermarkInfo,
+        settingContent: JSON.parse(response.data.watermarkInfo.settingContent)
+      }
+      // 设置当前仪表板全局信息
+      store.dispatch('panel/setPanelInfo', {
+        id: response.data.id,
+        name: response.data.name,
+        privileges: response.data.privileges,
+        sourcePanelName: response.data.sourcePanelName,
+        status: response.data.status,
+        createBy: response.data.createBy,
+        createTime: response.data.createTime,
+        creatorName: response.data.creatorName,
+        updateBy: response.data.updateBy,
+        updateName: response.data.updateName,
+        updateTime: response.data.updateTime,
+        watermarkOpen: response.data.watermarkOpen,
+        watermarkInfo: watermarkInfo
+      })
+      // 刷新联动信息
+      getPanelAllLinkageInfo(panelId).then(rsp => {
+        store.commit('setNowPanelTrackInfo', rsp.data)
+      })
+      // 刷新跳转信息
+      queryPanelJumpInfo(panelId).then(rsp => {
+        store.commit('setNowPanelJumpInfo', rsp.data)
+      })
+    } else {
+      $error(i18n.t('panel.panel_get_data_error'))
+    }
     callback(response)
   })
 }
@@ -224,6 +237,7 @@ export function initViewCache(panelId) {
     loading: false
   })
 }
+
 export function exportDetails(data) {
   // 初始化仪表板视图缓存
   return request({
@@ -262,6 +276,7 @@ export function saveCache(data) {
     data
   })
 }
+
 export function findUserCacheRequest(panelId) {
   return request({
     url: 'panel/group/findUserCache/' + panelId,
@@ -293,18 +308,17 @@ export function removePanelCache(panelId) {
   })
 }
 
-
 export function findPanelElementInfo(viewId) {
   return request({
-    url: 'panel/group/findPanelElementInfo/'+viewId,
+    url: 'panel/group/findPanelElementInfo/' + viewId,
     method: 'get',
     loading: false
   })
 }
 
-export function export2AppCheck(panelId){
+export function export2AppCheck(panelId) {
   return request({
-    url: 'panel/group/export2AppCheck/'+panelId,
+    url: 'panel/group/export2AppCheck/' + panelId,
     method: 'get',
     loading: false
   })
@@ -316,5 +330,39 @@ export function appApply(data) {
     method: 'post',
     loading: true,
     data
+  })
+}
+
+export function appEdit(data) {
+  return request({
+    url: 'panel/group/appEdit',
+    method: 'post',
+    loading: true,
+    data
+  })
+}
+
+export function editApply(data) {
+  return request({
+    url: 'panel/group/appApply',
+    method: 'post',
+    loading: false,
+    data
+  })
+}
+
+export function findOneWithParent(panelId) {
+  return request({
+    url: 'panel/group/findOneWithParent/' + panelId,
+    method: 'get',
+    loading: false
+  })
+}
+
+export function panelToTop(panelId) {
+  return request({
+    url: 'panel/group/toTop/' + panelId,
+    method: 'post',
+    loading: false
   })
 }

@@ -5,9 +5,11 @@ import cn.hutool.core.date.DateUtil;
 
 import com.google.gson.Gson;
 import io.dataease.auth.api.dto.CurrentUserDto;
+import io.dataease.commons.constants.ParamConstants;
 import io.dataease.commons.constants.SysLogConstants;
 import io.dataease.commons.utils.AuthUtils;
 import io.dataease.commons.utils.BeanUtils;
+import io.dataease.commons.utils.IPUtils;
 import io.dataease.commons.utils.ServletUtils;
 import io.dataease.controller.sys.base.ConditionEntity;
 import io.dataease.controller.sys.request.KeyGridRequest;
@@ -18,31 +20,35 @@ import io.dataease.exception.DataEaseException;
 import io.dataease.ext.ExtSysLogMapper;
 import io.dataease.ext.query.GridExample;
 import io.dataease.i18n.Translator;
+import io.dataease.plugins.common.base.domain.SysLogExample;
 import io.dataease.plugins.common.base.domain.SysLogWithBLOBs;
 import io.dataease.plugins.common.base.mapper.SysLogMapper;
+import io.dataease.service.system.SystemParameterService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.hssf.usermodel.*;
 import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.*;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.OutputStream;
 import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 public class LogService {
 
+    private static final String LOG_RETENTION = "30";
     private Gson gson = new Gson();
 
     // 仪表板的额外操作 分享以及公共链接
     private static Integer[] panel_ext_ope = {4, 5, 8, 9, 10};
+
+    private static Integer[] link_ext_ope = {13, 14};
 
     // 驱动文件操作 上传， 删除
     private static Integer[] driver_file_ope = {11, 3};
@@ -67,6 +73,69 @@ public class LogService {
 
     @Resource
     private LogManager logManager;
+
+    @Resource
+    private SystemParameterService systemParameterService;
+
+    public void cleanDisusedLog() {
+        String value = systemParameterService.getValue(ParamConstants.BASIC.LOG_TIME_OUT.getValue());
+        value = StringUtils.isBlank(value) ? LOG_RETENTION : value;
+        int logRetention = Integer.parseInt(value);
+        Calendar instance = Calendar.getInstance();
+
+        Calendar startInstance = (Calendar) instance.clone();
+        startInstance.add(Calendar.DATE, -logRetention);
+        startInstance.set(Calendar.HOUR_OF_DAY, 0);
+        startInstance.set(Calendar.MINUTE, 0);
+        startInstance.set(Calendar.SECOND, 0);
+        startInstance.set(Calendar.MILLISECOND, -1);
+        long timeInMillis = startInstance.getTimeInMillis();
+        SysLogExample example = new SysLogExample();
+        example.createCriteria().andTimeLessThan(timeInMillis);
+        sysLogMapper.deleteByExample(example);
+    }
+
+
+    public KeyGridRequest logRetentionProxy(KeyGridRequest request) {
+        String value = systemParameterService.getValue(ParamConstants.BASIC.LOG_TIME_OUT.getValue());
+        value = StringUtils.isBlank(value) ? LOG_RETENTION : value;
+        int logRetention = Integer.parseInt(value);
+        Calendar instance = Calendar.getInstance();
+
+        Calendar startInstance = (Calendar) instance.clone();
+        startInstance.add(Calendar.DATE, -logRetention);
+        startInstance.set(Calendar.HOUR_OF_DAY, 0);
+        startInstance.set(Calendar.MINUTE, 0);
+        startInstance.set(Calendar.SECOND, 0);
+        long startTime = startInstance.getTimeInMillis();
+
+        Calendar endInstance = (Calendar) instance.clone();
+        endInstance.add(Calendar.DATE, 1);
+        endInstance.set(Calendar.HOUR_OF_DAY, 0);
+        endInstance.set(Calendar.MINUTE, 0);
+        endInstance.set(Calendar.SECOND, 0);
+        long endTime = endInstance.getTimeInMillis();
+
+
+        List<ConditionEntity> conditions = request.getConditions();
+        if (CollectionUtils.isNotEmpty(conditions) && conditions.stream().anyMatch(condition -> StringUtils.equals("time", condition.getField()))) {
+            conditions.forEach(condition -> {
+                if (StringUtils.equals("time", condition.getField()) && startTime > ((List<Long>) condition.getValue()).get(0)) {
+                    ((List<Long>) condition.getValue()).set(0, startTime);
+                }
+            });
+        } else {
+            ConditionEntity conditionEntity = new ConditionEntity();
+            conditionEntity.setField("time");
+            conditionEntity.setOperator("between");
+            List<Long> times = new ArrayList<>();
+            times.add(startTime);
+            times.add(endTime);
+            conditionEntity.setValue(times);
+            conditions.add(conditionEntity);
+        }
+        return request;
+    }
 
 
     public List<SysLogGridDTO> query(KeyGridRequest request) {
@@ -182,6 +251,16 @@ public class LogService {
             results.add(folderItem);
         }
 
+        for (int i = 0; i < link_ext_ope.length; i++) {
+            SysLogConstants.SOURCE_TYPE sourceType = SysLogConstants.SOURCE_TYPE.LINK;
+            FolderItem folderItem = new FolderItem();
+            folderItem.setId(link_ext_ope[i] + "-" + sourceType.getValue());
+            String operateTypeName = SysLogConstants.operateTypeName(link_ext_ope[i]);
+            String sourceTypeName = sourceType.getName();
+            folderItem.setName(Translator.get(operateTypeName) + Translator.get(sourceTypeName));
+            results.add(folderItem);
+        }
+
         FolderItem userLogin = new FolderItem();
         SysLogConstants.OPERATE_TYPE operateTypeLogin = SysLogConstants.OPERATE_TYPE.LOGIN;
         SysLogConstants.SOURCE_TYPE sourceTypeLogin = SysLogConstants.SOURCE_TYPE.USER;
@@ -223,7 +302,8 @@ public class LogService {
         }
         return results;
     }
-    private List<FolderItem> viewPanelTypes () {
+
+    private List<FolderItem> viewPanelTypes() {
         Integer[] opTypes = new Integer[]{13, 14};
         Integer[] sourceTypes = new Integer[]{3};
         return typesByArr(opTypes, sourceTypes);
@@ -242,6 +322,7 @@ public class LogService {
         sysLogGridDTO.setTime(vo.getTime());
         sysLogGridDTO.setUser(vo.getNickName());
         sysLogGridDTO.setDetail(logManager.detailInfo(vo));
+        sysLogGridDTO.setIp(vo.getIp());
         return sysLogGridDTO;
     }
 
@@ -264,12 +345,14 @@ public class LogService {
             sysLogWithBLOBs.setLoginName(sysLogDTO.getSourceName());
             sysLogWithBLOBs.setNickName(sysLogDTO.getSourceName());
         }
+        sysLogWithBLOBs.setIp(IPUtils.get());
 
         sysLogMapper.insert(sysLogWithBLOBs);
     }
 
 
     public void exportExcel(KeyGridRequest request) throws Exception {
+        request = logRetentionProxy(request);
         request = detailRequest(request);
         String keyWord = request.getKeyWord();
         List<String> ids = null;
@@ -289,24 +372,25 @@ public class LogService {
             List<String[]> details = lists.stream().map(item -> {
                 String operateTypeName = SysLogConstants.operateTypeName(item.getOperateType());
                 String sourceTypeName = SysLogConstants.sourceTypeName(item.getSourceType());
-                String[] row = new String[4];
+                String[] row = new String[5];
                 row[0] = Translator.get(operateTypeName) + " " + Translator.get(sourceTypeName);
                 row[1] = logManager.detailInfo(item);
                 row[2] = item.getNickName();
-                row[3] = DateUtil.formatDateTime(new Date(item.getTime()));
+                row[3] = item.getIp();
+                row[4] = DateUtil.formatDateTime(new Date(item.getTime()));
                 return row;
             }).collect(Collectors.toList());
-            String[] headArr = {"操作类型", "详情", "用户", "时间"};
+            String[] headArr = {"操作类型", "详情", "用户", "IP地址", "时间"};
             details.add(0, headArr);
 
 
-            HSSFWorkbook wb = new HSSFWorkbook();
+            XSSFWorkbook wb = new XSSFWorkbook();
             //明细sheet
-            HSSFSheet detailsSheet = wb.createSheet("数据");
+            XSSFSheet detailsSheet = wb.createSheet("数据");
 
             //给单元格设置样式
-            CellStyle cellStyle = wb.createCellStyle();
-            Font font = wb.createFont();
+            XSSFCellStyle cellStyle = wb.createCellStyle();
+            XSSFFont font = wb.createFont();
             //设置字体大小
             font.setFontHeightInPoints((short) 12);
             //设置字体加粗
@@ -320,11 +404,11 @@ public class LogService {
 
             if (CollectionUtils.isNotEmpty(details)) {
                 for (int i = 0; i < details.size(); i++) {
-                    HSSFRow row = detailsSheet.createRow(i);
+                    XSSFRow row = detailsSheet.createRow(i);
                     String[] rowData = details.get(i);
                     if (rowData != null) {
                         for (int j = 0; j < rowData.length; j++) {
-                            HSSFCell cell = row.createCell(j);
+                            XSSFCell cell = row.createCell(j);
                             cell.setCellValue(rowData[j]);
                             if (i == 0) {// 头部
                                 cell.setCellStyle(cellStyle);
@@ -340,7 +424,7 @@ public class LogService {
             //文件名称
             String fileName = "DataEase操作日志";
             String encodeFileName = URLEncoder.encode(fileName, "UTF-8");
-            response.setHeader("Content-disposition", "attachment;filename="+encodeFileName+".xls");
+            response.setHeader("Content-disposition", "attachment;filename=" + encodeFileName + ".xlsx");
             wb.write(outputStream);
             outputStream.flush();
             outputStream.close();

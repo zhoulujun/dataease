@@ -34,6 +34,8 @@ import java.util.stream.Collectors;
 @Service("apiProvider")
 public class ApiProvider extends Provider {
 
+    private static String path = "['%s']";
+
     @Resource
     private SystemParameterService systemParameterService;
 
@@ -72,7 +74,7 @@ public class ApiProvider extends Provider {
         ApiDefinition apiDefinition = checkApiDefinition(datasourceRequest);
         String response = execHttpRequest(apiDefinition, StringUtils.isNotBlank(basicInfo.getFrontTimeOut()) ? Integer.parseInt(basicInfo.getFrontTimeOut()) : 10);
 
-        fieldList = getTableFileds(apiDefinition);
+        fieldList = getTableFields(apiDefinition);
         result.put("fieldList", fieldList);
         dataList = fetchResult(response, apiDefinition);
         result.put("dataList", dataList);
@@ -80,7 +82,7 @@ public class ApiProvider extends Provider {
     }
 
 
-    private List<TableField> getTableFileds(ApiDefinition apiDefinition) throws Exception {
+    private List<TableField> getTableFields(ApiDefinition apiDefinition) throws Exception {
         List<TableField> tableFields = new ArrayList<>();
         for (DatasetTableFieldDTO field : apiDefinition.getFields()) {
             TableField tableField = new TableField();
@@ -93,13 +95,13 @@ public class ApiProvider extends Provider {
         return tableFields;
     }
 
-    public List<TableField> getTableFileds(DatasourceRequest datasourceRequest) throws Exception {
+    public List<TableField> getTableFields(DatasourceRequest datasourceRequest) throws Exception {
         List<ApiDefinition> lists = new Gson().fromJson(datasourceRequest.getDatasource().getConfiguration(), new TypeToken<List<ApiDefinition>>() {
         }.getType());
         List<TableField> tableFields = new ArrayList<>();
         for (ApiDefinition apiDefinition : lists) {
             if (datasourceRequest.getTable().equalsIgnoreCase(apiDefinition.getName())) {
-                tableFields = getTableFileds(apiDefinition);
+                tableFields = getTableFields(apiDefinition);
             }
         }
         return tableFields;
@@ -198,10 +200,10 @@ public class ApiProvider extends Provider {
             handleStr(apiDefinition, response, fields, rootPath);
         }
         for (JSONObject field : fields) {
-            if(field.containsKey("children") && CollectionUtils.isNotEmpty(field.getJSONArray("children"))){
+            if (field.containsKey("children") && CollectionUtils.isNotEmpty(field.getJSONArray("children"))) {
                 field.put("disabled", false);
             }
-            if(field.containsKey("children") && CollectionUtils.isEmpty(field.getJSONArray("children"))){
+            if (field.containsKey("children") && CollectionUtils.isEmpty(field.getJSONArray("children"))) {
                 field.put("disabled", true);
             }
         }
@@ -238,14 +240,14 @@ public class ApiProvider extends Provider {
                         array.add(StringUtils.isNotEmpty(jsonObject.getString(s)) ? jsonObject.getString(s) : "");
                         o.put("value", array);
                     }
-                    o.put("jsonPath", rootPath + "." + s);
+                    o.put("jsonPath", rootPath + "." + String.format(path, s));
                     setProperty(apiDefinition, o, s);
                     if (!hasItem(apiDefinition, fields, o)) {
                         fields.add(o);
                     }
                 } else if (StringUtils.isNotEmpty(value) && value.startsWith("{")) {
                     List<JSONObject> children = new ArrayList<>();
-                    handleStr(apiDefinition, jsonObject.getString(s), children, rootPath + "." + s);
+                    handleStr(apiDefinition, jsonObject.getString(s), children, rootPath + "." + String.format(path, s));
                     JSONObject o = new JSONObject();
                     o.put("children", children);
                     o.put("childrenDataType", "OBJECT");
@@ -256,7 +258,7 @@ public class ApiProvider extends Provider {
                     }
                 } else {
                     JSONObject o = new JSONObject();
-                    o.put("jsonPath", rootPath + "." + s);
+                    o.put("jsonPath", rootPath + "." + String.format(path, s));
                     setProperty(apiDefinition, o, s);
                     JSONArray array = new JSONArray();
                     array.add(StringUtils.isNotEmpty(jsonObject.getString(s)) ? jsonObject.getString(s) : "");
@@ -361,14 +363,14 @@ public class ApiProvider extends Provider {
     private List<String[]> fetchResult(String result, ApiDefinition apiDefinition) {
         List<String[]> dataList = new LinkedList<>();
         if (StringUtils.isNotEmpty(apiDefinition.getDataPath()) && CollectionUtils.isEmpty(apiDefinition.getJsonFields())) {
-            List<LinkedHashMap> datas = new ArrayList<>();
+            List<LinkedHashMap> currentData = new ArrayList<>();
             Object object = JsonPath.read(result, apiDefinition.getDataPath());
             if (object instanceof List) {
-                datas = (List<LinkedHashMap>) object;
+                currentData = (List<LinkedHashMap>) object;
             } else {
-                datas.add((LinkedHashMap) object);
+                currentData.add((LinkedHashMap) object);
             }
-            for (LinkedHashMap data : datas) {
+            for (LinkedHashMap data : currentData) {
                 String[] row = new String[apiDefinition.getFields().size()];
                 int i = 0;
                 for (DatasetTableFieldDTO field : apiDefinition.getFields()) {
@@ -379,22 +381,22 @@ public class ApiProvider extends Provider {
             }
         } else {
             List<String> jsonPaths = apiDefinition.getFields().stream().map(DatasetTableFieldDTO::getJsonPath).collect(Collectors.toList());
-            Long maxLenth = 0l;
+            Long maxLength = 0l;
             List<List<String>> columnDataList = new ArrayList<>();
             for (int i = 0; i < jsonPaths.size(); i++) {
-                List<String> datas = new ArrayList<>();
+                List<String> data = new ArrayList<>();
                 Object object = JsonPath.read(result, jsonPaths.get(i));
                 if (object instanceof List && jsonPaths.get(i).contains("[*]")) {
-                    datas = (List<String>) object;
+                    data = (List<String>) object;
                 } else {
                     if (object != null) {
-                        datas.add(object.toString());
+                        data.add(object.toString());
                     }
                 }
-                maxLenth = maxLenth > datas.size() ? maxLenth : datas.size();
-                columnDataList.add(datas);
+                maxLength = maxLength > data.size() ? maxLength : data.size();
+                columnDataList.add(data);
             }
-            for (int i = 0; i < maxLenth; i++) {
+            for (int i = 0; i < maxLength; i++) {
                 String[] row = new String[apiDefinition.getFields().size()];
                 dataList.add(row);
             }

@@ -110,6 +110,8 @@ public interface ParamConstants {
     enum BASIC implements ParamConstants {
         FRONT_TIME_OUT("basic.frontTimeOut"),
         MSG_TIME_OUT("basic.msgTimeOut"),
+
+        LOG_TIME_OUT("basic.logTimeOut"),
         DS_CHECK_INTERVAL("basic.dsCheckInterval"),
         DS_CHECK_INTERVAL_TYPE("basic.dsCheckIntervalType"),
         DEFAULT_LOGIN_TYPE("basic.loginType"),
@@ -123,6 +125,8 @@ public interface ParamConstants {
         LOGIN_LIMIT_RELIEVETIMES("loginlimit.relieveTimes"),
 
         LOGIN_LIMIT_OPEN("loginlimit.open"),
+
+        SCAN_CREATE_USER("loginlimit.scanCreateUser"),
         TEMPLATE_ACCESS_KEY("basic.templateAccessKey");
 
         private String value;

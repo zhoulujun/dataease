@@ -1,17 +1,24 @@
 <template>
-  <el-row style="text-align: left">
+  <el-row
+    v-loading="$store.getters.loadingMap[$store.getters.currentPath]"
+    style="text-align: left"
+    class="de-search-table"
+  >
     <el-row class="top-operate">
       <el-col :span="12">
-        <el-button
+        <deBtn
           v-show="position==='templateLog'"
-          class="btn"
           type="primary"
           icon="el-icon-plus"
           @click="applyNew()"
-        >{{ $t('commons.create') }}</el-button>
+        >{{ $t('commons.create') }}
+        </deBtn>
         <span>&nbsp;</span>
       </el-col>
-      <el-col :span="12" class="right-user">
+      <el-col
+        :span="12"
+        class="right-user"
+      >
         <el-input
           ref="search"
           v-model="nickName"
@@ -28,16 +35,21 @@
           :plain="!!cacheCondition.length"
           icon="iconfont icon-icon-filter"
           @click="filterShow"
-        >{{ $t("user.filter")
-        }}<template v-if="filterTexts.length">
-          ({{ cacheCondition.length }})
-        </template>
+        >{{
+           $t('user.filter')
+         }}
+          <template v-if="filterTexts.length">
+            ({{ cacheCondition.length }})
+          </template>
         </deBtn>
       </el-col>
     </el-row>
-    <div v-if="filterTexts.length" class="filter-texts">
+    <div
+      v-if="filterTexts.length"
+      class="filter-texts"
+    >
       <span class="sum">{{ paginationConfig.total }}</span>
-      <span class="title">{{ $t("user.result_one") }}</span>
+      <span class="title">{{ $t('user.result_one') }}</span>
       <el-divider direction="vertical" />
       <i
         v-if="showScroll"
@@ -45,8 +57,15 @@
         @click="scrollPre"
       />
       <div class="filter-texts-container">
-        <p v-for="(ele, index) in filterTexts" :key="ele" class="text">
-          {{ ele }} <i class="el-icon-close" @click="clearOneFilter(index)" />
+        <p
+          v-for="(ele, index) in filterTexts"
+          :key="ele"
+          class="text"
+        >
+          {{ ele }} <i
+            class="el-icon-close"
+            @click="clearOneFilter(index)"
+          />
         </p>
       </div>
       <i
@@ -59,7 +78,8 @@
         class="clear-btn"
         icon="el-icon-delete"
         @click="clearFilter"
-      >{{ $t("user.clear_filter") }}</el-button>
+      >{{ $t('user.clear_filter') }}
+      </el-button>
     </div>
     <div
       id="resize-for-filter"
@@ -67,7 +87,7 @@
       :class="[filterTexts.length ? 'table-container-filter' : '']"
     >
       <grid-table
-        v-loading="$store.getters.loadingMap[$store.getters.currentPath]"
+        :ref="'grid-table'"
         :table-data="data"
         :columns="[]"
         :pagination="paginationConfig"
@@ -77,23 +97,32 @@
       >
         <el-table-column
           show-overflow-tooltip
-          prop="opType"
-          :label="'数据源'"
+          prop="datasourceName"
+          :label="$t('app_template.datasource')"
         >
-          <template v-slot:default="{ row }">
+          <template #default="{ row }">
             <span>{{ row.datasourceName }}</span>
           </template>
         </el-table-column>
         <el-table-column
           show-overflow-tooltip
           prop="datasetGroupName"
-          :label="'数据集分组'"
+          :label="$t('app_template.dataset_group')"
         />
         <el-table-column
           show-overflow-tooltip
           prop="panelName"
-          :label="'仪表板'"
-        />
+          :label="$t('app_template.panel')"
+        >
+          <template #default="{ row }">
+            <span
+              v-if="row.panelId && hasDataPermission('use',row.panelPrivileges)"
+              class="link-span"
+              @click="goPanel(row)"
+            >{{ row.panelName }}</span>
+            <span v-else>{{ row.panelName }}</span>
+          </template>
+        </el-table-column>
         <el-table-column
           show-overflow-tooltip
           prop="appName"
@@ -103,34 +132,96 @@
           show-overflow-tooltip
           prop="applyTime"
           sortable="custom"
-          :label="'应用时间'"
+          :label="$t('app_template.execution_time')"
         >
-          <template v-slot:default="scope">
+          <template #default="scope">
             <span>{{ scope.row.applyTime | timestampFormatDate }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column
+          v-if="optShow"
+          slot="__operation"
+          :label="$t('commons.operating')"
+          fixed="right"
+          :width="operateWidth"
+        >
+          <template slot-scope="scope">
+            <el-button
+              v-permission="['appLog:edit']"
+              class="de-text-btn mr2"
+              type="text"
+              @click="editApply(scope.row)"
+            >{{ $t('commons.edit') }}
+            </el-button>
+            <el-button
+              v-if="scope.row.id !== 1"
+              v-permission="['appLog:del']"
+              class="de-text-btn"
+              type="text"
+              @click="del(scope.row)"
+            >{{ $t('commons.delete') }}
+            </el-button>
           </template>
         </el-table-column>
       </grid-table>
     </div>
     <keep-alive>
-      <filterUser ref="filterUser" @search="filterDraw" />
+      <filterUser
+        ref="filterUser"
+        @search="filterDraw"
+      />
     </keep-alive>
+    <keep-alive>
+      <app-template-apply
+        ref="templateEditApply"
+        @closeDraw="closeDraw"
+      />
+    </keep-alive>
+
+    <!--导入templatedialog-->
+    <el-dialog
+      v-loading="$store.getters.loadingMap[$store.getters.currentPath]"
+      :title="$t('app_template.log_delete_tips')"
+      :visible.sync="deleteConfirmDialog"
+      :show-close="true"
+      width="420px"
+    >
+      <el-row>
+        <el-checkbox
+          v-model="deleteItemInfo.deleteResource"
+          :disabled="!(hasDataPermission('manage',deleteItemInfo.panelPrivileges) &&hasDataPermission('manage',deleteItemInfo.datasetPrivileges) &&hasDataPermission('manage',deleteItemInfo.datasourcePrivileges))"
+        />
+        {{ $t('app_template.log_resource_delete_tips') }}
+      </el-row>
+      <span slot="footer">
+        <el-button
+          size="mini"
+          @click="closeDel"
+        >{{ $t('commons.cancel') }}</el-button>
+        <el-button
+          type="danger"
+          size="mini"
+          @click="confirmDel"
+        >{{ $t('commons.confirm') }}</el-button>
+      </span>
+    </el-dialog>
   </el-row>
 </template>
 
 <script>
-import DeLayoutContent from '@/components/business/DeLayoutContent'
 import GridTable from '@/components/gridTable/index.vue'
-import filterUser from './filterUser'
+import filterUser from './FilterUser'
 import _ from 'lodash'
 import keyEnter from '@/components/msgCfm/keyEnter.js'
-import {
-  addOrder,
-  formatOrders
-} from '@/utils/index'
-import { logGrid } from '@/api/appTemplateMarket/log'
+import { addOrder, formatOrders } from '@/utils/index'
+import { deleteLogAndResource, logGrid } from '@/api/appTemplateMarket/log'
+import { findOneWithParent } from '@/api/panel/panel'
+import AppTemplateApply from '@/views/panel/appTemplate/component/AppTemplateApply'
+import { hasDataPermission } from '@/utils/permission'
+
 export default {
   name: 'AppTemplateLog',
-  components: { GridTable, DeLayoutContent, filterUser },
+  components: { AppTemplateApply, GridTable, filterUser },
   mixins: [keyEnter],
   props: {
     appTemplateId: {
@@ -145,6 +236,12 @@ export default {
   },
   data() {
     return {
+      optShow: false,
+      deleteConfirmDialog: false,
+      deleteItemInfo: {
+        deleteResource: false
+      },
+      operateWidth: 168,
       columns: [],
       paginationConfig: {
         currentPage: 1,
@@ -177,6 +274,72 @@ export default {
     this.resizeObserver()
   },
   methods: {
+    closeDel() {
+      this.deleteItemInfo = {
+        deleteResource: false
+      }
+      this.deleteConfirmDialog = false
+    },
+    confirmDel() {
+      const _this = this
+      deleteLogAndResource(_this.deleteItemInfo).then(() => {
+        if (_this.deleteItemInfo.deleteResource) {
+          _this.clearLocalStorage()
+        }
+        _this.closeDel()
+        _this.search()
+      })
+    },
+    clearLocalStorage() {
+      const clearParams = [
+        'panel-main-tree',
+        'panel-default-tree',
+        'chart-tree',
+        'dataset-tree'
+      ]
+      clearParams.forEach(item => {
+        localStorage.removeItem(item)
+      })
+    },
+    closeDraw() {
+      this.search()
+    },
+    editApply(item) {
+      const param = {
+        datasourceType: item.datasourceType,
+        logId: item.id,
+        panelId: item.panelId,
+        panelGroupPid: item.panelGroupPid,
+        datasourceId: item.datasourceId,
+        datasetGroupPid: item.datasetGroupPid,
+        datasetGroupId: item.datasetGroupId,
+        datasetGroupName: item.datasetGroupName,
+        panelName: item.panelName,
+        datasourcePrivileges: item.datasourcePrivileges,
+        panelPrivileges: item.panelPrivileges,
+        datasetPrivileges: item.datasetPrivileges,
+        appMarketEdit: hasDataPermission('manage', item.datasourcePrivileges)
+      }
+      this.$refs.templateEditApply.init(param)
+    },
+    goToDatasource(row) {
+
+    },
+    goPanel(row) {
+      findOneWithParent(row.panelId).then(rsp => {
+        this.$router.push({ name: 'panel', params: rsp.data })
+      })
+    },
+    edit() {
+
+    },
+    del(item) {
+      this.deleteItemInfo = {
+        ...item,
+        deleteResource: false
+      }
+      this.deleteConfirmDialog = true
+    },
     applyNew() {
       this.$emit('applyNew')
     },
@@ -272,6 +435,11 @@ export default {
       logGrid(currentPage, pageSize, param).then((response) => {
         this.data = response.data.listObject
         this.paginationConfig.total = response.data.itemCount
+        const _this = this
+        _this.optShow = false
+        this.$nextTick(() => {
+          _this.optShow = true
+        })
       })
     }
   }
@@ -285,107 +453,13 @@ export default {
 .table-container-filter {
   height: calc(100% - 110px);
 }
-.filter-texts {
-  display: flex;
-  align-items: center;
-  margin: 17px 0;
-  font-family: "PingFang SC";
-  font-weight: 400;
 
-  .sum {
-    color: #1f2329;
-  }
+.link-span {
+  color: #3370FF;
+  cursor: pointer;
 
-  .title {
-    color: #999999;
-    margin-left: 8px;
-  }
-
-  .text {
-    max-width: 280px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    padding: 1px 22px 1px 6px;
-    display: inline-block;
-    align-items: center;
-    color: #0c296e;
-    font-size: 14px;
-    line-height: 22px;
-    background: rgba(51, 112, 255, 0.1);
-    border-radius: 2px;
-    margin: 0;
-    margin-right: 8px;
-    position: relative;
-    i {
-      position: absolute;
-      right: 2px;
-      top: 50%;
-      transform: translateY(-50%);
-      cursor: pointer;
-    }
-  }
-
-  .clear-btn {
-    color: #646a73;
-  }
-
-  .clear-btn:hover {
-    color: #3370ff;
-  }
-
-  .filter-texts-container::-webkit-scrollbar {
-    display: none;
-  }
-
-  .arrow-filter {
-    font-size: 16px;
-    width: 24px;
-    height: 24px;
-    cursor: pointer;
-    color: #646a73;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-  .arrow-filter:hover {
-    background: rgba(31, 35, 41, 0.1);
-    border-radius: 4px;
-  }
-
-  .el-icon-arrow-right.arrow-filter {
-    margin-left: 5px;
-  }
-
-  .el-icon-arrow-left.arrow-filter {
-    margin-right: 5px;
-  }
-  .filter-texts-container {
-    flex: 1;
-    overflow-x: auto;
-    white-space: nowrap;
-    height: 24px;
-  }
-}
-.top-operate {
-  margin-bottom: 16px;
-  .right-user {
-    text-align: right;
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-
-    .de-button {
-      margin-left: 12px;
-    }
-
-    .el-input--medium .el-input__icon {
-      line-height: 32px;
-    }
-  }
-
-  .name-email-search {
-    width: 240px;
+  &:hover {
+    text-decoration: underline;
   }
 }
 </style>

@@ -1,10 +1,32 @@
 <template>
-  <div ref="tableContainer" :style="bg_class" style="width: 100%;height: 100%;overflow: hidden;">
-    <view-track-bar ref="viewTrack" :track-menu="trackMenu" class="track-bar" :style="trackBarStyleTime" @trackClick="trackClick" />
-    <span v-show="title_show" ref="title" :style="title_class" style="cursor: default;display: block;">
+  <div
+    ref="tableContainer"
+    :style="bg_class"
+    style="padding: 4px;width: 100%;height: 100%;overflow: hidden;"
+  >
+    <view-track-bar
+      ref="viewTrack"
+      :track-menu="trackMenu"
+      class="track-bar"
+      :style="trackBarStyleTime"
+      @trackClick="trackClick"
+    />
+    <span
+      v-show="title_show"
+      ref="title"
+      :style="title_class"
+      style="cursor: default;display: block;"
+    >
       <div>
-        <p style="padding:6px 4px 0;margin: 0;overflow: hidden;white-space: pre;text-overflow: ellipsis;display: inline;">{{ chart.title }}</p>
-        <title-remark v-if="chart.render && chart.render === 'antv' && remarkCfg.show" style="text-shadow: none!important;" :remark-cfg="remarkCfg" />
+        <chart-title-update
+          :title-class="title_class"
+          :chart-info="chartInfo"
+        />
+        <title-remark
+          v-if="chart.render && chart.render === 'antv' && remarkCfg.show"
+          style="text-shadow: none!important;margin-left: 4px;"
+          :remark-cfg="remarkCfg"
+        />
       </div>
     </span>
     <div
@@ -13,11 +35,19 @@
       :style="content_class"
     >
       <span :style="label_class">
-        <p v-if="chart.data.series[0].data && chart.data.series[0].data.length > 0" ref="textData" :style="label_content_class" @click="textClick">
+        <p
+          v-if="chart.data.series[0].data && chart.data.series[0].data.length > 0"
+          ref="textData"
+          :style="label_content_class"
+          @click="textClick"
+        >
           {{ chart.data.series[0].data[0] }}
         </p>
       </span>
-      <span v-if="dimensionShow" :style="label_space">
+      <span
+        v-if="dimensionShow"
+        :style="label_space"
+      >
         <p :style="label_class">
           {{ chart.data.series[0].name }}
         </p>
@@ -29,13 +59,14 @@
 <script>
 import { getRemark, hexColorToRGBA } from '../../chart/util'
 import eventBus from '@/components/canvas/utils/eventBus'
-import ViewTrackBar from '@/components/canvas/components/Editor/ViewTrackBar'
+import ViewTrackBar from '@/components/canvas/components/editor/ViewTrackBar'
 import TitleRemark from '@/views/chart/view/TitleRemark'
 import { DEFAULT_SIZE, DEFAULT_TITLE_STYLE } from '@/views/chart/chart/chart'
+import ChartTitleUpdate from '../ChartTitleUpdate.vue'
 
 export default {
   name: 'LabelNormalText',
-  components: { TitleRemark, ViewTrackBar },
+  components: { TitleRemark, ViewTrackBar, ChartTitleUpdate },
   props: {
     chart: {
       type: Object,
@@ -110,13 +141,11 @@ export default {
   computed: {
     trackBarStyleTime() {
       return this.trackBarStyle
+    },
+    chartInfo() {
+      const { id, title } = this.chart
+      return { id, title }
     }
-    // bg_class() {
-    //   return {
-    //     background: hexColorToRGBA('#ffffff', 0),
-    //     borderRadius: this.borderRadius
-    //   }
-    // }
   },
   watch: {
     chart() {
@@ -132,14 +161,12 @@ export default {
   },
   beforeDestroy() {
     eventBus.$off('resizing', this.chartResize)
+    window.removeEventListener('resize', this.calcHeight)
   },
   methods: {
     init() {
-      const that = this
       this.initStyle()
-      window.onresize = function() {
-        that.calcHeight()
-      }
+      window.addEventListener('resize', this.calcHeight)
       this.setBackGroundBorder()
       this.initRemark()
     },
@@ -282,7 +309,7 @@ export default {
 </script>
 
 <style scoped>
-.table-class ::v-deep .body--wrapper{
-  background: rgba(1,1,1,0);
+.table-class ::v-deep .body--wrapper {
+  background: rgba(1, 1, 1, 0);
 }
 </style>

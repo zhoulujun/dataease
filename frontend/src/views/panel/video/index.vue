@@ -4,21 +4,9 @@
 
 <script>
 
-import DeVideo from '@/components/canvas/custom-component/DeVideo'
+import DeVideo from '@/components/canvas/customComponent/DeVideo'
 export default {
-  name: 'Video',
-  components: { DeVideo },
-  data() {
-    return {}
-  },
-  mounted() {
-  },
-  methods: {
-
-  }
+  name: 'VideoDe',
+  components: { DeVideo }
 }
 </script>
-
-<style scoped>
-
-</style>

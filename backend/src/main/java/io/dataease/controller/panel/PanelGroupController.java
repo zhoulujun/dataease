@@ -5,11 +5,11 @@ import io.dataease.auth.annotation.DePermission;
 import io.dataease.auth.annotation.DePermissionProxy;
 import io.dataease.auth.annotation.DePermissions;
 import io.dataease.auth.service.impl.ExtAuthServiceImpl;
-import io.dataease.commons.constants.PanelConstants;
-import io.dataease.controller.request.panel.*;
 import io.dataease.commons.constants.DePermissionType;
+import io.dataease.commons.constants.PanelConstants;
 import io.dataease.commons.constants.ResourceAuthLevel;
 import io.dataease.controller.handler.annotation.I18n;
+import io.dataease.controller.request.panel.*;
 import io.dataease.dto.PermissionProxy;
 import io.dataease.dto.authModel.VAuthModelDTO;
 import io.dataease.dto.panel.PanelExport2App;
@@ -17,10 +17,11 @@ import io.dataease.dto.panel.PanelGroupDTO;
 import io.dataease.service.panel.PanelGroupService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import org.pentaho.di.core.util.UUIDUtil;
-import springfox.documentation.annotations.ApiIgnore;
 import org.apache.shiro.authz.annotation.Logical;
+import org.pentaho.di.core.util.UUIDUtil;
 import org.springframework.web.bind.annotation.*;
+import springfox.documentation.annotations.ApiIgnore;
+
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -59,15 +60,15 @@ public class PanelGroupController {
     @PostMapping("/save")
     @DePermissions(value = {
             @DePermission(type = DePermissionType.PANEL, value = "id"),
-            @DePermission(type = DePermissionType.PANEL, value = "pid", level = ResourceAuthLevel.PANNEL_LEVEL_MANAGE)
+            @DePermission(type = DePermissionType.PANEL, value = "pid", level = ResourceAuthLevel.PANEL_LEVEL_MANAGE)
     }, logical = Logical.AND)
     @I18n
-    public PanelGroupDTO save(@RequestBody PanelGroupRequest request) throws Exception{
+    public PanelGroupDTO save(@RequestBody PanelGroupRequest request) throws Exception {
         String panelId = panelGroupService.save(request);
         PanelGroupDTO result = findOne(panelId);
         // 如果新建来源来自模板市场，在返回数据中加入父级ID便于跳转展开仪表板树
-        if(PanelConstants.NEW_PANEL_FROM.NEW_MARKET_TEMPLATE.equals(request.getNewFrom())){
-            result.setParents(authService.parentResource(panelId,"panel"));
+        if (PanelConstants.NEW_PANEL_FROM.NEW_MARKET_TEMPLATE.equals(request.getNewFrom())) {
+            result.setParents(authService.parentResource(panelId, "panel"));
             result.setRequestId(UUIDUtil.getUUIDAsString());
         }
         return result;
@@ -77,7 +78,7 @@ public class PanelGroupController {
     @PostMapping("/update")
     @DePermissions(value = {
             @DePermission(type = DePermissionType.PANEL, value = "id"),
-            @DePermission(type = DePermissionType.PANEL, value = "pid", level = ResourceAuthLevel.PANNEL_LEVEL_MANAGE)
+            @DePermission(type = DePermissionType.PANEL, value = "pid", level = ResourceAuthLevel.PANEL_LEVEL_MANAGE)
     }, logical = Logical.AND)
     @I18n
     public String update(@RequestBody PanelGroupRequest request) {
@@ -85,14 +86,14 @@ public class PanelGroupController {
     }
 
     @ApiOperation("删除")
-    @DePermission(type = DePermissionType.PANEL, level = ResourceAuthLevel.PANNEL_LEVEL_MANAGE)
+    @DePermission(type = DePermissionType.PANEL, level = ResourceAuthLevel.PANEL_LEVEL_MANAGE)
     @PostMapping("/deleteCircle/{id}")
     public void deleteCircle(@PathVariable String id) {
         panelGroupService.deleteCircle(id);
     }
 
     @ApiOperation("详细信息")
-    @DePermission(type = DePermissionType.PANEL, level = ResourceAuthLevel.PANNEL_LEVEL_VIEW)
+    @DePermission(type = DePermissionType.PANEL, level = ResourceAuthLevel.PANEL_LEVEL_VIEW)
     @GetMapping("/findOne/{id}")
     public PanelGroupDTO findOne(@PathVariable String id) throws Exception {
         return panelGroupService.findOne(id);
@@ -101,7 +102,7 @@ public class PanelGroupController {
     @ApiIgnore
     @ApiOperation("详细信息(分享人代理)")
     @DePermissionProxy(paramIndex = 1)
-    @DePermission(type = DePermissionType.PANEL, level = ResourceAuthLevel.PANNEL_LEVEL_VIEW)
+    @DePermission(type = DePermissionType.PANEL, level = ResourceAuthLevel.PANEL_LEVEL_VIEW)
     @PostMapping("/proxy/findOne/{id}")
     public PanelGroupDTO proxyFindOne(@PathVariable String id, @RequestBody PermissionProxy proxy)
             throws Exception {
@@ -146,35 +147,37 @@ public class PanelGroupController {
     @ApiOperation("更新仪表板状态")
     @PostMapping("/updatePanelStatus/{panelId}")
     @I18n
-    @DePermission(type = DePermissionType.PANEL, level = ResourceAuthLevel.PANNEL_LEVEL_MANAGE)
+    @DePermission(type = DePermissionType.PANEL, level = ResourceAuthLevel.PANEL_LEVEL_MANAGE)
     public void updatePanelStatus(@PathVariable String panelId, @RequestBody PanelGroupBaseInfoRequest request) {
         panelGroupService.updatePanelStatus(panelId, request);
     }
+
     @ApiOperation("自动缓存")
     @PostMapping("/autoCache")
     @DePermissions(value = {
             @DePermission(type = DePermissionType.PANEL, value = "id"),
-            @DePermission(type = DePermissionType.PANEL, value = "pid", level = ResourceAuthLevel.PANNEL_LEVEL_MANAGE)
+            @DePermission(type = DePermissionType.PANEL, value = "pid", level = ResourceAuthLevel.PANEL_LEVEL_MANAGE)
     }, logical = Logical.AND)
-    public void autoCache(@RequestBody PanelGroupRequest request){
+    public void autoCache(@RequestBody PanelGroupRequest request) {
         panelGroupService.autoCache(request);
 
     }
 
     @ApiOperation("查找缓存")
     @GetMapping("/findUserCache/{panelId}")
-    public PanelGroupDTO findUserCache(@PathVariable String panelId){
+    public PanelGroupDTO findUserCache(@PathVariable String panelId) {
         return panelGroupService.findUserPanelCache(panelId);
     }
+
     @ApiOperation("检查缓存")
     @GetMapping("/checkUserCache/{panelId}")
-    public Boolean checkUserCache(@PathVariable String panelId){
+    public Boolean checkUserCache(@PathVariable String panelId) {
         return panelGroupService.checkUserCache(panelId);
     }
 
     @ApiOperation("删除缓存")
     @DeleteMapping("/removePanelCache/{panelId}")
-    public void removePanelCache(@PathVariable String panelId){
+    public void removePanelCache(@PathVariable String panelId) {
         panelGroupService.removePanelCache(panelId);
     }
 
@@ -183,24 +186,46 @@ public class PanelGroupController {
     public void viewLog(@RequestBody PanelViewLogRequest request) {
         panelGroupService.viewLog(request);
     }
+
     @ApiOperation("获取仪表板中视图Element信息")
     @GetMapping("/findPanelElementInfo/{viewId}")
     @I18n
-    public Object findPanelElementInfo(@PathVariable String viewId){
-       return panelGroupService.findPanelElementInfo(viewId);
+    public Object findPanelElementInfo(@PathVariable String viewId) {
+        return panelGroupService.findPanelElementInfo(viewId);
     }
+
     @GetMapping("/export2AppCheck/{panelId}")
-    public PanelExport2App export2AppCheck(@PathVariable String panelId){
-       return  panelGroupService.panelExport2AppCheck(panelId);
+    @I18n
+    public PanelExport2App export2AppCheck(@PathVariable String panelId) {
+        return panelGroupService.panelExport2AppCheck(panelId);
     }
 
     @PostMapping("/appApply")
-    public PanelGroupDTO appApply(@RequestBody PanelAppTemplateApplyRequest request) throws Exception{
+    public PanelGroupDTO appApply(@RequestBody PanelAppTemplateApplyRequest request) throws Exception {
         String panelId = panelGroupService.appApply(request);
         PanelGroupDTO result = findOne(panelId);
-        result.setParents(authService.parentResource(panelId,"panel"));
+        result.setParents(authService.parentResource(panelId, "panel"));
         result.setRequestId(UUIDUtil.getUUIDAsString());
         result.setResponseSource("appApply");
         return result;
+    }
+
+    @PostMapping("/appEdit")
+    public void appEdit(@RequestBody PanelAppTemplateApplyRequest request) throws Exception {
+        panelGroupService.appEdit(request);
+    }
+
+    @GetMapping("/findOneWithParent/{panelId}")
+    public PanelGroupDTO findOneWithParent(@PathVariable String panelId) throws Exception {
+        PanelGroupDTO result = findOne(panelId);
+        result.setParents(authService.parentResource(panelId, "panel"));
+        result.setRequestId(UUIDUtil.getUUIDAsString());
+        result.setResponseSource("appApply");
+        return result;
+    }
+
+    @PostMapping("/toTop/{panelId}")
+    public void toTop(@PathVariable String panelId) throws Exception {
+        panelGroupService.toTop(panelId);
     }
 }

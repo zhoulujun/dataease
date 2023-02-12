@@ -46,7 +46,10 @@
         </template>
       </ux-table-column>
     </ux-grid>
-    <span v-if="table.name" style="font-size: 12px">{{
+    <span
+      v-if="table.name"
+      style="font-size: 12px"
+    >{{
       $t('chart.preview_100_data')
     }}</span>
   </el-col>
@@ -77,12 +80,6 @@ export default {
     }
   },
   mounted() {
-    // window.onresize = () => {
-    //   return (() => {
-    //     this.height = window.innerHeight / 3
-    //   })()
-    // }
-    // this.height = window.innerHeight / 3
     this.$nextTick(() => {
       this.height =
         document.getElementById('dsData').parentNode.offsetHeight - 16 - 14 - 5
@@ -99,14 +96,14 @@ export default {
           .then((response) => {
             this.fields = response.data.fields
             this.data = response.data.data
-            const datas = this.data
+            const data = this.data
             if (response.data.status === 'warnning') {
               this.$warning(response.data.msg, 3000)
             }
             if (response.data.status === 'error') {
               this.$error(response.data.msg, 3000)
             }
-            this.$refs.plxTable.reloadData(datas)
+            this.$refs.plxTable.reloadData(data)
             this.dataLoading = false
           })
           .catch((res) => {

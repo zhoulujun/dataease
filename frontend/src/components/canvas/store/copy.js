@@ -5,15 +5,15 @@ import { deepCopy } from '@/components/canvas/utils/utils'
 import { chartBatchCopy, chartCopy } from '@/api/chart/chart'
 import { uuid } from 'vue-uuid'
 import { adaptCurThemeCommonStyle } from '@/components/canvas/utils/style'
-import Vue from "vue";
+import Vue from 'vue'
 
 export default {
   state: {
     copyData: null, // 复制粘贴剪切
     isCut: false,
     baseStyle: {
-      width: 300,
-      height: 200,
+      width: 533,
+      height: 300,
       top: 0,
       left: 0
     },
@@ -25,6 +25,24 @@ export default {
     }
   },
   mutations: {
+    // 复制到粘贴板
+    copyToClipboard(state) {
+      if (state.curComponent) {
+        Vue.prototype.$copyText('datease-component-' + state.curComponent.id)
+      }
+    },
+    passFromClipboard(state, componentId) {
+      state.componentData.forEach(item => {
+        if (item.id === componentId) {
+          state.copyData = {
+            data: deepCopy(item),
+            index: state.componentData.length
+          }
+        }
+      })
+      state.isCut = false
+      this.commit('paste')
+    },
     copyMultiplexingComponents(state) {
       let pYMax = 0
       const _this = this
@@ -35,7 +53,7 @@ export default {
         }
       })
       const canvasStyleData = state.canvasStyleData
-      const curCanvasScale = state.curCanvasScale
+      const curCanvasScaleSelf = state.curCanvasScaleMap['canvas-main']
       const componentGap = state.componentGap
       Object.keys(state.curMultiplexingComponents).forEach(function(componentId, index) {
         const component =
@@ -53,15 +71,15 @@ export default {
         const tilePosition = index % 3
         const divisiblePosition = parseInt(index / 3)
         if (canvasStyleData.auxiliaryMatrix) {
-          const width = component.sizex * curCanvasScale.matrixStyleOriginWidth
+          const width = component.sizex * curCanvasScaleSelf.matrixStyleOriginWidth
           // 取余 平铺4个 此处x 位置偏移
           component.x = component.x + component.sizex * tilePosition
           // Y 方向根据当前应该放置的最大值 加上50矩阵余量
           component.y = pYMax + 50 + state.viewBase.sizex * divisiblePosition
-          component.style.left = (component.x - 1) * curCanvasScale.matrixStyleOriginWidth
-          component.style.top = (component.y - 1) * curCanvasScale.matrixStyleOriginHeight
+          component.style.left = (component.x - 1) * curCanvasScaleSelf.matrixStyleOriginWidth
+          component.style.top = (component.y - 1) * curCanvasScaleSelf.matrixStyleOriginHeight
           component.style.width = width
-          component.style.height = component.sizey * curCanvasScale.matrixStyleOriginHeight
+          component.style.height = component.sizey * curCanvasScaleSelf.matrixStyleOriginHeight
         } else {
           const width = component.style.width
           const height = component.style.height
@@ -70,6 +88,8 @@ export default {
           component.style.width = width
           component.style.height = height
         }
+        component['canvasId'] = 'canvas-main'
+        component['canvasPid'] = '0'
         state.copyData = {
           data: component,
           index: index
@@ -89,10 +109,8 @@ export default {
 
     paste(state, needAdaptor) {
       if (!state.copyData) {
-        toast('请选择组件')
         return
       }
-
       const data = state.copyData.data
       // 仪表板复制的组件默认不在移动端部署中mobileSelected = false
       data.mobileSelected = false
@@ -108,6 +126,8 @@ export default {
           Vue.set(newView, 'needAdaptor', needAdaptor)
           newView.id = uuid.v1()
           newView.propValue.viewId = res.data
+          newView['canvasId'] = 'canvas-main'
+          newView['canvasPid'] = '0'
           if (newView.filters && newView.filters.length) {
             newView.filters = []
           }

@@ -1,9 +1,25 @@
 <template>
-  <div ref="tableContainer" :style="bg_class" style="padding: 8px;width: 100%;height: 100%;overflow: hidden;">
-    <span v-show="title_show" ref="title" :style="title_class" style="cursor: default;display: block;">
+  <div
+    ref="tableContainer"
+    :style="bg_class"
+    style="padding: 4px;width: 100%;height: 100%;overflow: hidden;"
+  >
+    <span
+      v-show="title_show"
+      ref="title"
+      :style="title_class"
+      style="cursor: default;display: block;"
+    >
       <div>
-        <p style="padding:6px 4px 0;margin: 0;overflow: hidden;white-space: pre;text-overflow: ellipsis;display: inline;">{{ chart.title }}</p>
-        <title-remark v-if="chart.render && chart.render === 'antv' && remarkCfg.show" style="text-shadow: none!important;" :remark-cfg="remarkCfg" />
+        <chart-title-update
+          :title-class="title_class"
+          :chart-info="chartInfo"
+        />
+        <title-remark
+          v-if="chart.render && chart.render === 'antv' && remarkCfg.show"
+          style="text-shadow: none!important;margin-left: 4px;"
+          :remark-cfg="remarkCfg"
+        />
       </div>
     </span>
     <div
@@ -16,7 +32,10 @@
           {{ result }}
         </p>
       </span>
-      <span v-if="dimensionShow" :style="label_space">
+      <span
+        v-if="dimensionShow"
+        :style="label_space"
+      >
         <p :style="label_class">
           {{ chart.data.series[0].name }}
         </p>
@@ -31,10 +50,11 @@ import eventBus from '@/components/canvas/utils/eventBus'
 import { formatterItem, valueFormatter } from '@/views/chart/chart/formatter'
 import TitleRemark from '@/views/chart/view/TitleRemark'
 import { DEFAULT_SIZE, DEFAULT_TITLE_STYLE } from '@/views/chart/chart/chart'
+import ChartTitleUpdate from '../ChartTitleUpdate.vue'
 
 export default {
   name: 'LabelNormal',
-  components: { TitleRemark },
+  components: { TitleRemark, ChartTitleUpdate },
   props: {
     chart: {
       type: Object,
@@ -94,12 +114,10 @@ export default {
     }
   },
   computed: {
-    // bg_class() {
-    //   return {
-    //     background: hexColorToRGBA('#ffffff', 0),
-    //     borderRadius: this.borderRadius
-    //   }
-    // }
+    chartInfo() {
+      const { id, title } = this.chart
+      return { id, title }
+    }
   },
   watch: {
     chart() {
@@ -115,15 +133,13 @@ export default {
   },
   beforeDestroy() {
     eventBus.$off('resizing', this.chartResize)
+    window.removeEventListener('resize', this.calcHeight)
   },
   methods: {
     init() {
-      const that = this
       this.initStyle()
       this.resultFormat()
-      window.onresize = function() {
-        that.calcHeight()
-      }
+      window.addEventListener('resize', this.calcHeight)
       this.setBackGroundBorder()
       this.initRemark()
     },

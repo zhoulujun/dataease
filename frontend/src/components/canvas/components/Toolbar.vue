@@ -1,7 +1,11 @@
 <template>
   <div>
     <div class="switch-position">
-      <el-radio-group v-model="mobileLayoutInitStatus" size="mini" @change="openMobileLayout">
+      <el-radio-group
+        v-model="mobileLayoutInitStatus"
+        size="mini"
+        @change="openMobileLayout"
+      >
         <el-radio-button :label="false">
           <span class="icon iconfont icon-icon_pc_outlined icon16_only" />
         </el-radio-button>
@@ -10,21 +14,38 @@
         </el-radio-button>
       </el-radio-group>
     </div>
-    <div v-show="editControlButton" class="toolbar">
+    <div
+      v-show="editControlButton"
+      class="toolbar"
+    >
       <span style="float: right;">
-        <el-button v-if="mobileLayoutStatus" size="mini" @click="editReset">
+        <el-button
+          v-if="mobileLayoutStatus"
+          size="mini"
+          @click="editReset"
+        >
           {{ $t('commons.reset') }}
         </el-button>
-        <el-button type="primary" size="mini" @click="editSave">
+        <el-button
+          type="primary"
+          size="mini"
+          @click="editSave"
+        >
           {{ $t('commons.confirm') }}
         </el-button>
-        <el-button size="mini" @click="editCancel">
+        <el-button
+          size="mini"
+          @click="editCancel"
+        >
           {{ $t('commons.cancel') }}
         </el-button>
       </span>
     </div>
 
-    <div v-show="!editControlButton" class="toolbar">
+    <div
+      v-show="!editControlButton"
+      class="toolbar"
+    >
       <div class="panel-info-area">
         <!--back to panelList-->
         <svg-icon
@@ -37,17 +58,36 @@
         </span>
       </div>
       <el-tooltip :content="$t('panel.undo') ">
-        <svg-icon icon-class="icon_undo_outlined" class="toolbar-icon-active icon16 margin-right20" @click="undo" />
+        <svg-icon
+          icon-class="icon_undo_outlined"
+          class="toolbar-icon-active icon16 margin-right20"
+          @click="undo"
+        />
       </el-tooltip>
       <el-tooltip :content="$t('panel.redo') ">
-        <svg-icon icon-class="icon_redo_outlined" class="toolbar-icon-active icon16 margin-right20" @click="redo" />
+        <svg-icon
+          icon-class="icon_redo_outlined"
+          class="toolbar-icon-active icon16 margin-right20"
+          @click="redo"
+        />
       </el-tooltip>
       <el-tooltip :content="$t('panel.fullscreen_preview')">
-        <svg-icon icon-class="icon_magnify_outlined" class="toolbar-icon-active icon16" @click="clickPreview" />
+        <svg-icon
+          icon-class="icon_magnify_outlined"
+          class="toolbar-icon-active icon16"
+          @click="clickPreview"
+        />
       </el-tooltip>
-      <el-divider style="margin-left: 20px" direction="vertical" />
+      <el-divider
+        style="margin-left: 20px"
+        direction="vertical"
+      />
       <span class="button_self">
-        <el-dropdown :hide-on-click="false" trigger="click" placement="bottom-start">
+        <el-dropdown
+          :hide-on-click="false"
+          trigger="click"
+          placement="bottom-start"
+        >
           <span class="icon iconfont icon-icon-more insert margin-right20">
             <span class="icon-font-margin">{{ $t('panel.more') }}</span>
           </span>
@@ -57,16 +97,25 @@
                 <span>
                   <span class="icon iconfont icon-icon_moments-categories_outlined icon16" />
                   <span class="text14 margin-left8">{{ $t('panel.new_element_distribution') }}</span>
-                  <svg-icon icon-class="icon_right_outlined" class="icon16 margin-left8" />
+                  <svg-icon
+                    icon-class="icon_right_outlined"
+                    class="icon16 margin-left8"
+                  />
                 </span>
                 <el-dropdown-menu slot="dropdown">
                   <el-dropdown-item @click.native="auxiliaryMatrixChange(false)">
                     <span class="text14"> {{ $t('panel.suspension') }} </span>
-                    <i v-if="!canvasStyleData.auxiliaryMatrix" class=" font-active el-icon-check margin-left52" />
+                    <i
+                      v-if="!canvasStyleData.auxiliaryMatrix"
+                      class=" font-active el-icon-check margin-left52"
+                    />
                   </el-dropdown-item>
                   <el-dropdown-item @click.native="auxiliaryMatrixChange(true)">
                     <span class="text14"> {{ $t('panel.matrix') }} </span>
-                    <i v-if="canvasStyleData.auxiliaryMatrix" class=" font-active el-icon-check margin-left52" />
+                    <i
+                      v-if="canvasStyleData.auxiliaryMatrix"
+                      class=" font-active el-icon-check margin-left52"
+                    />
                   </el-dropdown-item>
                 </el-dropdown-menu>
               </el-dropdown>
@@ -74,7 +123,12 @@
             <el-dropdown-item>
               <span class="icon iconfont icon-icon_dialpad_outlined icon16" />
               <span class="text14 margin-left8">{{ $t('panel.aided_grid') }}</span>
-              <el-switch v-model="showGridSwitch" :class="[{['grid-active']: showGridSwitch},'margin-left8']" size="mini" @change="showGridChange" />
+              <el-switch
+                v-model="showGridSwitch"
+                :class="[{['grid-active']: showGridSwitch},'margin-left8']"
+                size="mini"
+                @change="showGridChange"
+              />
             </el-dropdown-item>
             <el-dropdown-item @click.native="openOuterParamsSet">
               <span class="icon iconfont icon-icon-quicksetting icon16" />
@@ -84,17 +138,40 @@
               <span class="icon iconfont icon-icon_clear_outlined icon16" />
               <span class="text14 margin-left8">{{ $t('panel.clean_canvas') }}</span>
             </el-dropdown-item>
+            <el-dropdown-item
+              v-if="showWatermarkSetting"
+            >
+              <span class="icon iconfont icon-WATERMARK icon16" />
+              <span class="text14 margin-left8">{{ $t('panel.watermark') }}</span>
+              <el-switch
+                v-model="panelInfo.watermarkOpen"
+                :class="[{['grid-active']: panelInfo.watermarkOpen},'margin-left8']"
+                size="mini"
+                @change="styleChange"
+              />
+            </el-dropdown-item>
           </el-dropdown-menu>
         </el-dropdown>
       </span>
-      <span class="icon iconfont icon-icon_effects_outlined insert margin-right20" @click="showPanel">
+      <span
+        class="icon iconfont icon-icon_effects_outlined insert margin-right20"
+        @click="showPanel"
+      >
         <span class="icon-font-margin">{{ $t('panel.panel_style') }}</span>
       </span>
-      <span class="icon iconfont icon-icon_Batch_outlined insert margin-right20" @click="batchOption"><span
+      <span
+        class="icon iconfont icon-icon_Batch_outlined insert margin-right20"
+        @click="batchOption"
+      ><span
         class="icon-font-margin"
       >{{ $t('panel.batch_opt') }}</span></span>
       <span style="float: right;margin-right: 24px">
-        <el-button size="mini" type="primary" :disabled="saveButtonDisabled" @click="save(false)">
+        <el-button
+          size="mini"
+          type="primary"
+          :disabled="saveButtonDisabled"
+          @click="save(false)"
+        >
           {{ $t('commons.save') }}
         </el-button>
       </span>
@@ -110,7 +187,10 @@
     >
       <el-row style="height: 20px">
         <el-col :span="4">
-          <svg-icon icon-class="warn-tre" style="width: 20px;height: 20px;float: right" />
+          <svg-icon
+            icon-class="warn-tree"
+            style="width: 20px;height: 20px;float: right"
+          />
         </el-col>
         <el-col :span="20">
           <span style="font-size: 13px;margin-left: 10px;font-weight: bold;line-height: 20px">{{
@@ -118,10 +198,26 @@
           }}</span>
         </el-col>
       </el-row>
-      <div slot="footer" class="dialog-footer">
-        <el-button style="float: left" size="mini" @click="closeNotSave()">{{ $t('panel.do_not_save') }}</el-button>
-        <el-button size="mini" @click="closePanelVisible=false">{{ $t('panel.cancel') }}</el-button>
-        <el-button type="primary" size="mini" @click="save(true)">{{ $t('panel.save') }}
+      <div
+        slot="footer"
+        class="dialog-footer"
+      >
+        <el-button
+          style="float: left"
+          size="mini"
+          @click="closeNotSave()"
+        >{{ $t('panel.do_not_save') }}
+        </el-button>
+        <el-button
+          size="mini"
+          @click="closePanelVisible=false"
+        >{{ $t('panel.cancel') }}
+        </el-button>
+        <el-button
+          type="primary"
+          size="mini"
+          @click="save(true)"
+        >{{ $t('panel.save') }}
         </el-button>
       </div>
     </el-dialog>
@@ -132,11 +228,11 @@
 import generateID from '@/components/canvas/utils/generateID'
 import toast from '@/components/canvas/utils/toast'
 import { mapState } from 'vuex'
-import { commonStyle, commonAttr } from '@/components/canvas/custom-component/component-list'
+import { commonAttr, commonStyle } from '@/components/canvas/customComponent/component-list'
 import eventBus from '@/components/canvas/utils/eventBus'
 import { deepCopy, mobile2MainCanvas } from '@/components/canvas/utils/utils'
-import { panelUpdate, saveCache, removePanelCache } from '@/api/panel/panel'
-import { saveLinkage, getPanelAllLinkageInfo } from '@/api/panel/linkage'
+import { panelUpdate, removePanelCache, saveCache } from '@/api/panel/panel'
+import { getPanelAllLinkageInfo, saveLinkage } from '@/api/panel/linkage'
 import bus from '@/utils/bus'
 import { queryPanelJumpInfo } from '@/api/panel/linkJump'
 
@@ -166,6 +262,9 @@ export default {
     }
   },
   computed: {
+    showWatermarkSetting() {
+      return this.panelInfo.watermarkInfo && this.panelInfo.watermarkInfo.settingContent.enable && this.panelInfo.watermarkInfo.settingContent.enablePanelCustom
+    },
     panelInfo() {
       return this.$store.state.panel.panelInfo
     },
@@ -195,7 +294,7 @@ export default {
   created() {
     eventBus.$on('editPanelInitReady', this.editPanelInit)
     eventBus.$on('preview', this.preview)
-    eventBus.$on('save', this.save)
+    eventBus.$on('checkAndSave', this.checkAndSave)
     eventBus.$on('clearCanvas', this.clearCanvas)
     this.scale = this.canvasStyleData.scale
     this.mobileLayoutInitStatus = this.mobileLayoutStatus
@@ -204,14 +303,19 @@ export default {
   },
   beforeDestroy() {
     eventBus.$off('preview', this.preview)
-    eventBus.$off('save', this.save)
+    eventBus.$off('checkAndSave', this.checkAndSave)
     eventBus.$off('clearCanvas', this.clearCanvas)
     eventBus.$off('editPanelInitReady', this.editPanelInit)
     clearInterval(this.timer)
     this.timer = null
   },
   methods: {
-    editPanelInit(){
+    checkAndSave() {
+      if (!this.saveButtonDisabled) {
+        this.save(false)
+      }
+    },
+    editPanelInit() {
       this.showGridSwitch = this.canvasStyleData.aidedDesign.showGrid
     },
     close() {
@@ -343,10 +447,11 @@ export default {
       _this.timer = setInterval(() => {
         if (_this.$store.state.cacheStyleChangeTimes > 0) {
           const requestInfo = _this.savePrepare()
-          const cacheRequest ={
-            ...this.panelInfo,
+          const cacheRequest = {
+            ...deepCopy(this.panelInfo),
             ...requestInfo
           }
+          cacheRequest.watermarkInfo.settingContent = JSON.stringify(this.panelInfo.watermarkInfo.settingContent)
           saveCache(cacheRequest)
           _this.$store.state.cacheStyleChangeTimes = 0
         }
@@ -356,6 +461,7 @@ export default {
       // 保存到数据库
       const requestInfo = {
         id: this.panelInfo.id,
+        watermarkOpen: this.panelInfo.watermarkOpen,
         panelStyle: JSON.stringify(this.canvasStyleData),
         panelData: JSON.stringify(this.componentData)
       }
@@ -526,6 +632,9 @@ export default {
         }
       })
       this.cancelMobileLayoutStatue(sourceComponentData)
+    },
+    styleChange() {
+      this.$store.commit('canvasChange')
     }
   }
 }
@@ -739,11 +848,11 @@ export default {
 }
 
 .icon16_only {
-  font-size: 16px!important;
+  font-size: 16px !important;
 }
 
 .icon16 {
-  font-size: 16px!important;
+  font-size: 16px !important;
   color: var(--TextPrimary, #1F2329);
 }
 
@@ -760,9 +869,11 @@ export default {
   line-height: 22px;
   color: var(--TextPrimary, #1F2329);
 }
+
 .margin-left52 {
   margin-left: 52px !important;
 }
+
 .margin-left12 {
   margin-left: 12px !important;
 }
@@ -770,11 +881,12 @@ export default {
 .el-divider--vertical {
   margin: 0 20px 0 20px
 }
-.el-dropdown-menu__item{
+
+.el-dropdown-menu__item {
   line-height: 32px;
 }
 
-::v-deep .el-radio-button__inner{
-padding:7px 7px
+::v-deep .el-radio-button__inner {
+  padding: 7px 7px
 }
 </style>

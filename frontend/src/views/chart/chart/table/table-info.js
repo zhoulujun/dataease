@@ -1,10 +1,9 @@
-import { TableSheet, S2Event, PivotSheet } from '@antv/s2'
+import { TableSheet, S2Event, PivotSheet, DataCell, EXTRA_FIELD, TOTAL_VALUE } from '@antv/s2'
 import { getCustomTheme, getSize } from '@/views/chart/chart/common/common_table'
 import { DEFAULT_COLOR_CASE, DEFAULT_TOTAL } from '@/views/chart/chart/chart'
 import { formatterItem, valueFormatter } from '@/views/chart/chart/formatter'
 import { hexColorToRGBA } from '@/views/chart/chart/util'
-
-export function baseTableInfo(s2, container, chart, action, tableData) {
+export function baseTableInfo(s2, container, chart, action, tableData, pageInfo) {
   const containerDom = document.getElementById(container)
 
   // fields
@@ -118,13 +117,32 @@ export function baseTableInfo(s2, container, chart, action, tableData) {
     data: tableData
   }
 
+  const customAttr = JSON.parse(chart.customAttr)
   // options
   const s2Options = {
     width: containerDom.offsetWidth,
     height: containerDom.offsetHeight,
-    // showSeriesNumber: true
+    showSeriesNumber: customAttr.size.showIndex,
     style: getSize(chart),
     conditions: getConditions(chart)
+  }
+  // 开启序号之后，第一列就是序号列，修改 label 即可
+  if (s2Options.showSeriesNumber) {
+    s2Options.colCell = (node) => {
+      if (node.colIndex === 0) {
+        if (!customAttr.size.indexLabel) {
+          node.label = ' '
+        } else {
+          node.label = customAttr.size.indexLabel
+        }
+      }
+    }
+    s2Options.dataCell = (viewMeta) => {
+      if (viewMeta.colIndex === 0) {
+        viewMeta.fieldValue = (pageInfo.pageSize * (pageInfo.page - 1)) + viewMeta.rowIndex + 1
+      }
+      return new DataCell(viewMeta, viewMeta?.spreadsheet)
+    }
   }
 
   // 开始渲染
@@ -245,13 +263,26 @@ export function baseTableNormal(s2, container, chart, action, tableData) {
     data: tableData
   }
 
+  const customAttr = JSON.parse(chart.customAttr)
   // options
   const s2Options = {
     width: containerDom.offsetWidth,
     height: containerDom.offsetHeight,
-    // showSeriesNumber: true
+    showSeriesNumber: customAttr.size.showIndex,
     style: getSize(chart),
     conditions: getConditions(chart)
+  }
+  // 开启序号之后，第一列就是序号列，修改 label 即可
+  if (s2Options.showSeriesNumber) {
+    s2Options.colCell = (node) => {
+      if (node.colIndex === 0) {
+        if (!customAttr.size.indexLabel) {
+          node.label = ' '
+        } else {
+          node.label = customAttr.size.indexLabel
+        }
+      }
+    }
   }
 
   // 开始渲染
@@ -372,17 +403,6 @@ export function baseTablePivot(s2, container, chart, action, tableData) {
     })
   }
 
-  // data config
-  const s2DataConfig = {
-    fields: {
-      rows: r,
-      columns: c,
-      values: v
-    },
-    meta: meta,
-    data: tableData
-  }
-
   // total config
   let totalCfg = {}
   const chartObj = JSON.parse(JSON.stringify(chart))
@@ -401,6 +421,43 @@ export function baseTablePivot(s2, container, chart, action, tableData) {
   }
   totalCfg.row.subTotalsDimensions = r
   totalCfg.col.subTotalsDimensions = c
+
+  // 解析合计、小计排序
+  const sortParams = []
+  if (totalCfg.row.totalSort && totalCfg.row.totalSort !== 'none' && c.length > 0 && totalCfg.row.showGrandTotals && v.indexOf(totalCfg.row.totalSortField) > -1) {
+    const sort = {
+      sortFieldId: c[0],
+      sortMethod: totalCfg.row.totalSort.toUpperCase(),
+      sortByMeasure: TOTAL_VALUE,
+      query: {
+        [EXTRA_FIELD]: totalCfg.row.totalSortField
+      }
+    }
+    sortParams.push(sort)
+  }
+  if (totalCfg.col.totalSort && totalCfg.col.totalSort !== 'none' && r.length > 0 && totalCfg.col.showGrandTotals && v.indexOf(totalCfg.col.totalSortField) > -1) {
+    const sort = {
+      sortFieldId: r[0],
+      sortMethod: totalCfg.col.totalSort.toUpperCase(),
+      sortByMeasure: TOTAL_VALUE,
+      query: {
+        [EXTRA_FIELD]: totalCfg.col.totalSortField
+      }
+    }
+    sortParams.push(sort)
+  }
+
+  // data config
+  const s2DataConfig = {
+    fields: {
+      rows: r,
+      columns: c,
+      values: v
+    },
+    meta: meta,
+    data: tableData,
+    sortParams: sortParams
+  }
 
   // options
   const s2Options = {

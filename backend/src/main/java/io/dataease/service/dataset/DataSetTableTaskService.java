@@ -84,7 +84,7 @@ public class DataSetTableTaskService {
             }
             datasetTableTaskMapper.insert(datasetTableTask);
         } else {
-            datasetTableTask.setStatus(null);
+            datasetTableTask.setStatus(TaskStatus.Underway.name());
             datasetTableTask.setLastExecTime(null);
             datasetTableTask.setLastExecStatus(null);
             datasetTableTaskMapper.updateByPrimaryKeySelective(datasetTableTask);
@@ -335,6 +335,9 @@ public class DataSetTableTaskService {
 
     public void execTask(DatasetTableTask datasetTableTask) throws Exception {
         execNow(datasetTableTask);
+        if(datasetTableTask.getRate().equalsIgnoreCase(ScheduleType.SIMPLE.toString())){
+            scheduleService.addSchedule(datasetTableTask);
+        }
         if (!datasetTableTask.getRate().equalsIgnoreCase(ScheduleType.SIMPLE.toString())) {
             scheduleService.fireNow(datasetTableTask);
         }

@@ -3,6 +3,7 @@ package io.dataease.auth.service.impl;
 import io.dataease.auth.api.dto.CurrentRoleDto;
 import io.dataease.auth.entity.AccountLockStatus;
 import io.dataease.auth.entity.SysUserEntity;
+import io.dataease.commons.constants.ParamConstants;
 import io.dataease.commons.utils.CodingUtil;
 import io.dataease.exception.DataEaseException;
 import io.dataease.ext.*;
@@ -21,12 +22,14 @@ import io.dataease.plugins.util.PluginUtils;
 import io.dataease.plugins.xpack.cas.service.CasXpackService;
 import io.dataease.plugins.xpack.dingtalk.service.DingtalkXpackService;
 import io.dataease.plugins.xpack.lark.service.LarkXpackService;
+import io.dataease.plugins.xpack.larksuite.service.LarksuiteXpackService;
 import io.dataease.plugins.xpack.ldap.service.LdapXpackService;
 import io.dataease.plugins.xpack.loginlimit.dto.response.LoginLimitInfo;
 import io.dataease.plugins.xpack.loginlimit.service.LoginLimitXpackService;
 import io.dataease.plugins.xpack.oidc.service.OidcXpackService;
 
 import io.dataease.plugins.xpack.wecom.service.WecomXpackService;
+import io.dataease.service.system.SystemParameterService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -55,6 +58,9 @@ public class AuthUserServiceImpl implements AuthUserService {
 
     @Resource
     private SysLoginLimitMapper sysLoginLimitMapper;
+
+    @Resource
+    private SystemParameterService systemParameterService;
 
     /**
      * 此处需被F2CRealm登录认证调用 也就是说每次请求都会被调用 所以最好加上缓存
@@ -106,6 +112,11 @@ public class AuthUserServiceImpl implements AuthUserService {
     @Override
     public SysUserEntity getUserByLarkId(String larkId) {
         return authMapper.findLarkUser(larkId);
+    }
+
+    @Override
+    public SysUserEntity getUserByLarksuiteId(String larksuiteId) {
+        return authMapper.findLarksuiteUser(larksuiteId);
     }
 
     @Override
@@ -182,7 +193,7 @@ public class AuthUserServiceImpl implements AuthUserService {
         if (beansOfType.keySet().size() == 0) return false;
         OidcXpackService oidcXpackService = SpringContextUtil.getBean(OidcXpackService.class);
         if (ObjectUtils.isEmpty(oidcXpackService)) return false;
-        return oidcXpackService.isSuuportOIDC();
+        return oidcXpackService.isSupportOIDC();
     }
 
     @Override
@@ -191,7 +202,7 @@ public class AuthUserServiceImpl implements AuthUserService {
         if (beansOfType.keySet().size() == 0) return false;
         CasXpackService casXpackService = SpringContextUtil.getBean(CasXpackService.class);
         if (ObjectUtils.isEmpty(casXpackService)) return false;
-        return casXpackService.suuportCas();
+        return casXpackService.supportCas();
     }
 
     @Override
@@ -217,6 +228,15 @@ public class AuthUserServiceImpl implements AuthUserService {
         Map<String, LarkXpackService> beansOfType = SpringContextUtil.getApplicationContext().getBeansOfType((LarkXpackService.class));
         if (beansOfType.keySet().size() == 0) return false;
         LarkXpackService larkXpackService = SpringContextUtil.getBean(LarkXpackService.class);
+        if (ObjectUtils.isEmpty(larkXpackService)) return false;
+        return larkXpackService.isOpen();
+    }
+
+    @Override
+    public Boolean supportLarksuite() {
+        Map<String, LarksuiteXpackService> beansOfType = SpringContextUtil.getApplicationContext().getBeansOfType((LarksuiteXpackService.class));
+        if (beansOfType.keySet().size() == 0) return false;
+        LarksuiteXpackService larkXpackService = SpringContextUtil.getBean(LarksuiteXpackService.class);
         if (ObjectUtils.isEmpty(larkXpackService)) return false;
         return larkXpackService.isOpen();
     }
@@ -257,14 +277,16 @@ public class AuthUserServiceImpl implements AuthUserService {
     }
 
     @Override
-    public void recordLoginFail(String username, Integer logintype) {
-        if (!supportLoginLimit()) return;
+    public AccountLockStatus recordLoginFail(String username, Integer logintype) {
+        if (!supportLoginLimit()) return null;
         long now = System.currentTimeMillis();
         SysLoginLimit sysLoginLimit = new SysLoginLimit();
         sysLoginLimit.setUsername(username);
         sysLoginLimit.setLoginType(logintype);
         sysLoginLimit.setRecordTime(now);
         sysLoginLimitMapper.insert(sysLoginLimit);
+        return lockStatus(username, logintype);
+
     }
 
     @Override
@@ -292,13 +314,16 @@ public class AuthUserServiceImpl implements AuthUserService {
         SysLoginLimitExample example = new SysLoginLimitExample();
         example.createCriteria().andUsernameEqualTo(username).andLoginTypeEqualTo(logintype).andRecordTimeGreaterThan(dividingPointTime);
         List<SysLoginLimit> sysLoginLimits = sysLoginLimitMapper.selectByExample(example);
+        accountLockStatus.setRemainderTimes(limitTimes);
         if (CollectionUtils.isNotEmpty(sysLoginLimits)) {
             boolean needLock = sysLoginLimits.size() >= limitTimes;
+            accountLockStatus.setRemainderTimes(limitTimes - sysLoginLimits.size());
             accountLockStatus.setLocked(needLock);
             if (needLock) {
                 long unlockTime = now + (longRelieveTimes * 60L * 1000L);
                 accountLockStatus.setUnlockTime(unlockTime);
                 accountLockStatus.setRelieveTimes(relieveTimes);
+                accountLockStatus.setRemainderTimes(0);
             }
 
         }
@@ -312,5 +337,11 @@ public class AuthUserServiceImpl implements AuthUserService {
     public void clearAllLock() {
         SysLoginLimitExample example = new SysLoginLimitExample();
         sysLoginLimitMapper.deleteByExample(example);
+    }
+
+    @Override
+    public Boolean checkScanCreateLimit() {
+        String value = systemParameterService.getValue(ParamConstants.BASIC.SCAN_CREATE_USER.getValue());
+        return StringUtils.isNotBlank(value) && StringUtils.equals("true", value);
     }
 }

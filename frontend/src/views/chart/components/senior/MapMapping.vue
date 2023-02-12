@@ -1,7 +1,7 @@
 <template>
   <div style="width: 100%;display: block !important;">
     <el-table
-      :data="currentDatas"
+      :data="currentData"
       size="mini"
       :span-method="mergeCellMethod"
       style="width: 100%"
@@ -27,10 +27,19 @@
             @keyup.enter.native="$event.target.blur()"
           >
 
-            <i slot="suffix" class="el-icon-success el-input__icon map-mapping-ok" @click="finishEdit(scope.row)" />
+            <i
+              slot="suffix"
+              class="el-icon-success el-input__icon map-mapping-ok"
+              @click="finishEdit(scope.row)"
+            />
           </el-input>
 
-          <el-button v-else size="mini" plain @click="triggerEdit(scope)">
+          <el-button
+            v-else
+            size="mini"
+            plain
+            @click="triggerEdit(scope)"
+          >
             <span class="mapping-span">{{ scope.row.attrArea }}</span>
             <i class="el-icon-edit el-icon--right" />
           </el-button>
@@ -39,17 +48,24 @@
       </el-table-column>
       <el-table-column align="right">
 
-        <template slot="header" slot-scope="scope">
+        <template
+          slot="header"
+          slot-scope="scope"
+        >
           <el-input
+            :id="scope.$index"
             v-model="keyWord"
             size="mini"
-            placeholder="输入关键字搜索"
+            :placeholder="$t('commons.search_keywords')"
           />
         </template>
 
       </el-table-column>
 
-      <el-empty slot="empty" :description="!!currentAreaCode ? $t('map_mapping.empty'): $t('map_mapping.please_select_map')" />
+      <el-empty
+        slot="empty"
+        :description="!!currentAreaCode ? $t('map_mapping.empty'): $t('map_mapping.please_select_map')"
+      />
     </el-table>
     <div class="mapping-pagination">
       <el-pagination
@@ -91,7 +107,7 @@ export default {
       currentPage: 1,
       pageSize: 10,
       total: 0,
-      currentDatas: [],
+      currentData: [],
       usePage: true
     }
   },
@@ -180,7 +196,7 @@ export default {
       }
     },
     buildGridList() {
-      this.currentDatas = []
+      this.currentData = []
       if (!this.currentAreaCode || !this.mappingForm[this.currentAreaCode]) return
       this.gridList = Object.keys(this.mappingForm[this.currentAreaCode]).map(key => {
         return {
@@ -188,17 +204,17 @@ export default {
           attrArea: this.mappingForm[this.currentAreaCode][key] || key
         }
       })
-      const baseDatas = JSON.parse(JSON.stringify(this.gridList))
-      const tempDatas = baseDatas.filter(data => !this.keyWord || data.mapArea.toLowerCase().includes(this.keyWord.toLowerCase()) || (data.attrArea && data.attrArea.toLowerCase().includes(this.keyWord.toLowerCase())))
+      const baseData = JSON.parse(JSON.stringify(this.gridList))
+      const tempData = baseData.filter(data => !this.keyWord || data.mapArea.toLowerCase().includes(this.keyWord.toLowerCase()) || (data.attrArea && data.attrArea.toLowerCase().includes(this.keyWord.toLowerCase())))
       if (this.usePage) {
         const start = (this.currentPage - 1) * this.pageSize
         let end = this.currentPage * this.pageSize
-        if (end >= tempDatas.length) end = tempDatas.length
-        this.currentDatas = tempDatas.slice(start, end)
+        if (end >= tempData.length) end = tempData.length
+        this.currentData = tempData.slice(start, end)
       } else {
-        this.currentDatas = tempDatas
+        this.currentData = tempData
       }
-      this.total = tempDatas.length
+      this.total = tempData.length
     },
     initMapping() {
       const innerCallBack = (json, cCode) => {
@@ -215,7 +231,7 @@ export default {
         })
       }
       const cCode = this.currentAreaCode
-      if(!cCode) return
+      if (!cCode) return
       if (this.$store.getters.geoMap[cCode]) {
         const json = this.$store.getters.geoMap[cCode]
         json && innerCallBack(json, cCode)
